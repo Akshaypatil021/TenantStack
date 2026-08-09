@@ -25,8 +25,12 @@ app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'ok', message: 'TenantFlow API is running.' });
 });
 
+import authRoutes from './modules/auth/auth.routes';
+import projectRoutes from './modules/projects/project.routes';
+
 // Setup API Routes
-// app.use('/api/v1', apiRoutes);
+app.use('/api/v1/auth', authRoutes);
+app.use('/api/v1/projects', projectRoutes);
 
 // Global Error Handler placeholder
 app.use((err: any, req: Request, res: Response, next: Function) => {
