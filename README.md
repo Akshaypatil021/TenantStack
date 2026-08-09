@@ -1,0 +1,1 @@
+**TenantFlow is a secure, scalable multi-tenant SaaS platform that allows multiple organizations to manage their users, data, permissions, storage, and resources independently through a single application.**
