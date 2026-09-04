@@ -4,6 +4,7 @@ import { z } from 'zod';
 import Tenant from '../tenants/tenant.model';
 import User from '../users/user.model';
 import Role from '../roles/role.model';
+import Permission from '../permissions/permission.model';
 import { generateToken } from '../../utils/jwt.util';
 
 const RegisterSchema = z.object({
@@ -45,6 +46,24 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       description: 'Full access administrator',
       isDefault: true,
     });
+
+    // 4b. Seed Default Permissions for Tenant Admin
+    const defaultActions = [
+      'user:create', 'user:read', 'user:update', 'user:delete',
+      'project:create', 'project:read', 'project:update', 'project:delete',
+      'task:create', 'task:read', 'task:update', 'task:delete',
+      'billing:read', 'billing:update',
+      'file:upload', 'file:delete',
+      'audit:read',
+    ];
+
+    const permissionDocs = defaultActions.map((action) => ({
+      tenantId: tenant._id,
+      roleId: adminRole._id,
+      action,
+    }));
+
+    await Permission.insertMany(permissionDocs);
 
     // 5. Hash Password & Create User
     const salt = await bcrypt.genSalt(10);

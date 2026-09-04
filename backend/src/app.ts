@@ -25,17 +25,25 @@ app.get('/health', (req: Request, res: Response) => {
   res.status(200).json({ status: 'ok', message: 'TenantFlow API is running.' });
 });
 
+import path from 'path';
 import authRoutes from './modules/auth/auth.routes';
 import projectRoutes from './modules/projects/project.routes';
+import subscriptionRoutes from './modules/subscriptions/subscription.routes';
+import fileRoutes from './modules/files/file.routes';
+
+// Serve uploads directory
+app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
 // Setup API Routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/projects', projectRoutes);
+app.use('/api/v1/subscriptions', subscriptionRoutes);
+app.use('/api/v1/files', fileRoutes);
 
 // Global Error Handler placeholder
 app.use((err: any, req: Request, res: Response, next: Function) => {
   console.error(err.stack);
-  res.status(500).json({ error: 'Internal Server Error' });
+  res.status(500).json({ error: err.message || 'Internal Server Error' });
 });
 
 export default app;

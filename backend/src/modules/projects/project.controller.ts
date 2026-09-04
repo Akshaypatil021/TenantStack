@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { z, ZodError } from 'zod';
 import Project from './project.model';
 import { AuthenticatedRequest } from '../../middleware/auth.middleware';
+import { invalidateCache } from '../../services/redis.service';
 
 const CreateProjectSchema = z.object({
   name: z.string().min(2),
@@ -20,6 +21,12 @@ export const createProject = async (req: AuthenticatedRequest, res: Response): P
       description: validatedData.description,
       status: 'TODO',
     });
+
+    // Invalidate project count cache so limit middleware gets fresh count
+    await Promise.all([
+      invalidateCache(`tenant:${tenantId}:projects:count`),
+      invalidateCache(`tenant:${tenantId}:subscription`),
+    ]);
 
     res.status(201).json({ message: 'Project created successfully', project });
   } catch (error: any) {
