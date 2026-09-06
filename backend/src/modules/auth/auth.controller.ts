@@ -63,6 +63,29 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       action,
     }));
 
+    // 4c. Create Default Member Role for the Tenant
+    const memberRole = await Role.create({
+      tenantId: tenant._id,
+      name: 'Member',
+      description: 'Standard team member',
+      isDefault: false,
+    });
+
+    const memberActions = [
+      'user:read',
+      'project:create', 'project:read', 'project:update',
+      'task:create', 'task:read', 'task:update',
+      'file:upload', 'file:read',
+    ];
+
+    const memberPermissionDocs = memberActions.map((action) => ({
+      tenantId: tenant._id,
+      roleId: memberRole._id,
+      action,
+    }));
+
+    permissionDocs.push(...memberPermissionDocs);
+
     await Permission.insertMany(permissionDocs);
 
     // 5. Hash Password & Create User

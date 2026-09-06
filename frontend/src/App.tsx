@@ -8,6 +8,7 @@ import { LandingPage } from './pages/LandingPage';
 import { Dashboard } from './pages/Dashboard';
 import { Projects } from './pages/Projects';
 import { Billing } from './pages/Billing';
+import { AcceptInvite } from './pages/AcceptInvite';
 
 // Protected Route Component
 const ProtectedLayout = () => {
@@ -46,6 +47,10 @@ function AppRoutes() {
       <Route
         path="/register"
         element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Register />}
+      />
+      <Route
+        path="/invite/:token"
+        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <AcceptInvite />}
       />
 
       {/* Protected SaaS App Routes */}

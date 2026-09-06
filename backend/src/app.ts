@@ -30,6 +30,7 @@ import authRoutes from './modules/auth/auth.routes';
 import projectRoutes from './modules/projects/project.routes';
 import subscriptionRoutes from './modules/subscriptions/subscription.routes';
 import fileRoutes from './modules/files/file.routes';
+import userRoutes from './modules/users/user.routes';
 
 // Serve uploads directory
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
@@ -39,6 +40,7 @@ app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/projects', projectRoutes);
 app.use('/api/v1/subscriptions', subscriptionRoutes);
 app.use('/api/v1/files', fileRoutes);
+app.use('/api/v1/users', userRoutes);
 
 // Global Error Handler placeholder
 app.use((err: any, req: Request, res: Response, next: Function) => {

@@ -11,7 +11,7 @@ export const requirePermission = (requiredAction: string) => {
   return async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
     try {
       if (!req.user) {
-        res.status(401).json({ error: 'Unauthorized: User authentication required' });
+        res.status(401).json({ error: 'Unauthorized: User  authentication required' });
         return;
       }
 
