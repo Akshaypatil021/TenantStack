@@ -8,8 +8,6 @@ import {
   Lock,
   Eye,
   EyeOff,
-  Check,
-  Building2,
   Mail,
 } from 'lucide-react';
 
@@ -87,7 +85,14 @@ export const AcceptInvite = () => {
       }
 
       // Login user
-      login(data.token, data.user, inviteDetails?.tenant);
+      if (inviteDetails?.tenant) {
+        login(data.token, data.user, {
+          id: inviteDetails.tenant._id,
+          name: inviteDetails.tenant.name,
+        });
+      } else {
+        login(data.token, data.user);
+      }
       navigate('/dashboard');
     } catch (err: any) {
       setError(err.message);
@@ -153,14 +158,14 @@ export const AcceptInvite = () => {
             <div className="bg-gradient-to-tr from-purple-600 to-indigo-500 p-2.5 rounded-xl shadow-lg shadow-purple-500/25">
               <Layers className="w-6 h-6 text-white" />
             </div>
-            <span className="font-bold text-xl text-white tracking-wide">
+            <span className="font-bold text-xl text-white tracking-wider">
               TenantFlow
             </span>
           </div>
 
           {/* Center Content */}
           <div className="max-w-lg">
-            <h2 className="text-4xl xl:text-5xl font-extrabold text-white leading-tight tracking-tight">
+            <h2 className="text-4xl xl:text-5xl font-bold text-white leading-tight tracking-tight">
               Join your{' '}
               <span className="bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400 bg-clip-text text-transparent">
                 workspace
@@ -182,7 +187,7 @@ export const AcceptInvite = () => {
             <div className="inline-flex p-3 bg-gradient-to-tr from-purple-600 to-indigo-500 rounded-2xl shadow-lg shadow-purple-500/25 mb-4">
               <Layers className="w-7 h-7 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-white">TenantFlow</h1>
+            <h1 className="text-2xl font-bold text-white tracking-wider">TenantFlow</h1>
           </div>
 
           {/* Header */}

@@ -5,7 +5,13 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
-    extend: {},
+    extend: {
+      fontFamily: {
+        sans: ['Plus Jakarta Sans', 'Gilroy', 'Inter', 'sans-serif'],
+        nexover: ['Plus Jakarta Sans', 'Gilroy', 'sans-serif'],
+        display: ['Plus Jakarta Sans', 'Gilroy', 'sans-serif'],
+      },
+    },
   },
   plugins: [],
 }

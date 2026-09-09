@@ -144,7 +144,7 @@ export const Register = () => {
             <div className="bg-gradient-to-tr from-purple-600 to-indigo-500 p-2.5 rounded-xl shadow-lg shadow-purple-500/25">
               <Layers className="w-6 h-6 text-white" />
             </div>
-            <span className="font-bold text-xl text-white tracking-wide">
+            <span className="font-bold text-xl text-white tracking-wider">
               TenantFlow
             </span>
           </div>
@@ -155,7 +155,7 @@ export const Register = () => {
               <Sparkles className="w-4 h-4" /> Start your free trial today
             </div>
 
-            <h2 className="text-4xl xl:text-5xl font-extrabold text-white leading-tight tracking-tight">
+            <h2 className="text-4xl xl:text-5xl font-bold text-white leading-tight tracking-tight">
               Launch your{' '}
               <span className="bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400 bg-clip-text text-transparent">
                 multi-tenant
@@ -205,7 +205,7 @@ export const Register = () => {
             <div className="inline-flex p-3 bg-gradient-to-tr from-purple-600 to-indigo-500 rounded-2xl shadow-lg shadow-purple-500/25 mb-4">
               <Layers className="w-7 h-7 text-white" />
             </div>
-            <h1 className="text-2xl font-bold text-white">TenantFlow</h1>
+            <h1 className="text-2xl font-bold text-white tracking-wider">TenantFlow</h1>
           </div>
 
           {/* Header */}

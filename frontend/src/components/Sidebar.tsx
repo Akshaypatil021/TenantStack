@@ -33,7 +33,7 @@ export const Sidebar = () => {
             <Layers className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h1 className="font-bold text-lg text-white tracking-wide">TenantFlow</h1>
+            <h1 className="font-bold text-lg text-white tracking-wider">TenantFlow</h1>
             <p className="text-xs text-purple-400 font-medium">SaaS Platform</p>
           </div>
         </div>

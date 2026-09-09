@@ -1,232 +1,294 @@
 import { Link } from 'react-router-dom';
-import { 
-  Layers, 
-  ShieldCheck, 
-  Zap, 
-  CreditCard, 
-  ArrowRight, 
-  Check, 
-  Lock, 
-  BarChart3, 
-  Server
-} from 'lucide-react';
+import { ArrowRight, Layers, MoreVertical, Database, Lock, Sliders } from 'lucide-react';
 
 export const LandingPage = () => {
-  const features = [
-    {
-      icon: ShieldCheck,
-      title: 'Strict Tenant Data Isolation',
-      description: 'Every database query is automatically scoped with compound indexes (tenantId) ensuring total isolation.',
-      color: 'text-emerald-400',
-      bg: 'bg-emerald-500/10 border-emerald-500/20',
-    },
-    {
-      icon: Zap,
-      title: 'O(1) HashSet RBAC Engine',
-      description: 'Ultra-fast sub-millisecond role-based permission checks using Set lookup data structures.',
-      color: 'text-purple-400',
-      bg: 'bg-purple-500/10 border-purple-500/20',
-    },
-    {
-      icon: CreditCard,
-      title: 'Dynamic Plan Limits',
-      description: 'Enforce subscription limits (Projects, Users, Storage) without hardcoding values in your code.',
-      color: 'text-blue-400',
-      bg: 'bg-blue-500/10 border-blue-500/20',
-    },
-    {
-      icon: Lock,
-      title: 'JWT Authentication',
-      description: 'Stateless, cryptographically signed authentication tokens embedded with tenant claims.',
-      color: 'text-amber-400',
-      bg: 'bg-amber-500/10 border-amber-500/20',
-    },
-    {
-      icon: BarChart3,
-      title: 'Usage Analytics & Invoices',
-      description: 'Track resource consumption live and generate digital invoice records for every billing tier.',
-      color: 'text-indigo-400',
-      bg: 'bg-indigo-500/10 border-indigo-500/20',
-    },
-    {
-      icon: Server,
-      title: 'Enterprise Architecture',
-      description: 'Monorepo built with Express, TypeScript, Zod validation, and MongoDB Atlas.',
-      color: 'text-rose-400',
-      bg: 'bg-rose-500/10 border-rose-500/20',
-    },
-  ];
-
-  const plans = [
-    {
-      name: 'FREE',
-      price: '$0',
-      description: 'Perfect for exploring TenantFlow features.',
-      features: ['2 Team Users', '5 Active Projects', '10 MB Storage', '100 API Requests/day'],
-    },
-    {
-      name: 'PRO',
-      price: '$29',
-      description: 'Built for growing teams and startups.',
-      features: ['10 Team Users', '20 Active Projects', '50 MB Storage', '1,000 API Requests/day'],
-      popular: true,
-    },
-    {
-      name: 'BUSINESS',
-      price: '$99',
-      description: 'Enterprise grade power and capacity.',
-      features: ['15 Team Users', '100 Active Projects', '100 MB Storage', '2,000 API Requests/day'],
-    },
-  ];
-
   return (
-    <div className="min-h-screen bg-slate-950 text-slate-100 selection:bg-purple-500 selection:text-white">
-      {/* Top Navbar */}
-      <header className="max-w-7xl mx-auto px-6 py-6 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="bg-gradient-to-tr from-purple-600 to-indigo-500 p-2 rounded-xl shadow-lg shadow-purple-500/20">
-            <Layers className="w-6 h-6 text-white" />
+    <div className="min-h-screen bg-white text-slate-900 selection:bg-emerald-500 selection:text-white">
+      {/* ─── Hero Wrapper with Grid Background ─── */}
+      <div className="relative overflow-hidden">
+        {/* Subtle Grid Background with Radial Fade */}
+      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+        <div 
+          className="absolute inset-0"
+          style={{
+            backgroundImage: 'linear-gradient(to right, rgba(145, 151, 157, 0.6) 1px, transparent 1px), linear-gradient(to bottom, rgba(141, 151, 163, 0.6) 1px, transparent 1px)',
+            backgroundSize: '4rem 4rem',
+            maskImage: 'radial-gradient(ellipse 80% 50% at 50% 50%, #211818ff 20%, transparent 100%)',
+            WebkitMaskImage: 'radial-gradient(ellipse 80% 50% at 50% 50%, #000 20%, transparent 100%)',
+          }}
+        />
+      </div>
+
+      {/* ─── Top Navbar ─── */}
+      <header className="relative z-10 max-w-[1280px] mx-auto px-8 py-6 flex items-center justify-between">
+        {/* Logo */}
+        <div className="flex items-center gap-2.5">
+          <div className="bg-gradient-to-br from-violet-500 to-indigo-600 p-2 rounded-lg shadow-md">
+            <Layers className="w-5 h-5 text-white" />
           </div>
-          <span className="font-bold text-xl text-white tracking-wide">TenantFlow</span>
+          <span className="font-bold text-xl text-slate-900 tracking-wide">
+            TenantFlow
+          </span>
         </div>
 
-        <nav className="hidden md:flex items-center gap-8 text-sm text-slate-400 font-medium">
-          <a href="#features" className="hover:text-white transition">Features</a>
-          <a href="#architecture" className="hover:text-white transition">Architecture</a>
-          <a href="#pricing" className="hover:text-white transition">Pricing</a>
+        {/* Center Navigation */}
+        <nav className="hidden md:flex items-center gap-10 text-[15px] text-slate-500 font-medium">
+          <a href="#features" className="hover:text-slate-900 transition-colors duration-200">
+            Features
+          </a>
+          <a href="#architecture" className="hover:text-slate-900 transition-colors duration-200">
+            Architecture
+          </a>
+          <a href="#pricing" className="hover:text-slate-900 transition-colors duration-200">
+            Pricing
+          </a>
+          <a href="#docs" className="hover:text-slate-900 transition-colors duration-200">
+            Docs
+          </a>
         </nav>
 
-        <div className="flex items-center gap-4">
-          <Link
-            to="/login"
-            className="text-sm font-semibold text-slate-300 hover:text-white transition px-4 py-2"
-          >
-            Sign In
-          </Link>
-          <Link
-            to="/register"
-            className="text-sm font-semibold bg-purple-600 hover:bg-purple-500 text-white px-5 py-2.5 rounded-xl transition shadow-lg shadow-purple-600/25"
-          >
-            Get Started Free
-          </Link>
-        </div>
+        {/* Right CTA */}
+        <Link
+          to="/register"
+          className="hidden md:inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold px-6 py-3 rounded-full transition-all duration-200 shadow-lg shadow-slate-900/20"
+        >
+          Start Free Trial
+          <ArrowRight className="w-4 h-4" />
+        </Link>
       </header>
 
-      {/* Hero Section */}
-      <section className="max-w-6xl mx-auto px-6 pt-20 pb-24 text-center">
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-purple-500/10 border border-purple-500/20 rounded-full text-purple-400 text-xs font-semibold mb-8">
-          <Zap className="w-4 h-4" /> Multi-Tenant SaaS Platform Engine
-        </div>
-
-        <h1 className="text-4xl md:text-6xl font-extrabold text-white tracking-tight leading-tight max-w-4xl mx-auto">
-          The Next-Gen <span className="bg-gradient-to-r from-purple-400 via-indigo-300 to-pink-400 bg-clip-text text-transparent">Multi-Tenant Engine</span> for SaaS Applications
+      {/* ─── Hero Section ─── */}
+      <section className="relative z-10 max-w-5xl mx-auto px-8 pt-20 pb-8 text-center">
+        <h1 className="text-[clamp(2.5rem,5.5vw,4.5rem)] font-bold text-slate-900 leading-[1.1] tracking-tight">
+          Your Trusted Partner in
+          <br />
+          Comprehensive Web Security
         </h1>
 
-        <p className="text-slate-400 text-lg md:text-xl max-w-2xl mx-auto mt-6 leading-relaxed">
-          Enforce strict data isolation, high-performance O(1) RBAC permission checks, and dynamic subscription plan limits with zero friction.
+        <p className="text-slate-500 text-lg md:text-[17px] max-w-[800px] mx-auto mt-6 leading-relaxed">
+          Securing Your Digital World: Your Trusted Partner in Data Protection with
+          <br className="hidden md:block" />
+          Cutting-Edge Solutions for Comprehensive Data Security.
         </p>
 
+        {/* CTA Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-10">
+          {/* Primary - Dark */}
           <Link
             to="/register"
-            className="w-full sm:w-auto bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold px-8 py-4 rounded-xl transition shadow-xl shadow-purple-600/30 flex items-center justify-center gap-2 text-base"
+            className="group inline-flex items-center gap-4 bg-[#1a1a1a] hover:bg-[#000000] text-white font-medium text-[15px] pl-7 pr-1.5 py-1.5 rounded-full transition-all duration-200 shadow-xl shadow-slate-900/10"
           >
-            Start Free Organization
-            <ArrowRight className="w-5 h-5" />
+            Get Started
+            <span className="bg-[#c8f542] text-[#1a1a1a] rounded-full p-2.5 group-hover:scale-105 transition-transform flex items-center justify-center">
+              <ArrowRight className="w-4 h-4 stroke-[2.5]" />
+            </span>
           </Link>
+
+          {/* Secondary - Outline */}
           <Link
-            to="/login"
-            className="w-full sm:w-auto bg-slate-900 border border-slate-800 hover:bg-slate-800 text-slate-300 font-semibold px-8 py-4 rounded-xl transition text-base"
+            to="#architecture"
+            className="group inline-flex items-center gap-4 bg-white border border-slate-200 hover:border-slate-300 text-slate-800 font-medium text-[15px] pl-7 pr-1.5 py-1.5 rounded-full transition-all duration-200 shadow-sm"
           >
-            Sign In to Workspace
+            Learn More
+            <span className="bg-[#f8f9fa] text-slate-900 border border-slate-100 rounded-full p-2.5 group-hover:scale-105 transition-transform flex items-center justify-center">
+              <ArrowRight className="w-4 h-4 stroke-[2]" />
+            </span>
           </Link>
         </div>
+      </section>
 
-        {/* Dashboard Preview Glassmorphism Mockup */}
-        <div className="mt-16 bg-slate-900/60 border border-slate-800 rounded-3xl p-4 shadow-2xl backdrop-blur-xl relative overflow-hidden">
-          <div className="bg-slate-950 rounded-2xl p-6 border border-slate-800/80 text-left">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-800">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-rose-500"></div>
-                <div className="w-3 h-3 rounded-full bg-amber-500"></div>
-                <div className="w-3 h-3 rounded-full bg-emerald-500"></div>
-              </div>
-              <span className="text-xs font-mono text-slate-500">tenantflow-dashboard.internal</span>
+      {/* ─── Floating Widget Cards ─── */}
+      <section className="relative z-10 max-w-6xl mx-auto px-8 pt-8 pb-20">
+        <div className="flex flex-col md:flex-row items-end justify-center gap-6 md:gap-8">
+
+          {/* Card 1: RBAC Permission Check */}
+          <div className="w-full md:w-[260px] bg-white border border-slate-200 rounded-2xl p-5 shadow-xl shadow-slate-200/50 transform md:-rotate-3 md:translate-y-4 hover:rotate-0 hover:translate-y-0 transition-all duration-500">
+            <div className="flex items-center justify-between mb-4">
+              <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                RBAC Permission Check
+              </span>
+              <MoreVertical className="w-4 h-4 text-slate-300" />
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-              <div className="bg-slate-900 p-4 rounded-xl border border-slate-800">
-                <p className="text-xs text-slate-400">Organization</p>
-                <p className="text-lg font-bold text-purple-400 mt-1">Tech Corp Inc.</p>
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-bold text-slate-900">
+                &lt; 0.8 ms
+              </span>
+            </div>
+            <span className="inline-block mt-2 px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">
+              Active
+            </span>
+          </div>
+
+          {/* Card 2: Tenant Data Isolation (Center, Larger) */}
+          <div className="w-full md:w-[340px] bg-white border border-slate-200 rounded-2xl p-6 shadow-2xl shadow-slate-300/40 relative z-20 hover:shadow-slate-400/30 transition-all duration-500">
+            <div className="flex items-center justify-between mb-1">
+              <div className="flex items-baseline gap-2">
+                <span className="text-base font-bold text-slate-900">
+                  Tenant Data Isolation:
+                </span>
+                <span className="text-emerald-500 font-bold text-base">Active</span>
               </div>
-              <div className="bg-slate-900 p-4 rounded-xl border border-slate-800">
-                <p className="text-xs text-slate-400">Active Plan</p>
-                <p className="text-lg font-bold text-emerald-400 mt-1">PRO Tier ($29/mo)</p>
-              </div>
-              <div className="bg-slate-900 p-4 rounded-xl border border-slate-800">
-                <p className="text-xs text-slate-400">RBAC Status</p>
-                <p className="text-lg font-bold text-indigo-400 mt-1">O(1) HashSet Active</p>
-              </div>
+              <MoreVertical className="w-4 h-4 text-slate-300" />
+            </div>
+            <p className="text-sm text-slate-500 mb-4">Organization: TechNova Inc.</p>
+
+            <div className="flex items-center justify-between text-sm mb-2">
+              <span className="text-slate-500 font-medium">Quota</span>
+              <span className="text-slate-700 font-semibold">4/5 Projects (80%)</span>
+            </div>
+            <div className="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+              <div
+                className="bg-emerald-500 h-full rounded-full transition-all duration-1000"
+                style={{ width: '80%' }}
+              />
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* Features Grid Section */}
-      <section id="features" className="max-w-7xl mx-auto px-6 py-24 border-t border-slate-900">
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-3xl font-bold text-white tracking-tight">Built for Multi-Tenant Security & Performance</h2>
-          <p className="text-slate-400 text-sm mt-3">Architected to support isolated B2B SaaS tenants effortlessly.</p>
-        </div>
+          {/* Card 3: Workspace Limits */}
+          <div className="w-full md:w-[280px] bg-white border border-slate-200 rounded-2xl p-5 shadow-xl shadow-slate-200/50 transform md:rotate-2 md:translate-y-6 hover:rotate-0 hover:translate-y-0 transition-all duration-500">
+            <div className="mb-4">
+              <span className="text-lg font-bold text-slate-900">
+                Workspace
+                <br />
+                Limits
+              </span>
+            </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {features.map((feat, idx) => {
-            const Icon = feat.icon;
-            return (
-              <div key={idx} className="bg-slate-900/50 border border-slate-800 p-8 rounded-2xl hover:border-slate-700 transition">
-                <div className={`p-3 rounded-xl border inline-block ${feat.bg}`}>
-                  <Icon className={`w-6 h-6 ${feat.color}`} />
+            <div className="flex items-center gap-5">
+              {/* Toggle Items */}
+              {[
+                { label: 'Data Isolation', active: true },
+                { label: 'Active Users', active: true },
+                { label: 'Storage', active: true },
+              ].map((item, idx) => (
+                <div key={idx} className="flex flex-col items-center gap-1.5">
+                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider whitespace-nowrap">
+                    {item.label}
+                  </span>
+                  {/* Toggle Switch */}
+                  <div className="w-10 h-5 bg-emerald-500 rounded-full relative cursor-default shadow-inner">
+                    <div className="absolute right-0.5 top-0.5 w-4 h-4 bg-white rounded-full shadow-md" />
+                  </div>
                 </div>
-                <h3 className="text-lg font-bold text-white mt-5">{feat.title}</h3>
-                <p className="text-slate-400 text-xs mt-2 leading-relaxed">{feat.description}</p>
-              </div>
-            );
-          })}
+              ))}
+            </div>
+          </div>
+
         </div>
       </section>
+      </div>
 
-      {/* Pricing Section */}
-      <section id="pricing" className="max-w-7xl mx-auto px-6 py-24 border-t border-slate-900">
+      {/* ─── How it Works Section ─── */}
+      <section id="features" className="relative z-10 max-w-6xl mx-auto px-8 py-24 bg-white">
         <div className="text-center max-w-3xl mx-auto mb-16">
-          <h2 className="text-3xl font-bold text-white tracking-tight">Transparent Plan Pricing</h2>
-          <p className="text-slate-400 text-sm mt-3">Choose the right resource quota for your organization.</p>
+          <span className="text-emerald-500 text-sm font-semibold tracking-wider uppercase block mb-3">How it Works</span>
+          <h2 className="text-3xl md:text-5xl font-bold text-slate-900 tracking-tight">
+            How TenantFlow Engine Works
+          </h2>
+          <p className="text-slate-500 text-lg mt-5">
+            A brief overview of the core technologies powering your enterprise application.
+          </p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {plans.map((plan, idx) => (
+          {/* Card 1 */}
+          <div className="bg-slate-50 rounded-3xl p-10 text-center hover:bg-slate-100 transition-colors duration-300 border border-slate-100">
+            <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-emerald-500/30">
+              <Database className="w-8 h-8 text-white" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 mb-4">Total Data Isolation</h3>
+            <p className="text-slate-500 text-sm leading-relaxed">
+              Every database query is automatically scoped with strict compound indexes. We ensure zero cross-tenant data leakage.
+            </p>
+          </div>
+
+          {/* Card 2 */}
+          <div className="bg-slate-50 rounded-3xl p-10 text-center hover:bg-slate-100 transition-colors duration-300 border border-slate-100">
+            <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-emerald-500/30">
+              <Lock className="w-8 h-8 text-white" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 mb-4">Stateless Authentication</h3>
+            <p className="text-slate-500 text-sm leading-relaxed">
+              Secure your APIs with stateless, cryptographically signed JWT tokens embedded with robust tenant claims.
+            </p>
+          </div>
+
+          {/* Card 3 */}
+          <div className="bg-slate-50 rounded-3xl p-10 text-center hover:bg-slate-100 transition-colors duration-300 border border-slate-100">
+            <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-emerald-500/30">
+              <Sliders className="w-8 h-8 text-white" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 mb-4">Dynamic Quotas</h3>
+            <p className="text-slate-500 text-sm leading-relaxed">
+              Automatically restrict tenant resources based on their active subscription plans. Upgrade limits without code changes.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ─── Pricing Section ─── */}
+      <section id="pricing" className="relative z-10 max-w-6xl mx-auto px-8 py-24">
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">
+            Transparent Plan Pricing
+          </h2>
+          <p className="text-slate-500 text-base mt-4">
+            Choose the right resource quota for your organization.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {[
+            {
+              name: 'FREE',
+              price: '$0',
+              description: 'Perfect for exploring TenantFlow features.',
+              features: ['2 Team Users', '5 Active Projects', '10 MB Storage', '100 API Requests/day'],
+            },
+            {
+              name: 'PRO',
+              price: '$29',
+              description: 'Built for growing teams and startups.',
+              features: ['10 Team Users', '20 Active Projects', '50 MB Storage', '1,000 API Requests/day'],
+              popular: true,
+            },
+            {
+              name: 'BUSINESS',
+              price: '$99',
+              description: 'Enterprise grade power and capacity.',
+              features: ['15 Team Users', '100 Active Projects', '100 MB Storage', '2,000 API Requests/day'],
+            },
+          ].map((plan, idx) => (
             <div
               key={idx}
-              className={`bg-slate-900 border rounded-2xl p-8 relative flex flex-col justify-between ${
-                plan.popular ? 'border-purple-500/50 shadow-xl shadow-purple-500/10' : 'border-slate-800'
+              className={`bg-white border rounded-2xl p-8 relative flex flex-col justify-between transition-all duration-300 hover:shadow-lg ${
+                plan.popular
+                  ? 'border-slate-900 shadow-xl shadow-slate-300/40'
+                  : 'border-slate-200 hover:border-slate-300'
               }`}
             >
               {plan.popular && (
-                <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[10px] font-bold uppercase tracking-wider rounded-full shadow-lg">
+                <span className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 bg-slate-900 text-white text-[10px] font-bold uppercase tracking-wider rounded-full shadow-lg">
                   Most Popular
                 </span>
               )}
 
               <div>
-                <h3 className="text-xl font-bold text-white">{plan.name}</h3>
-                <p className="text-xs text-slate-400 mt-1">{plan.description}</p>
+                <h3 className="text-xl font-bold text-slate-900">{plan.name}</h3>
+                <p className="text-sm text-slate-500 mt-1">{plan.description}</p>
                 <div className="mt-6 flex items-baseline gap-1">
-                  <span className="text-4xl font-extrabold text-white">{plan.price}</span>
-                  <span className="text-slate-500 text-xs font-medium">/month</span>
+                  <span className="text-4xl font-bold text-slate-900">{plan.price}</span>
+                  <span className="text-slate-400 text-sm font-medium">/month</span>
                 </div>
 
                 <ul className="mt-8 space-y-3.5">
                   {plan.features.map((feat, fIdx) => (
-                    <li key={fIdx} className="flex items-center gap-3 text-xs text-slate-300">
-                      <Check className="w-4 h-4 text-purple-400 shrink-0" />
+                    <li key={fIdx} className="flex items-center gap-3 text-sm text-slate-600">
+                      <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center flex-shrink-0">
+                        <svg className="w-3 h-3 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                          <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                        </svg>
+                      </div>
                       <span>{feat}</span>
                     </li>
                   ))}
@@ -235,7 +297,11 @@ export const LandingPage = () => {
 
               <Link
                 to="/register"
-                className="mt-8 w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold py-3 rounded-xl text-xs text-center transition shadow-lg shadow-purple-600/20 block"
+                className={`mt-8 w-full font-semibold py-3.5 rounded-full text-sm text-center transition-all duration-200 block ${
+                  plan.popular
+                    ? 'bg-slate-900 hover:bg-slate-800 text-white shadow-lg shadow-slate-900/20'
+                    : 'bg-slate-100 hover:bg-slate-200 text-slate-700'
+                }`}
               >
                 Get Started with {plan.name}
               </Link>
@@ -244,11 +310,13 @@ export const LandingPage = () => {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-slate-900 py-12 text-center text-xs text-slate-500">
-        <div className="flex items-center justify-center gap-2 mb-3">
-          <Layers className="w-5 h-5 text-purple-400" />
-          <span className="font-bold text-slate-300 text-sm">TenantFlow SaaS Platform</span>
+      {/* ─── Footer ─── */}
+      <footer className="relative z-10 border-t border-slate-200 py-12 text-center text-sm text-slate-400">
+        <div className="flex items-center justify-center gap-2.5 mb-3">
+          <div className="bg-gradient-to-br from-violet-500 to-indigo-600 p-1.5 rounded-lg">
+            <Layers className="w-4 h-4 text-white" />
+          </div>
+          <span className="font-bold text-slate-700 text-sm">TenantFlow</span>
         </div>
         <p>© 2026 TenantFlow. Built with Express, TypeScript & React.</p>
       </footer>

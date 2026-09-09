@@ -1,14 +1,19 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 body {
-  font-family: 'Inter', sans-serif;
-  background-color: #0f172a;
-  color: #f8fafc;
+  font-family: 'Plus Jakarta Sans', 'Gilroy', sans-serif;
+  background-color: #ffffff; /* Changed default bg to white for light theme */
+  color: #0f172a; /* Changed default text color */
 }
+
+
 
 /* Custom Scrollbar */
 ::-webkit-scrollbar {
