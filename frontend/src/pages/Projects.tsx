@@ -216,7 +216,7 @@ export const Projects = () => {
                 style={{ width: `${storageUsage.percentUsed}%` }}
               ></div>
             </div>
-            <p className="text-[10px] text-slate-500 text-right mt-1 font-mono">
+            <p className="text-[10px] text-slate-600 text-right mt-1 font-mono">
               {storageUsage.percentUsed}% storage full
             </p>
           </div>
@@ -225,7 +225,7 @@ export const Projects = () => {
 
       {/* Projects Grid */}
       {loading ? (
-        <div className="text-center py-12 text-slate-500">Loading projects...</div>
+        <div className="text-center py-12 text-slate-600">Loading projects...</div>
       ) : projects.length === 0 ? (
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-12 text-center max-w-md mx-auto">
           <FolderKanban className="w-12 h-12 text-slate-600 mx-auto mb-4" />
@@ -250,7 +250,7 @@ export const Projects = () => {
                   <span className="px-2.5 py-1 bg-purple-500/10 border border-purple-500/20 text-purple-400 text-xs font-semibold rounded-full uppercase">
                     {project.status || 'TODO'}
                   </span>
-                  <div className="flex items-center gap-1 text-slate-500 text-xs">
+                  <div className="flex items-center gap-1 text-slate-600 text-xs">
                     <Calendar className="w-3.5 h-3.5" />
                     <span>{new Date(project.createdAt).toLocaleDateString()}</span>
                   </div>
@@ -426,7 +426,7 @@ export const Projects = () => {
             {/* File List */}
             <div className="flex-1 overflow-y-auto space-y-2">
               {projectFiles.length === 0 ? (
-                <p className="text-center py-6 text-slate-500 text-xs">No files uploaded to this project yet.</p>
+                <p className="text-center py-6 text-slate-600 text-xs">No files uploaded to this project yet.</p>
               ) : (
                 projectFiles.map((file) => (
                   <div

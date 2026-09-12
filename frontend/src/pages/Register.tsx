@@ -188,7 +188,7 @@ export const Register = () => {
           </div>
 
           {/* Bottom Trust */}
-          <div className="flex items-center gap-3 text-slate-500 text-xs">
+          <div className="flex items-center gap-3 text-slate-600 text-xs">
             <Globe className="w-4 h-4 text-slate-600" />
             <span>
               Trusted by <span className="text-slate-300 font-semibold">2,500+</span> organizations worldwide
@@ -233,7 +233,7 @@ export const Register = () => {
                     className={`w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
                       currentStep >= step
                         ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-500/25'
-                        : 'bg-slate-800 text-slate-500 border border-slate-700'
+                        : 'bg-slate-800 text-slate-600 border border-slate-700'
                     }`}
                   >
                     {currentStep > step ? (
@@ -300,7 +300,7 @@ export const Register = () => {
                       className={`w-5 h-5 absolute left-3.5 top-3.5 transition-colors duration-200 ${
                         focusedField === 'firstName'
                           ? 'text-purple-400'
-                          : 'text-slate-500'
+                          : 'text-slate-600'
                       }`}
                     />
                     <input
@@ -362,7 +362,7 @@ export const Register = () => {
                     className={`w-5 h-5 absolute left-3.5 top-3.5 transition-colors duration-200 ${
                       focusedField === 'email'
                         ? 'text-purple-400'
-                        : 'text-slate-500'
+                        : 'text-slate-600'
                     }`}
                   />
                   <input
@@ -397,7 +397,7 @@ export const Register = () => {
                     className={`w-5 h-5 absolute left-3.5 top-3.5 transition-colors duration-200 ${
                       focusedField === 'password'
                         ? 'text-purple-400'
-                        : 'text-slate-500'
+                        : 'text-slate-600'
                     }`}
                   />
                   <input
@@ -417,7 +417,7 @@ export const Register = () => {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-3.5 text-slate-500 hover:text-slate-300 transition"
+                    className="absolute right-3.5 top-3.5 text-slate-600 hover:text-slate-300 transition"
                   >
                     {showPassword ? (
                       <EyeOff className="w-5 h-5" />
@@ -487,7 +487,7 @@ export const Register = () => {
                   <p className="text-white text-sm font-semibold">
                     {formData.firstName} {formData.lastName}
                   </p>
-                  <p className="text-slate-500 text-xs">
+                  <p className="text-slate-600 text-xs">
                     {formData.email} · Admin
                   </p>
                 </div>
@@ -509,7 +509,7 @@ export const Register = () => {
                     className={`w-5 h-5 absolute left-3.5 top-3.5 transition-colors duration-200 ${
                       focusedField === 'companyName'
                         ? 'text-purple-400'
-                        : 'text-slate-500'
+                        : 'text-slate-600'
                     }`}
                   />
                   <input
@@ -580,11 +580,11 @@ export const Register = () => {
           {/* Footer */}
           <p className="text-center text-[11px] text-slate-600 mt-8">
             By creating an account, you agree to our{' '}
-            <span className="text-slate-500 hover:text-slate-400 cursor-pointer">
+            <span className="text-slate-600 hover:text-slate-400 cursor-pointer">
               Terms of Service
             </span>{' '}
             and{' '}
-            <span className="text-slate-500 hover:text-slate-400 cursor-pointer">
+            <span className="text-slate-600 hover:text-slate-400 cursor-pointer">
               Privacy Policy
             </span>
           </p>

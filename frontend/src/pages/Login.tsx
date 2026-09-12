@@ -123,7 +123,7 @@ export const Login = () => {
                     <p className="text-white text-lg font-bold tracking-tight">
                       {stat.value}
                     </p>
-                    <p className="text-slate-500 text-[10px] font-medium uppercase tracking-wider mt-0.5">
+                    <p className="text-slate-600 text-[10px] font-medium uppercase tracking-wider mt-0.5">
                       {stat.label}
                     </p>
                   </div>
@@ -146,7 +146,7 @@ export const Login = () => {
                 )
               )}
             </div>
-            <p className="text-slate-500 text-xs">
+            <p className="text-slate-600 text-xs">
               <span className="text-slate-300 font-semibold">2,500+</span>{' '}
               organizations already trust TenantFlow
             </p>
@@ -209,7 +209,7 @@ export const Login = () => {
                   className={`w-5 h-5 absolute left-3.5 top-3.5 transition-colors duration-200 ${
                     focusedField === 'email'
                       ? 'text-purple-400'
-                      : 'text-slate-500'
+                      : 'text-slate-600'
                   }`}
                 />
                 <input
@@ -250,7 +250,7 @@ export const Login = () => {
                   className={`w-5 h-5 absolute left-3.5 top-3.5 transition-colors duration-200 ${
                     focusedField === 'password'
                       ? 'text-purple-400'
-                      : 'text-slate-500'
+                      : 'text-slate-600'
                   }`}
                 />
                 <input
@@ -267,7 +267,7 @@ export const Login = () => {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-3.5 text-slate-500 hover:text-slate-300 transition"
+                  className="absolute right-3.5 top-3.5 text-slate-600 hover:text-slate-300 transition"
                 >
                   {showPassword ? (
                     <EyeOff className="w-5 h-5" />
@@ -323,7 +323,7 @@ export const Login = () => {
               <div className="w-full border-t border-slate-800" />
             </div>
             <div className="relative flex justify-center text-xs">
-              <span className="bg-slate-950 px-4 text-slate-500 font-medium">
+              <span className="bg-slate-950 px-4 text-slate-600 font-medium">
                 New to TenantFlow?
               </span>
             </div>
@@ -341,11 +341,11 @@ export const Login = () => {
           {/* Footer */}
           <p className="text-center text-[11px] text-slate-600 mt-8">
             By signing in, you agree to our{' '}
-            <span className="text-slate-500 hover:text-slate-400 cursor-pointer">
+            <span className="text-slate-600 hover:text-slate-400 cursor-pointer">
               Terms
             </span>{' '}
             and{' '}
-            <span className="text-slate-500 hover:text-slate-400 cursor-pointer">
+            <span className="text-slate-600 hover:text-slate-400 cursor-pointer">
               Privacy Policy
             </span>
           </p>

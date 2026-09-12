@@ -128,7 +128,7 @@ export const Billing = () => {
                 <p className="text-xs text-slate-400 mt-1">{plan.description}</p>
                 <div className="mt-4 flex items-baseline gap-1">
                   <span className="text-3xl font-bold text-white">{plan.price}</span>
-                  <span className="text-slate-500 text-xs font-medium">/month</span>
+                  <span className="text-slate-600 text-xs font-medium">/month</span>
                 </div>
 
                 <ul className="mt-6 space-y-3">
@@ -145,7 +145,7 @@ export const Billing = () => {
                 {isCurrent ? (
                   <button
                     disabled
-                    className="w-full bg-slate-800 text-slate-500 font-semibold py-2.5 rounded-xl text-xs cursor-default"
+                    className="w-full bg-slate-800 text-slate-600 font-semibold py-2.5 rounded-xl text-xs cursor-default"
                   >
                     Current Plan
                   </button>
@@ -172,7 +172,7 @@ export const Billing = () => {
         </div>
 
         {invoices.length === 0 ? (
-          <p className="text-slate-500 text-xs text-center py-6">No billing invoices found yet.</p>
+          <p className="text-slate-600 text-xs text-center py-6">No billing invoices found yet.</p>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs text-slate-300">

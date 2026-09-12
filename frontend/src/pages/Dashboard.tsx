@@ -112,7 +112,7 @@ export const Dashboard = () => {
             <span className="text-3xl font-bold text-white">
               {loading ? '...' : subscription?.usage?.projects?.used ?? 0}
             </span>
-            <span className="text-xs text-slate-500 font-medium">
+            <span className="text-xs text-slate-600 font-medium">
               / {subscription?.usage?.projects?.max ?? 5} allowed
             </span>
           </div>
@@ -141,7 +141,7 @@ export const Dashboard = () => {
                 {/* Mock value for now, typically fetched from backend */}
                 1
               </span>
-              <span className="text-xs text-slate-500 font-medium">
+              <span className="text-xs text-slate-600 font-medium">
                 Active Users
               </span>
             </div>
@@ -198,7 +198,7 @@ export const Dashboard = () => {
           <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md shadow-2xl relative animate-[slideDown_0.3s_ease-out]">
             <button
               onClick={() => setShowInviteModal(false)}
-              className="absolute top-4 right-4 text-slate-500 hover:text-white transition"
+              className="absolute top-4 right-4 text-slate-600 hover:text-white transition"
             >
               <X className="w-5 h-5" />
             </button>
