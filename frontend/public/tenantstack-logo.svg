@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 48" fill="none">
+  <!-- Lime Circular Badge -->
+  <circle cx="24" cy="24" r="20" fill="#c8f542" />
+  
+  <!-- Isometric Stack Architecture Icon -->
+  <g stroke="#0f172a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+    <!-- Top Isometric Plate -->
+    <path d="M24 13.5 L32.5 18 L24 22.5 L15.5 18 Z" fill="#c8f542" />
+    <path d="M15.5 18 L15.5 20.5 L24 25 L32.5 20.5 L32.5 18" />
+    <!-- Middle Tier Plate -->
+    <path d="M15.5 24 L24 28.5 L32.5 24" />
+    <!-- Bottom Tier Plate -->
+    <path d="M15.5 27.5 L24 32 L32.5 27.5" />
+  </g>
+
+  <!-- Typography: TenantStack -->
+  <text x="56" y="31.5" font-family="-apple-system, BlinkMacSystemFont, 'Inter', 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="22" font-weight="800" fill="#0f172a" letter-spacing="-0.5">TenantStack</text>
+</svg>

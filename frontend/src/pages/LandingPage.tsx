@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, Layers, MoreVertical, Database, Lock, Sliders, Sparkles, Check } from 'lucide-react';
+import { ArrowRight, MoreVertical, Database, Lock, Sliders, Sparkles, Check } from 'lucide-react';
 import { motion, type Variants } from 'framer-motion';
 
 // Standard scroll reveal animation variants
@@ -65,7 +65,7 @@ export const LandingPage = () => {
           className="absolute inset-0"
           style={{
             backgroundImage: 'linear-gradient(to right, rgba(145, 151, 157, 0.6) 1px, transparent 1px), linear-gradient(to bottom, rgba(141, 151, 163, 0.6) 1px, transparent 1px)',
-            backgroundSize: '4rem 4rem',
+            backgroundSize: '6.5rem 6.5rem',
             maskImage: 'radial-gradient(ellipse 80% 50% at 50% 50%, #211818ff 20%, transparent 100%)',
             WebkitMaskImage: 'radial-gradient(ellipse 80% 50% at 50% 50%, #000 20%, transparent 100%)',
           }}
@@ -75,14 +75,19 @@ export const LandingPage = () => {
       {/* ─── Top Navbar ─── */}
       <header className="relative z-10 max-w-[1280px] mx-auto px-8 py-6 flex items-center justify-between">
         {/* Logo */}
-        <div className="flex items-center gap-2.5">
-          <div className="bg-gradient-to-br from-violet-500 to-indigo-600 p-2 rounded-lg shadow-md">
-            <Layers className="w-5 h-5 text-white" />
+        <Link to="/" className="flex items-center gap-2.5 group">
+          <div className="w-9 h-9 rounded-full bg-[#c8f542] flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform duration-200">
+            <svg viewBox="0 0 32 32" className="w-5 h-5" fill="none" stroke="#0f172a" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M16 6 L26 11 L16 16 L6 11 Z" fill="#c8f542" />
+              <path d="M6 11 L6 13.5 L16 18.5 L26 13.5 L26 11" />
+              <path d="M6 17 L16 22 L26 17" />
+              <path d="M6 21 L16 26 L26 21" />
+            </svg>
           </div>
-          <span className="font-bold text-xl text-slate-900 tracking-wide">
-            TenantFlow
+          <span className="font-bold text-xl text-slate-900 tracking-tight">
+            TenantStack
           </span>
-        </div>
+        </Link>
 
         {/* Center Navigation */}
         <nav className="hidden md:flex items-center gap-10 text-[15px] text-slate-600 font-medium">
