@@ -105,7 +105,7 @@ export const Login = () => {
           to="/register"
           className="hidden sm:inline-flex items-center justify-center bg-[#18181b] hover:bg-[#c8f542] hover:text-slate-900 text-white text-sm font-semibold px-6 py-2.5 rounded-full transition-colors duration-300 shadow-md"
         >
-          Create Organization
+          Create Account
         </Link>
       </header>
 
@@ -128,7 +128,7 @@ export const Login = () => {
                 Sign in to your Workspace.
               </h1>
               <p className="text-slate-500 text-lg leading-relaxed mb-16">
-                Access your organization's dashboard, manage multi-tenant projects, and collaborate securely with your team.
+                Access your workspace dashboard, manage multi-tenant projects, and collaborate securely with your team.
               </p>
 
               {/* Info Blocks */}
@@ -138,9 +138,9 @@ export const Login = () => {
                   <div className="w-10 h-10 bg-[#5E9F71]/20 rounded-full flex items-center justify-center mb-4">
                     <ShieldCheck className="w-5 h-5 text-[#5E9F71]" />
                   </div>
-                  <h3 className="font-bold text-slate-900 mb-2">100% Data Isolation</h3>
+                  <h3 className="font-bold text-slate-900 mb-2">Secure Architecture</h3>
                   <p className="text-sm text-slate-500 leading-relaxed">
-                    Complete schema and tenant separation guaranteeing strict enterprise data security.
+                    Complete isolation for your compute nodes and storage out of the box.
                   </p>
                 </motion.div>
 
@@ -195,7 +195,7 @@ export const Login = () => {
                         ? 'border-[#c8f542] ring-2 ring-[#c8f542]/20'
                         : 'border-slate-200'
                     } rounded-xl py-3 px-4 text-sm text-slate-900 placeholder-slate-400 focus:outline-none transition-all`}
-                    placeholder="you@company.com"
+                    placeholder="developer@example.com"
                   />
                 </div>
 
@@ -269,7 +269,7 @@ export const Login = () => {
                 {/* Registration Link */}
                 <div className="pt-6 border-t border-slate-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-sm text-slate-500">
                   <p>
-                    Don't have an organization yet?{' '}
+                    Don't have an account yet?{' '}
                     <Link
                       to="/register"
                       className="text-slate-900 font-semibold underline hover:text-[#5E9F71] transition-colors"
@@ -302,11 +302,11 @@ export const Login = () => {
 
           <div className="relative z-10 max-w-2xl mx-auto">
             <h3 className="text-3xl md:text-4xl font-bold text-white tracking-tight leading-tight">
-              Secure Your Tenant Data with <br className="hidden sm:block" />
-              TenantFlow Architecture
+              Deploy High-Performance Compute Nodes <br className="hidden sm:block" />
+              in Seconds
             </h3>
             <p className="text-slate-400 text-sm md:text-base leading-relaxed mt-4 mb-8 max-w-lg mx-auto">
-              Allows you to set custom resource quotas per organization, eliminate cross-tenant data leakage, and scale your SaaS with confidence.
+              Instantly provision, scale, and manage your servers with our ultra-fast architecture. Start testing your workloads today with a predictable monthly cap.
             </p>
             <Link
               to="/register"
@@ -344,7 +344,7 @@ export const Login = () => {
                       <path d="M12 1.5l8.66 5v11L12 22.5l-8.66-5v-11L12 1.5zm0 2.31L4.84 7.96l7.16 4.13 7.16-4.13L12 3.81zm-7.66 5.5v7.38l6.66 3.85v-7.38L4.34 9.31zm15.32 0l-6.66 3.85v7.38l6.66-3.85V9.31z"/>
                     </svg>
                   </div>
-                  <span className="font-bold text-2xl text-slate-900 tracking-tight">TenantFlow</span>
+                  <span className="font-bold text-2xl text-slate-900 tracking-tight">TenantStack</span>
                 </div>
                 <p className="text-sm text-slate-500 leading-relaxed max-w-[310px] mb-8">
                   Securing Your Digital World: Your Trusted Partner in Data Protection with Cutting Edge Solutions for Data Security.
@@ -422,7 +422,7 @@ export const Login = () => {
               </div>
 
               <div className="mt-8 text-xs text-slate-400">
-                Copyright © 2026 TenantFlow. All Rights Reserved
+                Copyright © 2026 TenantStack. All Rights Reserved
               </div>
             </div>
           </motion.div>

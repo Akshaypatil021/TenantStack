@@ -86,14 +86,14 @@ export const Dashboard = () => {
       <div className="bg-gradient-to-r from-purple-900/40 via-slate-900 to-indigo-900/40 border border-purple-500/20 p-8 rounded-3xl relative overflow-hidden">
         <div className="relative z-10 max-w-2xl">
           <div className="inline-flex items-center gap-2 px-3 py-1 bg-purple-500/10 border border-purple-500/20 rounded-full text-purple-400 text-xs font-semibold mb-3">
-            <Zap className="w-3.5 h-3.5" /> Multi-Tenant Active Workspace
+            <Zap className="w-3.5 h-3.5" /> Active Workspace
           </div>
           <h1 className="text-3xl font-bold text-white tracking-tight">
             Welcome back, {user?.firstName}! 👋
           </h1>
           <p className="text-slate-400 mt-2 text-sm leading-relaxed">
             Here's what's happening with <span className="text-purple-300 font-semibold">{tenant?.name}</span> today. 
-            All data shown is strictly isolated to your organization.
+            All data shown is strictly isolated to your workspace.
           </p>
         </div>
       </div>

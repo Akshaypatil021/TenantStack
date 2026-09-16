@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { ArrowRight, MoreVertical, Database, Lock, Sliders, Sparkles, Check } from 'lucide-react';
+import { ArrowRight, MoreVertical, Database, Lock, Sliders, Sparkles, Check, Server, Menu, X } from 'lucide-react';
 import { motion, type Variants } from 'framer-motion';
 
 // Standard scroll reveal animation variants
@@ -53,7 +53,9 @@ const AnimatedPrice = ({ value }: { value: number }) => {
 
 export const LandingPage = () => {
   const [isYearly, setIsYearly] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState('Pro Plan');
+  const [selectedPlan, setSelectedPlan] = useState('Solo Dev');
+  const [engineMode, setEngineMode] = useState<'storage' | 'server'>('storage');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-white text-slate-900 selection:bg-emerald-500 selection:text-white">
@@ -73,7 +75,7 @@ export const LandingPage = () => {
       </div>
 
       {/* ─── Top Navbar ─── */}
-      <header className="relative z-10 max-w-[1280px] mx-auto px-8 py-6 flex items-center justify-between">
+      <header className="relative z-50 max-w-[1280px] mx-auto px-6 md:px-8 py-5 md:py-6 flex items-center justify-between">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2.5 group">
           <div className="w-9 h-9 rounded-full bg-[#c8f542] flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform duration-200">
@@ -89,7 +91,7 @@ export const LandingPage = () => {
           </span>
         </Link>
 
-        {/* Center Navigation */}
+        {/* Center Navigation (Desktop) */}
         <nav className="hidden md:flex items-center gap-10 text-[15px] text-slate-600 font-medium">
           <a href="#features" className="hover:text-slate-900 transition-colors duration-200">
             Features
@@ -105,7 +107,7 @@ export const LandingPage = () => {
           </a>
         </nav>
 
-        {/* Right CTA */}
+        {/* Right CTA (Desktop) */}
         <Link
           to="/register"
           className="group hidden md:inline-flex items-center gap-3 bg-slate-900 hover:bg-[#c8f542] text-white hover:text-slate-900 text-[14px] font-semibold pl-6 pr-1.5 py-1.5 rounded-full transition-all duration-300 shadow-lg shadow-slate-900/20 hover:shadow-xl"
@@ -119,6 +121,73 @@ export const LandingPage = () => {
             <ArrowRight className="w-4 h-4 text-white absolute transition-all duration-300 ease-out transform -translate-x-7 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 stroke-[2.7]" />
           </span>
         </Link>
+
+        {/* Mobile Hamburger Toggle Button */}
+        <button
+          onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+          className="md:hidden p-2 rounded-xl text-slate-700 hover:text-slate-950 hover:bg-slate-100/80 transition-colors cursor-pointer outline-none"
+          aria-label="Toggle Navigation Menu"
+        >
+          {mobileMenuOpen ? <X className="w-6 h-6 text-slate-900" /> : <Menu className="w-6 h-6 text-slate-900" />}
+        </button>
+
+        {/* Mobile Navigation Drawer Dropdown */}
+        {mobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, y: -10, scale: 0.98 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.98 }}
+            transition={{ duration: 0.2 }}
+            className="absolute top-full left-4 right-4 bg-white/95 backdrop-blur-xl border border-slate-200/80 rounded-2xl p-6 shadow-2xl z-50 flex flex-col gap-4 md:hidden"
+          >
+            <a
+              href="#features"
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-base font-semibold text-slate-800 hover:text-[#5E9F71] py-2 px-3 rounded-lg hover:bg-slate-50 transition-colors"
+            >
+              Features
+            </a>
+            <a
+              href="#architecture"
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-base font-semibold text-slate-800 hover:text-[#5E9F71] py-2 px-3 rounded-lg hover:bg-slate-50 transition-colors"
+            >
+              Architecture
+            </a>
+            <a
+              href="#pricing"
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-base font-semibold text-slate-800 hover:text-[#5E9F71] py-2 px-3 rounded-lg hover:bg-slate-50 transition-colors"
+            >
+              Pricing
+            </a>
+            <a
+              href="#docs"
+              onClick={() => setMobileMenuOpen(false)}
+              className="text-base font-semibold text-slate-800 hover:text-[#5E9F71] py-2 px-3 rounded-lg hover:bg-slate-50 transition-colors"
+            >
+              Docs
+            </a>
+            
+            <div className="pt-3 border-t border-slate-100 flex flex-col gap-2.5">
+              <Link
+                to="/login"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full text-center py-2.5 px-4 rounded-xl font-semibold text-slate-800 hover:bg-slate-100 text-sm transition-colors"
+              >
+                Log In
+              </Link>
+              <Link
+                to="/register"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full flex items-center justify-center gap-2 py-3 px-5 rounded-full font-semibold bg-slate-900 text-white text-sm hover:bg-[#c8f542] hover:text-slate-900 transition-all shadow-md"
+              >
+                <span>Start Free Trial</span>
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </motion.div>
+        )}
       </header>
 
       {/* ─── Hero Section ─── */}
@@ -128,18 +197,18 @@ export const LandingPage = () => {
         variants={staggerContainer}
         className="relative z-10 max-w-5xl mx-auto px-8 pt-20 pb-8 text-center"
       >
-        <motion.h1 variants={scrollReveal} className="text-[clamp(2.5rem,5.5vw,4.5rem)] font-bold text-slate-900 leading-[1.1] tracking-tight">
+        <motion.h1 variants={scrollReveal} className="text-[clamp(2.25rem,4.8vw,4.25rem)] font-semibold text-slate-900 leading-[1.12] tracking-tight">
           {/* The Complete Engine for */}
           Architected for Scale.
           <br />
-          {/* Scalable Multi-Tenant SaaS */}
-          Engineered for Multi-Tenancy.
+          {/* Engineered for Developers */}
+          Engineered for Developers.
         </motion.h1>
 
         <motion.p variants={scrollReveal} className="text-slate-600 text-lg md:text-[17px] max-w-[760px] mx-auto mt-6 leading-relaxed">
-          Stop spending months reinventing infrastructure plumbing. TenantFlow delivers
+          Stop spending months reinventing infrastructure plumbing. TenantStack delivers
           <br className="hidden md:block" />
-          the battle-tested foundation to isolate tenant data, automate team governance,
+          the battle-tested foundation to deploy compute nodes, manage storage,
           <br className="hidden md:block" />
           and scale effortlessly from day zero.
         </motion.p>
@@ -211,13 +280,13 @@ export const LandingPage = () => {
             <div className="flex items-center justify-between mb-1">
               <div className="flex items-baseline gap-2">
                 <span className="text-base font-bold text-slate-900">
-                  Tenant Data Isolation:
+                  VPC Data Isolation:
                 </span>
                 <span className="text-emerald-500 font-bold text-base">Active</span>
               </div>
               <MoreVertical className="w-4 h-4 text-slate-300" />
             </div>
-            <p className="text-sm text-slate-600 mb-4">Organization: TechNova Inc.</p>
+            <p className="text-sm text-slate-600 mb-4">Workspace: DevLab</p>
 
             <div className="flex items-center justify-between text-sm mb-2">
               <span className="text-slate-600 font-medium">Quota</span>
@@ -266,19 +335,88 @@ export const LandingPage = () => {
       </div>
 
       {/* ─── How it Works Section ─── */}
+      {/* ─── Engine Mode Selection Section ─── */}
       <section 
         id="features" 
-        className="relative z-10 max-w-6xl mx-auto px-8 py-[60px] bg-white"
+        className="relative z-10 max-w-6xl mx-auto px-8 pt-[60px] pb-4 bg-white"
       >
-        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={scrollReveal} className="text-center max-w-3xl mx-auto mb-16">
-          <span className="text-emerald-500 text-sm font-semibold tracking-wider uppercase block mb-3">How it Works</span>
-          <h2 className="text-3xl md:text-5xl font-bold text-slate-900 tracking-tight">
-            How TenantFlow Engine Works
-          </h2>
-          <p className="text-slate-600 text-lg mt-5">
-            A brief overview of the core technologies powering your enterprise application.
-          </p>
+        {/* ─── Engine Mode Slider (Storage vs Server / EC2 Power) ─── */}
+        <motion.div 
+          initial="hidden" 
+          whileInView="visible" 
+          viewport={{ once: true, margin: "-100px" }} 
+          variants={scrollReveal}
+          className="flex flex-col items-center justify-center mb-8"
+        >
+          {/* Subtle Label / Tag */}
+          <div className="inline-flex items-center gap-2 px-3.5 py-1 mb-4 rounded-full bg-slate-100/90 border border-slate-200 text-xs font-semibold text-slate-600 shadow-sm">
+            <span className="w-2 h-2 rounded-full bg-[#c8f542] animate-pulse"></span>
+            <span>Choose Architecture Engine</span>
+          </div>
+
+          {/* Interactive Segmented Slider */}
+          <div className="relative p-1.5 bg-slate-100/90 border border-slate-200/90 rounded-full shadow-inner inline-flex items-center max-w-full">
+            {/* Storage Option Button */}
+            <button
+              type="button"
+              onClick={() => setEngineMode('storage')}
+              className={`relative z-10 flex items-center gap-2 sm:gap-2.5 px-5 sm:px-6 py-2.5 sm:py-3 rounded-full text-xs sm:text-sm font-semibold transition-all duration-300 cursor-pointer ${
+                engineMode === 'storage' 
+                  ? 'text-white font-bold' 
+                  : 'text-slate-600 hover:text-slate-900 font-medium'
+              }`}
+            >
+              <Database className={`w-4 h-4 transition-colors ${engineMode === 'storage' ? 'text-[#c8f542]' : 'text-slate-400'}`} />
+              <span>Storage Engine</span>
+
+              {engineMode === 'storage' && (
+                <motion.div
+                  layoutId="engineSliderBackground"
+                  className="absolute inset-0 bg-slate-900 rounded-full shadow-lg shadow-slate-900/20 -z-10"
+                  transition={{ type: "spring", stiffness: 450, damping: 35 }}
+                />
+              )}
+            </button>
+
+            {/* Server / EC2 Power Option Button */}
+            <button
+              type="button"
+              onClick={() => setEngineMode('server')}
+              className={`relative z-10 flex items-center gap-2 sm:gap-2.5 px-5 sm:px-6 py-2.5 sm:py-3 rounded-full text-xs sm:text-sm font-semibold transition-all duration-300 cursor-pointer ${
+                engineMode === 'server' 
+                  ? 'text-white font-bold' 
+                  : 'text-slate-600 hover:text-slate-900 font-medium'
+              }`}
+            >
+              <Server className={`w-4 h-4 transition-colors ${engineMode === 'server' ? 'text-[#c8f542]' : 'text-slate-400'}`} />
+              <span>Server / EC2 Power</span>
+
+              {engineMode === 'server' && (
+                <motion.div
+                  layoutId="engineSliderBackground"
+                  className="absolute inset-0 bg-slate-900 rounded-full shadow-lg shadow-slate-900/20 -z-10"
+                  transition={{ type: "spring", stiffness: 450, damping: 35 }}
+                />
+              )}
+            </button>
+          </div>
         </motion.div>
+      </section>
+
+      {/* ─── STORAGE ARCHITECTURE ENGINE CONTENT ─── */}
+      {engineMode === 'storage' && (
+        <>
+          {/* ─── How it Works Section ─── */}
+          <section className="relative z-10 max-w-6xl mx-auto px-8 py-[60px] bg-white">
+            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={scrollReveal} className="text-center max-w-3xl mx-auto mb-16">
+              <span className="text-emerald-500 text-sm font-semibold tracking-wider uppercase block mb-3">How it Works</span>
+              <h2 className="text-3xl md:text-5xl font-bold text-slate-900 tracking-tight">
+                How TenantStack Engine Works
+              </h2>
+              <p className="text-slate-600 text-lg mt-5">
+                A brief overview of the core technologies powering your enterprise application.
+              </p>
+            </motion.div>
 
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Card 1 */}
@@ -697,27 +835,20 @@ export const LandingPage = () => {
                   <div className="text-right">112.5%</div>
                 </div>
                 {/* Row 4 */}
-                <div className="grid grid-cols-4 gap-4 items-center border-b border-slate-50 pb-5">
-                  <div className="text-slate-900">Barone LLC.</div>
-                  <div>Business</div>
-                  <div><span className="px-3 py-1 bg-[#5E9F71]/10 text-[#5E9F71] rounded-full text-[10px] font-bold">Active</span></div>
-                  <div className="text-right">48.7%</div>
-                </div>
-                {/* Row 5 */}
                 <div className="grid grid-cols-4 gap-4 items-center">
-                  <div className="text-slate-900">Initech Ltd.</div>
+                  <div className="text-slate-900">Globex Corp.</div>
                   <div>Pro</div>
                   <div><span className="px-3 py-1 bg-[#5E9F71]/10 text-[#5E9F71] rounded-full text-[10px] font-bold">Active</span></div>
-                  <div className="text-right">82.1%</div>
+                  <div className="text-right">89.1%</div>
                 </div>
               </div>
             </div>
           </motion.div>
 
-          {/* Right: Text & Mini Grid */} 
+          {/* Right: Text Content */}
           <motion.div variants={scrollReveal} className="lg:pl-8">
-            <h3 className="text-3xl md:text-4xl font-bold text-slate-900 mb-6 leading-tight tracking-tight">
-              Manage and organize tenants
+            <h3 className="text-3xl font-bold text-slate-900 mb-6 leading-tight">
+              Monitor, Restrict, and organize tenants
             </h3>
             <p className="text-slate-600 text-base leading-relaxed mb-12">
               Allows you to set custom resource thresholds for specific organizations and receive real-time alerts when these limits are breached, ensuring you stay informed of critical account activity.
@@ -766,7 +897,7 @@ export const LandingPage = () => {
             Choose a suitable plan
           </h2>
           <p className="text-slate-600 text-base mt-4 max-w-xl mx-auto">
-            Your Trusted Partner in Data Protection with Cutting-Edge Solutions for Comprehensive Data Security.
+            Transparent, predictable pricing designed for developers and growing teams. Scale storage and compute seamlessly.
           </p>
         </motion.div>
 
@@ -790,59 +921,59 @@ export const LandingPage = () => {
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
             {
-              name: 'Free Trial',
+              name: 'Free Tier',
               isTrial: true,
               priceMonthly: 0,
               priceYearly: 0,
-              badge: '7 Days Only',
-              description: 'Default plan on account signup. Full access for 7 days only, then a paid plan is required.',
-              usersMonthly: 2,
-              usersYearly: 2,
+              badge: 'Free Forever',
+              description: 'Ideal for personal learning, experiments, and small side projects.',
+              usersMonthly: 1,
+              usersYearly: 1,
               features: [
-                '5 Active Projects',
-                '10 MB Storage',
-                '100 API Requests/day',
-                'Mandatory upgrade after 7 days',
+                '3 Active Projects',
+                '1 GB NVMe Storage',
+                '1,000 API Requests/day',
+                'Community Support',
               ],
-              buttonText: 'Start 7-Day Free Trial',
+              buttonText: 'Get Started Free',
               isDark: false,
             },
             {
-              name: 'Pro Plan',
+              name: 'Solo Dev',
               isTrial: false,
-              priceMonthly: 29,
-              priceYearly: 295,
-              originalYearly: 348,
-              discountBadge: '15% OFF',
-              description: 'Built for growing teams and startups.',
-              usersMonthly: 10,
-              usersYearly: 12,
-              features: ['20 Active Projects', '1 GB Storage', '5,000 API Requests/day'],
+              priceMonthly: 5,
+              priceYearly: 49,
+              originalYearly: 60,
+              discountBadge: '18% OFF',
+              description: 'Built for individual developers and indie hackers launching apps.',
+              usersMonthly: 3,
+              usersYearly: 5,
+              features: ['15 Active Projects', '15 GB NVMe Storage', '25,000 API Requests/day'],
               yearlyExtraFeatures: [
-                '+2 GB Extra Cloud Storage',
-                'Advanced Webhooks & Integrations',
+                '+5 GB Extra Storage Bonus',
+                'Automated Daily Backups',
               ],
               popular: true,
-              buttonText: 'Select Pro Plan',
+              buttonText: 'Select Solo Dev',
               isDark: true,
             },
             {
-              name: 'Business Plan',
+              name: 'Pro Dev',
               isTrial: false,
-              priceMonthly: 99,
-              priceYearly: 890,
-              originalYearly: 1188,
-              discountBadge: '25% OFF',
-              description: 'Enterprise grade power and capacity.',
-              usersMonthly: 15,
-              usersYearly: 20,
-              features: ['100 Active Projects', '3 GB Storage', '15,000 API Requests/day'],
+              priceMonthly: 15,
+              priceYearly: 149,
+              originalYearly: 180,
+              discountBadge: '17% OFF',
+              description: 'For power developers and freelancers building client solutions.',
+              usersMonthly: 10,
+              usersYearly: 15,
+              features: ['Unlimited Active Projects', '50 GB NVMe Storage', '100,000 API Requests/day'],
               yearlyExtraFeatures: [
-                '+5 GB Extra Cloud Storage',
-                'Advanced Webhooks & Integrations',
-                '1-Year Audit Log Retention & Reviews',
+                '+15 GB Extra Storage Bonus',
+                'Automated Daily Backups',
+                'Priority Email & Chat Support',
               ],
-              buttonText: 'Select Business Plan',
+              buttonText: 'Select Pro Dev',
               isDark: false,
             },
           ].map((plan, idx) => {
@@ -859,7 +990,7 @@ export const LandingPage = () => {
                 >
                 <div>
                   <div className="flex items-center gap-4 mb-4">
-                    <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{plan.name}</h3>
+                     <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{plan.name}</h3>
                     {plan.popular && (
                       <span className="px-3 py-1 bg-[#c8f542] text-[#2c3d0c] text-[10px] font-bold uppercase tracking-wider rounded-full">
                         Recommended
@@ -1032,7 +1163,7 @@ export const LandingPage = () => {
           <div className="relative z-10 max-w-2xl mx-auto">
             <h3 className="text-3xl md:text-4xl font-bold text-white tracking-tight leading-tight">
               Secure Your Tenant Data with <br className="hidden sm:block" />
-              TenantFlow Architecture
+              TenantStack Architecture
             </h3>
             <p className="text-slate-400 text-sm md:text-base leading-relaxed mt-4 mb-8 max-w-lg mx-auto">
               Allows you to set custom resource quotas per organization, eliminate cross-tenant data leakage, and scale your SaaS with confidence.
@@ -1053,6 +1184,797 @@ export const LandingPage = () => {
           </div>
         </motion.div>
       </section>
+        </>
+      )}
+
+            {/* ─── SERVER / EC2 POWER ENGINE CONTENT ─── */}
+      {engineMode === 'server' && (
+        <div>
+
+          {/* ─── How it Works Section ─── */}
+          <section className="relative z-10 max-w-6xl mx-auto px-8 py-[60px] bg-white">
+            <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={scrollReveal} className="text-center max-w-3xl mx-auto mb-16">
+              <span className="text-emerald-500 text-sm font-semibold tracking-wider uppercase block mb-3">How it Works</span>
+              <h2 className="text-3xl md:text-5xl font-bold text-slate-900 tracking-tight">
+                How Server & Hosting Works
+              </h2>
+              <p className="text-slate-600 text-lg mt-5">
+                A brief overview of the core technologies powering your enterprise application.
+              </p>
+            </motion.div>
+
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {/* Card 1 */}
+          <motion.div variants={scrollReveal} className="bg-slate-50 rounded-3xl p-10 text-center hover:bg-slate-100 transition-colors duration-300 border border-slate-100">
+            <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-emerald-500/30">
+              <Server className="w-8 h-8 text-white" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 mb-4">Total Instance Isolation</h3>
+            <p className="text-slate-600 text-sm leading-relaxed">
+              Every tenant receives a dedicated EC2 instance or sandboxed container. We ensure zero cross-tenant resource contention and complete environment isolation.
+            </p>
+          </motion.div>
+
+          {/* Card 2 */}
+          <motion.div variants={scrollReveal} className="bg-slate-50 rounded-3xl p-10 text-center hover:bg-slate-100 transition-colors duration-300 border border-slate-100">
+            <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-emerald-500/30">
+              <Lock className="w-8 h-8 text-white" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 mb-4">VPC Networking</h3>
+            <p className="text-slate-600 text-sm leading-relaxed">
+              Deploy tenant resources within isolated Virtual Private Clouds (VPCs) with strict security groups, ensuring private networking and secure access control.
+            </p>
+          </motion.div>
+
+          {/* Card 3 */}
+          <motion.div variants={scrollReveal} className="bg-slate-50 rounded-3xl p-10 text-center hover:bg-slate-100 transition-colors duration-300 border border-slate-100">
+            <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-emerald-500/30">
+              <Sliders className="w-8 h-8 text-white" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 mb-4">Auto-Scaling Groups</h3>
+            <p className="text-slate-600 text-sm leading-relaxed">
+              Automatically scale your EC2 compute capacity up or down based on real-time traffic demands. Ensure high availability without manual intervention.
+            </p>
+          </motion.div>
+        </motion.div>
+      </section>
+
+      {/* ─── In-Depth Features Section ─── */}
+      <section 
+        className="relative z-10 max-w-6xl mx-auto px-8 py-[60px] bg-white border-t border-slate-100"
+      >
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={scrollReveal} className="text-center max-w-3xl mx-auto mb-16">
+          <span className="text-emerald-500 text-sm font-semibold tracking-wider uppercase block mb-3">Key Features</span>
+          <h2 className="text-3xl md:text-5xl font-bold text-slate-900 tracking-tight">
+            In-Depth Architecture of Our Compute Engine
+          </h2>
+          <p className="text-slate-600 text-lg mt-5">
+            The foundational building blocks engineered to keep your server instances isolated, secure, and auto-scaled on shared cloud infrastructure.
+          </p>
+        </motion.div>
+
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={staggerContainer} className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Card 1: Data Isolation */}
+          <motion.div variants={scrollReveal} className="h-full">
+            <div className="bg-slate-50 border border-slate-100 rounded-[2rem] p-8 md:p-10 flex flex-col h-full hover:shadow-lg hover:border-slate-200 transition-all duration-300">
+            <h3 className="text-2xl font-bold text-slate-900 mb-4 pr-8">
+              Guarantees Strict Network and Hardware Isolation
+            </h3>
+            <p className="text-slate-600 text-base leading-relaxed mb-10">
+              Every EC2 instance is isolated within a dedicated VPC subnetwork, eliminating cross-tenant resource contention and horizontal privilege escalation.
+            </p>
+            
+            {/* Visual Mockup - Card 1 */}
+            <div className="mt-auto bg-white border border-slate-100 rounded-2xl p-6 shadow-sm flex-1">
+              <div className="flex items-center justify-between mb-8">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-slate-900">VPC Network Status</span>
+                  <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-full tracking-wide">SECURE</span>
+                </div>
+                <div className="text-xs font-medium text-slate-400 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
+                  Real-time Guard
+                </div>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                    <span className="text-sm font-medium text-slate-700">Network Boundary Check</span>
+                  </div>
+                  <span className="text-xs font-bold text-emerald-600 bg-emerald-100 px-2.5 py-1 rounded-md">PASS</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                    <span className="text-sm font-medium text-slate-700">Security Group Enforcement</span>
+                  </div>
+                  <span className="text-xs font-bold text-emerald-600 bg-emerald-100 px-2.5 py-1 rounded-md">PASS</span>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
+                  <div className="flex items-center gap-3">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+                    <span className="text-sm font-medium text-slate-700">Network Routing Latency</span>
+                  </div>
+                  <span className="text-xs font-bold text-slate-700 bg-white border border-slate-200 px-2.5 py-1 rounded-md shadow-sm">&lt; 0.8ms</span>
+                </div>
+              </div>
+            </div>
+            </div>
+          </motion.div>
+
+          {/* Card 2: Real-time Instance Health & Telemetry */}
+          <motion.div variants={scrollReveal} className="h-full">
+            <div className="bg-slate-50 border border-slate-100 rounded-[2rem] p-8 md:p-10 flex flex-col h-full hover:shadow-lg hover:border-slate-200 transition-all duration-300">
+            <h3 className="text-2xl font-bold text-slate-900 mb-4 pr-8">
+              Real-time Instance Health & Telemetry
+            </h3>
+            <p className="text-slate-600 text-base leading-relaxed mb-10">
+              Visualize the complete lifecycle of your server instances. Monitor CPU spikes, memory utilization, and network throughput with our high-resolution telemetry pipeline.
+            </p>
+            
+            {/* Visual Mockup - Card 2 (Histogram / Bar Chart) */}
+            <div className="mt-auto bg-white border border-slate-100 rounded-2xl p-6 shadow-sm flex-1 flex flex-col">
+              <div className="flex items-center justify-between mb-1">
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-slate-900">CPU & Memory Load</span>
+                  <span className="px-2 py-0.5 bg-slate-900 text-white text-[10px] font-bold rounded-full tracking-wide">LIVE</span>
+                </div>
+                <div className="text-xs font-medium text-slate-600 bg-white px-3 py-1.5 rounded-lg border border-slate-200 flex items-center gap-1 shadow-sm cursor-pointer">
+                  Last 7 Days
+                  <svg className="w-3 h-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </div>
+              </div>
+              <p className="text-[11px] font-medium text-slate-400 mb-8">Average resource utilization across all EC2 instances</p>
+
+              {/* Chart Area */}
+              <div className="relative flex-1 min-h-[180px] mt-2 mb-2">
+                {/* Y Axis Grid Lines */}
+                <div className="absolute inset-0 flex flex-col justify-between pb-6 pt-2">
+                  <div className="flex items-center gap-3">
+                    <span className="text-[10px] font-medium text-slate-400 w-6 text-right">100%</span>
+                    <div className="flex-1 border-t border-dashed border-slate-200"></div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-[10px] font-medium text-slate-400 w-6 text-right">75%</span>
+                    <div className="flex-1 border-t border-dashed border-slate-200"></div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-[10px] font-medium text-slate-400 w-6 text-right">50%</span>
+                    <div className="flex-1 border-t border-dashed border-slate-200"></div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-[10px] font-medium text-slate-400 w-6 text-right">25%</span>
+                    <div className="flex-1 border-t border-dashed border-slate-200"></div>
+                  </div>
+                </div>
+
+                {/* Bars Area */}
+                <div className="absolute inset-0 pl-11 pr-2 flex justify-between items-end pb-6 pt-2 h-full">
+                  {/* Mon */}
+                  <div className="relative w-8 h-full flex items-end justify-center group">
+                    <div className="w-full h-[45%] bg-slate-200 rounded-t-md absolute bottom-0 transition-all duration-300 group-hover:opacity-80"></div>
+                    <div className="w-full h-[30%] bg-emerald-500 rounded-t-md absolute bottom-0 shadow-sm transition-all duration-300 group-hover:h-[35%] group-hover:bg-emerald-400"></div>
+                  </div>
+                  {/* Tue */}
+                  <div className="relative w-8 h-full flex items-end justify-center group">
+                    <div className="w-full h-[65%] bg-slate-200 rounded-t-md absolute bottom-0 transition-all duration-300 group-hover:opacity-80"></div>
+                    <div className="w-full h-[40%] bg-emerald-500 rounded-t-md absolute bottom-0 shadow-sm transition-all duration-300 group-hover:h-[45%] group-hover:bg-emerald-400"></div>
+                  </div>
+                  {/* Wed */}
+                  <div className="relative w-8 h-full flex items-end justify-center group">
+                    <div className="w-full h-[85%] bg-slate-200 rounded-t-md absolute bottom-0 transition-all duration-300 group-hover:opacity-80"></div>
+                    <div className="w-full h-[60%] bg-[#c8f542] border border-[#c8f542]/50 rounded-t-md absolute bottom-0 shadow-sm transition-all duration-300 group-hover:h-[65%]"></div>
+                  </div>
+                  {/* Thu */}
+                  <div className="relative w-8 h-full flex items-end justify-center group">
+                    <div className="w-full h-[55%] bg-slate-200 rounded-t-md absolute bottom-0 transition-all duration-300 group-hover:opacity-80"></div>
+                    <div className="w-full h-[35%] bg-emerald-500 rounded-t-md absolute bottom-0 shadow-sm transition-all duration-300 group-hover:h-[40%] group-hover:bg-emerald-400"></div>
+                  </div>
+                  {/* Fri */}
+                  <div className="relative w-8 h-full flex items-end justify-center group">
+                    <div className="w-full h-[70%] bg-slate-200 rounded-t-md absolute bottom-0 transition-all duration-300 group-hover:opacity-80"></div>
+                    <div className="w-full h-[50%] bg-emerald-500 rounded-t-md absolute bottom-0 shadow-sm transition-all duration-300 group-hover:h-[55%] group-hover:bg-emerald-400"></div>
+                  </div>
+                  {/* Sat */}
+                  <div className="relative w-8 h-full flex items-end justify-center group">
+                    <div className="w-full h-[40%] bg-slate-200 rounded-t-md absolute bottom-0 transition-all duration-300 group-hover:opacity-80"></div>
+                    <div className="w-full h-[25%] bg-emerald-500 rounded-t-md absolute bottom-0 shadow-sm transition-all duration-300 group-hover:h-[30%] group-hover:bg-emerald-400"></div>
+                  </div>
+                  {/* Sun */}
+                  <div className="relative w-8 h-full flex items-end justify-center group">
+                    <div className="w-full h-[35%] bg-slate-200 rounded-t-md absolute bottom-0 transition-all duration-300 group-hover:opacity-80"></div>
+                    <div className="w-full h-[20%] bg-emerald-500 rounded-t-md absolute bottom-0 shadow-sm transition-all duration-300 group-hover:h-[25%] group-hover:bg-emerald-400"></div>
+                  </div>
+                </div>
+
+                {/* X Axis Labels */}
+                <div className="absolute bottom-0 left-0 right-0 flex justify-between pl-11 pr-2 text-[10px] font-semibold text-slate-400 pt-2 border-t border-slate-100">
+                  <span className="w-8 text-center">Mon</span>
+                  <span className="w-8 text-center">Tue</span>
+                  <span className="w-8 text-center">Wed</span>
+                  <span className="w-8 text-center">Thu</span>
+                  <span className="w-8 text-center">Fri</span>
+                  <span className="w-8 text-center">Sat</span>
+                  <span className="w-8 text-center">Sun</span>
+                </div>
+              </div>
+
+              {/* Legend */}
+              <div className="flex items-center justify-center gap-6 mt-auto pt-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-emerald-500"></div>
+                  <span className="text-[11px] font-semibold text-slate-600">Avg CPU Load</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-slate-200"></div>
+                  <span className="text-[11px] font-semibold text-slate-600">Peak Memory</span>
+                </div>
+              </div>
+            </div>
+            </div>
+          </motion.div>
+        </motion.div>
+
+        {/* ─── Horizontal Feature Card (Load Balancer) ─── */}
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={scrollReveal} className="mt-8">
+          <div className="bg-slate-50 border border-slate-100 rounded-[2.5rem] p-10 md:p-14 flex flex-col lg:flex-row gap-12 lg:gap-16 items-center hover:shadow-lg hover:border-slate-200 transition-all duration-300">
+          
+          {/* Left Side (Text & CTA) */}
+          <div className="lg:w-1/3 flex flex-col justify-center">
+            <h3 className="text-3xl font-bold text-slate-900 mb-6 leading-tight">
+              Load Balancer & Traffic Analytics
+            </h3>
+            <p className="text-slate-600 text-base leading-relaxed mb-8">
+              Monitor every incoming connection hitting your load balancers. Analyze traffic spikes, track bandwidth usage, and automatically throttle abusive tenants before they impact system performance. This provides a clear audit trail for compliance and security investigations.
+            </p>
+            <div>
+              <a
+                href="#architecture"
+                className="group inline-flex items-center gap-4 bg-white hover:bg-[#c8f542] text-slate-900 font-semibold text-[15px] pl-7 pr-1.5 py-1.5 rounded-full transition-all duration-300 shadow-md hover:shadow-xl hover:scale-105 border border-slate-200/80 hover:border-transparent cursor-pointer"
+              >
+                <span>Learn More</span>
+                <span className="w-9 h-9 rounded-full bg-[#c8f542] group-hover:bg-[#1c1c1f] flex items-center justify-center relative overflow-hidden flex-shrink-0 transition-colors duration-300 shadow-sm">
+                  {/* Outgoing dark arrow on lime circle (slides right on hover) */}
+                  <ArrowRight className="w-4 h-4 text-slate-900 absolute transition-all duration-300 ease-out transform translate-x-0 opacity-100 group-hover:translate-x-7 group-hover:opacity-0 stroke-[2.7]" />
+                  
+                  {/* Incoming white arrow on black circle (slides from left to center on hover) */}
+                  <ArrowRight className="w-4 h-4 text-white absolute transition-all duration-300 ease-out transform -translate-x-7 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 stroke-[2.7]" />
+                </span>
+              </a>
+            </div>
+          </div>
+
+          {/* Right Side (Chart & Stats) */}
+          <div className="lg:w-2/3 w-full bg-white border border-slate-100 rounded-3xl p-8 shadow-sm flex flex-col md:flex-row gap-8">
+            
+            {/* Chart Area */}
+            <div className="flex-1 flex flex-col">
+              <div className="mb-8">
+                <div className="flex items-center gap-2 mb-1">
+                  <h4 className="text-lg font-bold text-slate-900">Traffic Activity</h4>
+                  <span className="px-2 py-0.5 bg-slate-900 text-white text-[10px] font-bold rounded-full tracking-wide">4 NEW</span>
+                </div>
+                <p className="text-[11px] font-medium text-slate-400">Viewing last 24 hours report</p>
+              </div>
+
+              {/* Radar Chart Mockup (Load Balancer Analytics) */}
+              <div className="relative w-full h-[240px] mt-6 mb-2 flex items-center justify-center group">
+                
+                {/* SVG Radar Chart Container */}
+                <div className="relative w-[200px] h-[200px] mt-2">
+                  {/* Labels (HTML positioned around the chart) */}
+                  <span className="absolute -top-4 left-1/2 -translate-x-1/2 text-[9px] font-bold text-slate-400 tracking-widest uppercase">Bandwidth</span>
+                  <span className="absolute top-1/4 -right-12 text-[9px] font-bold text-slate-400 tracking-widest uppercase text-right">Latency</span>
+                  <span className="absolute bottom-1/4 -right-12 text-[9px] font-bold text-slate-400 tracking-widest uppercase text-right">Reqs/Sec</span>
+                  <span className="absolute -bottom-4 left-1/2 -translate-x-1/2 text-[9px] font-bold text-slate-400 tracking-widest uppercase">Uptime</span>
+                  <span className="absolute bottom-1/4 -left-12 text-[9px] font-bold text-slate-400 tracking-widest uppercase">Cache Hit</span>
+                  <span className="absolute top-1/4 -left-12 text-[9px] font-bold text-slate-400 tracking-widest uppercase">CPU Load</span>
+
+                  <svg className="w-full h-full drop-shadow-sm overflow-visible" viewBox="0 0 100 100">
+                    <defs>
+                      <linearGradient id="radarGrad1" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stopColor="#10b981" stopOpacity="0.6" />
+                        <stop offset="100%" stopColor="#047857" stopOpacity="0.2" />
+                      </linearGradient>
+                      <linearGradient id="radarGrad2" x1="0" y1="0" x2="1" y2="1">
+                        <stop offset="0%" stopColor="#c8f542" stopOpacity="0.5" />
+                        <stop offset="100%" stopColor="#a3d726" stopOpacity="0.2" />
+                      </linearGradient>
+                    </defs>
+                    
+                    {/* Background Grids (Concentric Hexagons) */}
+                    <polygon points="50,10 84.6,30 84.6,70 50,90 15.4,70 15.4,30" fill="none" stroke="#e2e8f0" strokeWidth="1" strokeDasharray="3 3" />
+                    <polygon points="50,25 71.6,37.5 71.6,62.5 50,75 28.4,62.5 28.4,37.5" fill="none" stroke="#e2e8f0" strokeWidth="1" strokeDasharray="3 3" />
+                    <polygon points="50,40 58.6,45 58.6,55 50,60 41.4,55 41.4,45" fill="none" stroke="#e2e8f0" strokeWidth="1" strokeDasharray="3 3" />
+                    
+                    {/* Axes Lines */}
+                    <line x1="50" y1="50" x2="50" y2="10" stroke="#f1f5f9" strokeWidth="1.5" />
+                    <line x1="50" y1="50" x2="84.6" y2="30" stroke="#f1f5f9" strokeWidth="1.5" />
+                    <line x1="50" y1="50" x2="84.6" y2="70" stroke="#f1f5f9" strokeWidth="1.5" />
+                    <line x1="50" y1="50" x2="50" y2="90" stroke="#f1f5f9" strokeWidth="1.5" />
+                    <line x1="50" y1="50" x2="15.4" y2="70" stroke="#f1f5f9" strokeWidth="1.5" />
+                    <line x1="50" y1="50" x2="15.4" y2="30" stroke="#f1f5f9" strokeWidth="1.5" />
+                    
+                    {/* Data Polygon 2 (System Capacity / Outer) */}
+                    <polygon 
+                      points="50,12 80.3,32.5 82.9,69 50,80 19.7,67.5 24,35" 
+                      fill="url(#radarGrad2)" 
+                      stroke="#a3d726" 
+                      strokeWidth="1.5"
+                      strokeLinejoin="round"
+                      className="transition-all duration-700 group-hover:scale-[1.03] origin-center cursor-pointer"
+                    />
+                    
+                    {/* Data Polygon 1 (Current Load / Inner) */}
+                    <polygon 
+                      points="50,22 76,35 67.3,60 50,85 28.3,62.5 37,42.5" 
+                      fill="url(#radarGrad1)" 
+                      stroke="#10b981" 
+                      strokeWidth="2"
+                      strokeLinejoin="round"
+                      className="transition-all duration-700 group-hover:scale-[1.06] origin-center cursor-pointer"
+                    />
+
+                    {/* Nodes for Data Polygon 1 */}
+                    <circle cx="50" cy="22" r="2.5" fill="#fff" stroke="#10b981" strokeWidth="1.5" className="animate-pulse" />
+                    <circle cx="76" cy="35" r="2.5" fill="#fff" stroke="#10b981" strokeWidth="1.5" />
+                    <circle cx="67.3" cy="60" r="2.5" fill="#fff" stroke="#10b981" strokeWidth="1.5" />
+                    <circle cx="50" cy="85" r="2.5" fill="#fff" stroke="#10b981" strokeWidth="1.5" />
+                    <circle cx="28.3" cy="62.5" r="2.5" fill="#fff" stroke="#10b981" strokeWidth="1.5" />
+                    <circle cx="37" cy="42.5" r="2.5" fill="#fff" stroke="#10b981" strokeWidth="1.5" />
+                  </svg>
+                </div>
+              </div>
+
+              {/* Legend */}
+              <div className="flex items-center justify-center gap-6 mt-8">
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#10b981] shadow-sm"></div>
+                  <span className="text-[11px] font-semibold text-slate-600">Current Load</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-2.5 h-2.5 rounded-full bg-[#c8f542] shadow-sm"></div>
+                  <span className="text-[11px] font-semibold text-slate-600">System Capacity</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Stats Sidebar */}
+            <div className="w-full md:w-32 flex flex-col justify-center gap-8 md:border-l border-slate-100 md:pl-8">
+              <div>
+                <p className="text-3xl font-bold text-slate-900 tracking-tight">10k+</p>
+                <p className="text-[11px] text-slate-600 mt-2 leading-tight">Concurrent Connections Supported</p>
+              </div>
+              <div>
+                <p className="text-3xl font-bold text-slate-900 tracking-tight">&lt;15ms</p>
+                <p className="text-[11px] text-slate-600 mt-2 leading-tight">Avg Load Balancer Latency</p>
+              </div>
+            </div>
+
+            </div>
+          </div>
+        </motion.div>
+      </section>
+
+      {/* ─── Essential Feature Section (Tenant Dashboard) ─── */}
+      <section 
+        className="relative z-10 max-w-6xl mx-auto px-8 py-[60px] bg-white"
+      >
+        
+        {/* Header */}
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={scrollReveal} className="text-center max-w-3xl mx-auto mb-16">
+          <p className="text-[#5E9F71] font-semibold text-sm mb-4">Essential Feature</p>
+          <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-6 leading-tight tracking-tight">
+            Discover the Power of Compute Management.
+          </h2>
+          <p className="text-slate-600 text-lg">
+            Your Trusted Partner in SaaS Architecture with Cutting-Edge Solutions for Comprehensive Data Isolation.
+          </p>
+        </motion.div>
+
+        {/* 2-Column Content */}
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={staggerContainer} className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          
+          {/* Left: Table Mockup */}
+          <motion.div variants={scrollReveal} className="bg-[#FAFAFB] rounded-[2rem] p-6 sm:p-10 border border-slate-100 flex items-center justify-center shadow-inner">
+            <div className="bg-white rounded-2xl w-full p-6 sm:p-8 shadow-sm border border-slate-50">
+              {/* Header */}
+              <div className="mb-8">
+                <div className="flex items-center gap-3 mb-2">
+                  <h3 className="text-lg font-bold text-slate-900">Active Compute Nodes</h3>
+                  <span className="px-2 py-0.5 bg-slate-900 text-white text-[10px] font-bold rounded-full tracking-wide">LIVE</span>
+                </div>
+                <p className="text-[11px] font-medium text-slate-400">Cluster Status: AP-South-1</p>
+              </div>
+
+              {/* Table Header */}
+              <div className="grid grid-cols-4 gap-4 pb-4 border-b border-slate-100 text-[11px] font-semibold text-slate-400 mb-5">
+                <div>Instance ID</div>
+                <div className="flex items-center gap-1">Type <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" /></svg></div>
+                <div>Status</div>
+                <div className="flex items-center justify-end gap-1 text-right">CPU Load <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" /></svg></div>
+              </div>
+
+              {/* Table Rows */}
+              <div className="flex flex-col gap-5 text-[12px] font-medium text-slate-600">
+                {/* Row 1 */}
+                <div className="grid grid-cols-4 gap-4 items-center border-b border-slate-50 pb-5">
+                  <div className="text-slate-900 font-mono text-[11px]">i-09abf34...</div>
+                  <div>t3.large</div>
+                  <div><span className="px-3 py-1 bg-[#5E9F71]/10 text-[#5E9F71] rounded-full text-[10px] font-bold flex items-center gap-1 w-max"><span className="w-1.5 h-1.5 rounded-full bg-[#5E9F71] animate-pulse"></span> Running</span></div>
+                  <div className="text-right">78.2%</div>
+                </div>
+                {/* Row 2 */}
+                <div className="grid grid-cols-4 gap-4 items-center border-b border-slate-50 pb-5">
+                  <div className="text-slate-900 font-mono text-[11px]">i-08c3d12...</div>
+                  <div>c5.xlarge</div>
+                  <div><span className="px-3 py-1 bg-amber-100 text-amber-600 rounded-full text-[10px] font-bold flex items-center gap-1 w-max"><span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-spin"></span> Scaling</span></div>
+                  <div className="text-right">94.1%</div>
+                </div>
+                {/* Row 3 */}
+                <div className="grid grid-cols-4 gap-4 items-center border-b border-slate-50 pb-5">
+                  <div className="text-slate-900 font-mono text-[11px]">i-067a9cd...</div>
+                  <div>m5.large</div>
+                  <div><span className="px-3 py-1 bg-slate-100 text-slate-500 rounded-full text-[10px] font-bold flex items-center gap-1 w-max"><span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Stopped</span></div>
+                  <div className="text-right">0.0%</div>
+                </div>
+                {/* Row 4 */}
+                <div className="grid grid-cols-4 gap-4 items-center">
+                  <div className="text-slate-900 font-mono text-[11px]">i-054fba3...</div>
+                  <div>t3.medium</div>
+                  <div><span className="px-3 py-1 bg-[#5E9F71]/10 text-[#5E9F71] rounded-full text-[10px] font-bold flex items-center gap-1 w-max"><span className="w-1.5 h-1.5 rounded-full bg-[#5E9F71] animate-pulse"></span> Running</span></div>
+                  <div className="text-right">45.8%</div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Right: Text Content */}
+          <motion.div variants={scrollReveal} className="lg:pl-8">
+            <h3 className="text-3xl font-bold text-slate-900 mb-6 leading-tight">
+              Monitor, Scale, and Orchestrate Servers
+            </h3>
+            <p className="text-slate-600 text-base leading-relaxed mb-12">
+              Instantly view all your active compute resources in real-time. Define auto-scaling thresholds, manage load distribution, and guarantee high availability across all your deployed availability zones.
+            </p>
+
+            {/* Mini Grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-10">
+              {/* Item 1 */}
+              <div>
+                <div className="w-12 h-12 bg-[#5E9F71]/10 rounded-full flex items-center justify-center text-[#5E9F71] mb-5">
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+                  </svg>
+                </div>
+                <h4 className="text-base font-bold text-slate-900 mb-2">Auto-Scaling Groups</h4>
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  Automatically spin up or terminate instances based on CPU utilization to handle traffic spikes seamlessly.
+                </p>
+              </div>
+
+              {/* Item 2 */}
+              <div>
+                <div className="w-12 h-12 bg-[#5E9F71]/10 rounded-full flex items-center justify-center text-[#5E9F71] mb-5">
+                  <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                  </svg>
+                </div>
+                <h4 className="text-base font-bold text-slate-900 mb-2">Automated Health Checks</h4>
+                <p className="text-sm text-slate-600 leading-relaxed">
+                  Continuous polling of node vitals ensures traffic is only routed to healthy, responsive instances.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+          </motion.div>
+      </section>
+
+      {/* ─── Pricing Section ─── */}
+      <section 
+        id="pricing" 
+        className="relative z-10 max-w-6xl mx-auto px-8 py-[60px]"
+      >
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={scrollReveal} className="text-center max-w-3xl mx-auto mb-10">
+          <p className="text-[#5E9F71] font-semibold text-sm mb-4">Instance Pricing</p>
+          <h2 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">
+            Select your Compute Node
+          </h2>
+          <p className="text-slate-600 text-base mt-4 max-w-xl mx-auto">
+            Pay-as-you-go billing with a predictable monthly cap. Pause or destroy nodes anytime.
+          </p>
+        </motion.div>
+
+        {/* On-Demand / Reserved Toggle */}
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={scrollReveal} className="flex items-center justify-center gap-4 mb-16">
+          <span className={`text-sm font-bold transition-colors ${!isYearly ? 'text-slate-900' : 'text-slate-400'}`}>On-Demand (Monthly)</span>
+          <button 
+            onClick={() => setIsYearly(!isYearly)}
+            className="w-12 h-6 bg-[#5E9F71]/20 rounded-full relative p-1 transition-colors outline-none cursor-pointer"
+          >
+            <div className={`w-4 h-4 bg-[#5E9F71] rounded-full shadow-sm transition-transform duration-300 ${isYearly ? 'translate-x-6' : 'translate-x-0'}`}></div>
+          </button>
+          <div className="flex items-center gap-2">
+            <span className={`text-sm font-bold transition-colors ${isYearly ? 'text-slate-900' : 'text-slate-400'}`}>1-Year Reserved</span>
+            <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold tracking-wide rounded-full">
+              Save up to 30%
+            </span>
+          </div>
+        </motion.div>
+
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          {[
+            {
+              name: 'Sandbox / Testing',
+              isTrial: false,
+              priceMonthly: 5,
+              priceYearly: 42,
+              originalYearly: 60,
+              badge: 'Best for Testing',
+              description: 'Shared vCPU ideal for development, testing, and small personal projects.',
+              usersMonthly: 1,
+              usersYearly: 1,
+              features: [
+                '1 GB Memory (RAM)',
+                '25 GB NVMe Storage',
+                'Shared CPU Architecture',
+                'Community Support',
+              ],
+              buttonText: 'Deploy Sandbox',
+              isDark: false,
+            },
+            {
+              name: 'Dev Pro',
+              isTrial: false,
+              priceMonthly: 15,
+              priceYearly: 126,
+              originalYearly: 180,
+              discountBadge: '30% OFF',
+              description: 'Balanced performance for production apps and staging environments.',
+              usersMonthly: 2,
+              usersYearly: 2,
+              features: ['4 GB Memory (RAM)', '80 GB NVMe Storage', 'Dedicated CPU Architecture'],
+              yearlyExtraFeatures: [
+                'Free Automated Daily Backups',
+                'Priority Support Access',
+              ],
+              popular: true,
+              buttonText: 'Deploy Node',
+              isDark: true,
+            },
+            {
+              name: 'Compute Node',
+              isTrial: false,
+              priceMonthly: 40,
+              priceYearly: 336,
+              originalYearly: 480,
+              discountBadge: '30% OFF',
+              description: 'High performance dedicated CPUs for intensive workloads and CI/CD.',
+              usersMonthly: 4,
+              usersYearly: 4,
+              features: ['8 GB Memory (RAM)', '160 GB NVMe Storage', 'High-Frequency CPU'],
+              yearlyExtraFeatures: [
+                'Free Automated Daily Backups',
+                'Priority Support Access',
+                'Advanced Network Telemetry',
+              ],
+              buttonText: 'Deploy Node',
+              isDark: false,
+            },
+          ].map((plan, idx) => {
+            const isDark = selectedPlan === plan.name;
+            return (
+              <motion.div variants={scrollReveal} key={idx} className="h-full">
+                <div
+                  onClick={() => setSelectedPlan(plan.name)}
+                  className={`border rounded-[1.5rem] p-10 relative flex flex-col justify-between transition-all duration-300 hover:shadow-2xl cursor-pointer h-full ${
+                    isDark
+                      ? 'bg-[#18181b] border-transparent text-white shadow-2xl shadow-slate-900/30 transform md:-translate-y-4'
+                      : 'bg-white border-slate-200 text-slate-900 hover:border-slate-300 hover:-translate-y-1'
+                  }`}
+                >
+                <div>
+                  <div className="flex items-center gap-4 mb-4">
+                     <h3 className={`text-xl font-bold ${isDark ? 'text-white' : 'text-slate-900'}`}>{plan.name}</h3>
+                    {plan.popular && (
+                      <span className="px-3 py-1 bg-[#c8f542] text-[#2c3d0c] text-[10px] font-bold uppercase tracking-wider rounded-full">
+                        Recommended
+                      </span>
+                    )}
+                    {plan.badge && (
+                      <span className="px-2.5 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold uppercase tracking-wider rounded-full">
+                        {plan.badge}
+                      </span>
+                    )}
+                  </div>
+                  
+                  <p className={`text-sm mt-1 leading-relaxed ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                    {plan.description}
+                  </p>
+                  
+                  <div className="mt-8 mb-6">
+                    <div className="flex items-baseline gap-1.5">
+                      <span className={`text-5xl font-bold tracking-tight ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                        {plan.isTrial ? (
+                          <span>$0</span>
+                        ) : (
+                          <AnimatedPrice value={isYearly ? plan.priceYearly : plan.priceMonthly} />
+                        )}
+                      </span>
+                      <span className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
+                        {plan.isTrial ? 'for 7 days only' : (isYearly ? 'per year' : 'per month')}
+                      </span>
+                    </div>
+
+                    {/* Discount Badge UI (Visible only on Yearly for paid plans) */}
+                    <div className={`mt-3 flex items-center gap-2 h-6 transition-opacity duration-300 ${!plan.isTrial && isYearly && plan.originalYearly ? 'opacity-100' : 'opacity-0'}`}>
+                      {plan.originalYearly && (
+                        <>
+                          <span className={`text-sm line-through font-medium ${isDark ? 'text-slate-500' : 'text-slate-400'}`}>
+                            ${plan.originalYearly}
+                          </span>
+                          <span className="px-2.5 py-0.5 bg-emerald-100 text-emerald-700 text-[10px] font-bold tracking-wide rounded-full">
+                            {plan.discountBadge}
+                          </span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  <ul className="space-y-4">
+                    {/* Dynamic Team Users Feature with Yearly Upgrade & Blurred Previous Value */}
+                    <li className={`flex items-center justify-between gap-2 text-sm font-medium ${isDark ? 'text-slate-300' : 'text-slate-600'}`}>
+                      <div className="flex items-center gap-3">
+                        <div className="w-5 h-5 rounded-full bg-[#5E9F71] flex items-center justify-center flex-shrink-0">
+                          <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                          </svg>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {isYearly && plan.usersYearly > plan.usersMonthly ? (
+                            <>
+                              <span className="line-through text-slate-400 opacity-40 blur-[0.6px] select-none text-xs font-semibold">
+                                {plan.usersMonthly} vCPU Cores
+                              </span>
+                              <span className={`font-bold transition-colors ${isDark ? 'text-white' : 'text-slate-900'}`}>
+                                {plan.usersYearly} vCPU Cores
+                              </span>
+                            </>
+                          ) : (
+                            <span>{plan.usersMonthly} vCPU Core{plan.usersMonthly > 1 ? 's' : ''}</span>
+                          )}
+                        </div>
+                      </div>
+                      {isYearly && plan.usersYearly > plan.usersMonthly && (
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider flex-shrink-0 ${
+                          isDark 
+                            ? 'bg-[#c8f542]/20 text-[#c8f542] border border-[#c8f542]/30' 
+                            : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                        }`}>
+                          +{plan.usersYearly - plan.usersMonthly} Extra
+                        </span>
+                      )}
+                    </li>
+
+                    {plan.features.map((feat, fIdx) => {
+                      const isAlert = plan.isTrial && feat.includes('Mandatory');
+                      return (
+                        <li key={fIdx} className={`flex items-center gap-3 text-sm font-medium ${
+                          isAlert 
+                            ? 'text-amber-600 font-semibold' 
+                            : isDark ? 'text-slate-300' : 'text-slate-600'
+                        }`}>
+                          <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
+                            isAlert ? (isDark ? 'bg-amber-400/20 text-amber-400' : 'bg-amber-100 text-amber-700') : 'bg-[#5E9F71] text-white'
+                          }`}>
+                            {isAlert ? (
+                              <span className="text-xs font-black leading-none">!</span>
+                            ) : (
+                              <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="3">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </div>
+                          <span>{feat}</span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+
+                  {/* Yearly Extra Benefits (revealed dynamically when Yearly is active ONLY for paid plans) */}
+                  {!plan.isTrial && isYearly && plan.yearlyExtraFeatures && plan.yearlyExtraFeatures.length > 0 && (
+                    <div className="mt-6 pt-5 border-t border-dashed border-slate-200/80 transition-all duration-300">
+                      <div className="flex items-center gap-1.5 mb-3.5">
+                        <Sparkles className={`w-3.5 h-3.5 ${isDark ? 'text-[#c8f542]' : 'text-[#5E9F71]'}`} />
+                        <span className={`text-[11px] font-bold uppercase tracking-wider ${isDark ? 'text-[#c8f542]' : 'text-[#5E9F71]'}`}>
+                          Yearly Extra Benefits
+                        </span>
+                      </div>
+                      <ul className="space-y-3">
+                        {plan.yearlyExtraFeatures.map((extraFeat, eIdx) => (
+                          <li 
+                            key={eIdx} 
+                            className={`flex items-center justify-between gap-2 text-sm font-medium ${
+                              isDark ? 'text-slate-200' : 'text-slate-700'
+                            }`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 ${
+                                isDark ? 'bg-[#c8f542] text-slate-950' : 'bg-[#5E9F71] text-white'
+                              }`}>
+                                <Check className="w-3 h-3" strokeWidth={3} />
+                              </div>
+                              <span>{extraFeat}</span>
+                            </div>
+                            <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full uppercase tracking-wider flex-shrink-0 ${
+                              isDark ? 'bg-[#c8f542]/20 text-[#c8f542]' : 'bg-emerald-100 text-emerald-800'
+                            }`}>
+                              Bonus
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+
+                <Link
+                  to="/register"
+                  onClick={() => setSelectedPlan(plan.name)}
+                  className={`mt-12 w-full md:w-auto self-start font-semibold py-3 px-6 rounded-full text-sm flex items-center justify-center gap-2 transition-all duration-300 ${
+                    isDark
+                      ? 'bg-white hover:bg-[oklch(44.6%_.043_257.281)] text-slate-900 hover:text-white shadow-md hover:shadow-xl border border-transparent'
+                      : 'bg-[#18181b] hover:bg-[#c8f542] text-white hover:text-slate-900 shadow-md hover:shadow-lg hover:shadow-[#c8f542]/20'
+                  }`}
+                >
+                  {plan.isTrial ? 'Start 7-Day Free Trial' : `Select ${plan.name} Plan`}
+                  <ArrowRight className="w-4 h-4 ml-1" />
+                </Link>
+              </div>
+              </motion.div>
+            );
+          })}
+        </motion.div>
+
+        {/* ─── Bottom CTA Banner (Matching User Mockup) ─── */}
+        <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={scrollReveal} className="mt-20 bg-[#18181b] rounded-[2.5rem] p-12 md:p-16 text-center relative overflow-hidden shadow-2xl border border-slate-800/80">
+          {/* Subtle Lightning Watermark in Background */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-[0.05]">
+            <svg viewBox="0 0 25 24" className="w-[520px] h-[520px] fill-white transform -rotate-12" stroke="none">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" />
+            </svg>
+          </div>
+
+          <div className="relative z-10 max-w-2xl mx-auto">
+            <h3 className="text-3xl md:text-4xl font-bold text-white tracking-tight leading-tight">
+              Deploy High-Performance Compute Nodes <br className="hidden sm:block" />
+              in Seconds
+            </h3>
+            <p className="text-slate-400 text-sm md:text-base leading-relaxed mt-4 mb-8 max-w-lg mx-auto">
+              Instantly provision, scale, and manage your servers with our ultra-fast architecture. Start testing your workloads today with a predictable monthly cap.
+            </p>
+            <Link
+              to="/register"
+              className="group inline-flex items-center gap-4 bg-white hover:bg-[#c8f542] text-slate-900 font-semibold text-[15px] pl-7 pr-1.5 py-1.5 rounded-full transition-all duration-300 shadow-xl hover:shadow-2xl hover:scale-105 cursor-pointer"
+            >
+              <span>Get Started</span>
+              <span className="w-9 h-9 rounded-full bg-[#c8f542] group-hover:bg-[#1c1c1f] flex items-center justify-center relative overflow-hidden flex-shrink-0 transition-colors duration-300 shadow-sm">
+                {/* Outgoing dark arrow on lime circle (slides right on hover) */}
+                <ArrowRight className="w-4 h-4 text-slate-900 absolute transition-all duration-300 ease-out transform translate-x-0 opacity-100 group-hover:translate-x-7 group-hover:opacity-0 stroke-[2.7]" />
+                
+                {/* Incoming white arrow on black circle (slides from left to center on hover) */}
+                <ArrowRight className="w-4 h-4 text-white absolute transition-all duration-300 ease-out transform -translate-x-7 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 stroke-[2.7]" />
+              </span>
+            </Link>
+          </div>
+        </motion.div>
+      </section>
+        
+        </div>
+      )}
 
       {/* ─── Footer (Matching User Mockup) ─── */}
       <footer className="relative z-10 border-t border-slate-100 bg-white pt-16 pb-12">
@@ -1068,10 +1990,10 @@ export const LandingPage = () => {
                       <path d="M12 1.5l8.66 5v11L12 22.5l-8.66-5v-11L12 1.5zm0 2.31L4.84 7.96l7.16 4.13 7.16-4.13L12 3.81zm-7.66 5.5v7.38l6.66 3.85v-7.38L4.34 9.31zm15.32 0l-6.66 3.85v7.38l6.66-3.85V9.31z"/>
                     </svg>
                   </div>
-                  <span className="font-bold text-2xl text-slate-900 tracking-tight">TenantFlow</span>
+                  <span className="font-bold text-2xl text-slate-900 tracking-tight">TenantStack</span>
                 </div>
                 <p className="text-sm text-slate-500 leading-relaxed max-w-[310px] mb-8">
-                  Securing Your Digital World: Your Trusted Partner in Data Protection with Cutting Edge Solutions for Data Security.
+                  Next-Gen Multi-Tenant Cloud Platform for Developers: High-performance compute nodes, isolated storage & predictable pricing.
                 </p>
               </div>
 
@@ -1150,7 +2072,7 @@ export const LandingPage = () => {
               </div>
 
               <div className="mt-8 text-xs text-slate-400">
-                Copyright © 2026 TenantFlow. All Rights Reserved
+                Copyright © 2026 TenantStack. All Rights Reserved
               </div>
             </div>
 

@@ -7,7 +7,7 @@ import {
   EyeOff,
   ShieldCheck,
   Headset,
-  ArrowRight,
+  ArrowRight
 } from 'lucide-react';
 import { motion, type Variants } from 'framer-motion';
 
@@ -32,7 +32,7 @@ const staggerContainer: Variants = {
 
 export const Register = () => {
   const [formData, setFormData] = useState({
-    companyName: '',
+    workspaceName: '',
     firstName: '',
     lastName: '',
     email: '',
@@ -48,8 +48,8 @@ export const Register = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.companyName) {
-      setError('Please enter a company name');
+    if (!formData.workspaceName) {
+      setError('Please enter a workspace name');
       return;
     }
     if (!formData.firstName || !formData.lastName || !formData.email || !formData.password) {
@@ -159,10 +159,10 @@ export const Register = () => {
                 Get Started
               </span>
               <h1 className="text-4xl lg:text-6xl font-bold text-slate-900 mt-4 mb-6 leading-[1.1] tracking-tight">
-                Create your Organization.
+                Start your Developer Journey.
               </h1>
               <p className="text-slate-500 text-lg leading-relaxed mb-16">
-                Your Trusted Partner in Data Protection with Cutting-Edge Solutions for Comprehensive Data Security and Multi-Tenant Isolation.
+                Spin up high-performance compute nodes in seconds. No credit card required to start testing your sandbox.
               </p>
 
               {/* Info Blocks */}
@@ -172,9 +172,9 @@ export const Register = () => {
                   <div className="w-10 h-10 bg-[#5E9F71]/20 rounded-full flex items-center justify-center mb-4">
                     <ShieldCheck className="w-5 h-5 text-[#5E9F71]" />
                   </div>
-                  <h3 className="font-bold text-slate-900 mb-2">Enterprise Security</h3>
+                  <h3 className="font-bold text-slate-900 mb-2">Secure Architecture</h3>
                   <p className="text-sm text-slate-500 leading-relaxed">
-                    Our platform ensures zero cross-tenant data leakage with strict compound indexes and RBAC.
+                    Our platform ensures complete isolation for your compute nodes and storage out of the box.
                   </p>
                 </motion.div>
                 {/* Block 2 */}
@@ -200,6 +200,7 @@ export const Register = () => {
             </div>
 
             <div className="bg-white rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 p-8 sm:p-12 relative z-10">
+
               {error && (
                 <div className="mb-8 p-4 bg-rose-50 border border-rose-100 rounded-xl flex items-start gap-3">
                   <div className="w-5 h-5 bg-rose-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -264,20 +265,20 @@ export const Register = () => {
                   />
                 </div>
 
-                {/* Row 3: Company Name */}
+                {/* Row 3: Workspace Name */}
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Company Name <span className="text-rose-500">*</span>
+                    Workspace Name <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
                     required
-                    value={formData.companyName}
-                    onChange={(e) => setFormData({ ...formData, companyName: e.target.value })}
-                    onFocus={() => setFocusedField('companyName')}
+                    value={formData.workspaceName}
+                    onChange={(e) => setFormData({ ...formData, workspaceName: e.target.value })}
+                    onFocus={() => setFocusedField('workspaceName')}
                     onBlur={() => setFocusedField(null)}
-                    className={`w-full bg-slate-50 border ${focusedField === 'companyName' ? 'border-[#c8f542] ring-2 ring-[#c8f542]/20' : 'border-slate-200'} rounded-xl py-3 px-4 text-sm text-slate-900 placeholder-slate-400 focus:outline-none transition-all`}
-                    placeholder="Your Company Name"
+                    className={`w-full bg-slate-50 border ${focusedField === 'workspaceName' ? 'border-[#c8f542] ring-2 ring-[#c8f542]/20' : 'border-slate-200'} rounded-xl py-3 px-4 text-sm text-slate-900 placeholder-slate-400 focus:outline-none transition-all`}
+                    placeholder="e.g. Personal Projects"
                   />
                 </div>
 
@@ -351,7 +352,7 @@ export const Register = () => {
                       </>
                     ) : (
                       <>
-                        Create Organization
+                        Create Developer Account
                       </>
                     )}
                   </button>
@@ -387,7 +388,7 @@ export const Register = () => {
           <div className="relative z-10 max-w-2xl mx-auto">
             <h3 className="text-3xl md:text-4xl font-bold text-white tracking-tight leading-tight">
               Secure Your Tenant Data with <br className="hidden sm:block" />
-              TenantFlow Architecture
+              TenantStack Architecture
             </h3>
             <p className="text-slate-400 text-sm md:text-base leading-relaxed mt-4 mb-8 max-w-lg mx-auto">
               Allows you to set custom resource quotas per organization, eliminate cross-tenant data leakage, and scale your SaaS with confidence.
@@ -428,7 +429,7 @@ export const Register = () => {
                       <path d="M12 1.5l8.66 5v11L12 22.5l-8.66-5v-11L12 1.5zm0 2.31L4.84 7.96l7.16 4.13 7.16-4.13L12 3.81zm-7.66 5.5v7.38l6.66 3.85v-7.38L4.34 9.31zm15.32 0l-6.66 3.85v7.38l6.66-3.85V9.31z"/>
                     </svg>
                   </div>
-                  <span className="font-bold text-2xl text-slate-900 tracking-tight">TenantFlow</span>
+                  <span className="font-bold text-2xl text-slate-900 tracking-tight">TenantStack</span>
                 </div>
                 <p className="text-sm text-slate-500 leading-relaxed max-w-[310px] mb-8">
                   Securing Your Digital World: Your Trusted Partner in Data Protection with Cutting Edge Solutions for Data Security.
@@ -506,7 +507,7 @@ export const Register = () => {
               </div>
 
               <div className="mt-8 text-xs text-slate-400">
-                Copyright © 2026 TenantFlow. All Rights Reserved
+                Copyright © 2026 TenantStack. All Rights Reserved
               </div>
             </div>
           </motion.div>

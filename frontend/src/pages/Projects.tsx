@@ -177,7 +177,7 @@ export const Projects = () => {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-white tracking-tight">Projects</h1>
-          <p className="text-sm text-slate-400 mt-1">Manage, organize, and store files for your tenant projects</p>
+          <p className="text-sm text-slate-400 mt-1">Manage, organize, and store files for your workspace projects</p>
         </div>
         <button
           onClick={() => {
@@ -200,7 +200,7 @@ export const Projects = () => {
               <HardDrive className="w-5 h-5" />
             </div>
             <div>
-              <h4 className="text-sm font-semibold text-white">Tenant Isolated Storage</h4>
+              <h4 className="text-sm font-semibold text-white">Workspace Storage</h4>
               <p className="text-xs text-slate-400">
                 Plan Limit ({storageUsage.plan}): {storageUsage.usedMB} MB / {storageUsage.maxStorageMB} MB used
               </p>
@@ -230,7 +230,7 @@ export const Projects = () => {
         <div className="bg-slate-900 border border-slate-800 rounded-2xl p-12 text-center max-w-md mx-auto">
           <FolderKanban className="w-12 h-12 text-slate-600 mx-auto mb-4" />
           <h3 className="text-lg font-semibold text-white">No projects found</h3>
-          <p className="text-slate-400 text-xs mt-1 mb-6">Start by creating your first project for this tenant.</p>
+          <p className="text-slate-400 text-xs mt-1 mb-6">Start by creating your first project for this workspace.</p>
           <button
             onClick={() => setShowCreateModal(true)}
             className="bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs px-4 py-2 rounded-lg transition"
@@ -287,7 +287,7 @@ export const Projects = () => {
             </button>
 
             <h2 className="text-xl font-bold text-white mb-1">Create New Project</h2>
-            <p className="text-xs text-slate-400 mb-6">All projects are isolated to your organization.</p>
+            <p className="text-xs text-slate-400 mb-6">All projects are isolated to your workspace.</p>
 
             {error && (
               <div
@@ -377,7 +377,7 @@ export const Projects = () => {
             <h2 className="text-xl font-bold text-white mb-1">
               Project Attachments: <span className="text-purple-400">{activeProjectForFiles.name}</span>
             </h2>
-            <p className="text-xs text-slate-400 mb-4">Files are stored securely under isolated tenant directories.</p>
+            <p className="text-xs text-slate-400 mb-4">Files are stored securely under isolated workspace directories.</p>
 
             {fileError && (
               <div
