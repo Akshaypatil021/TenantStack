@@ -8,11 +8,11 @@ import Permission from '../permissions/permission.model';
 import { generateToken } from '../../utils/jwt.util';
 
 const RegisterSchema = z.object({
-  companyName: z.string().min(2),
   firstName: z.string().min(2),
   lastName: z.string().min(2),
   email: z.string().email(),
   password: z.string().min(6),
+  developerRole: z.string().min(2),
 });
 
 const LoginSchema = z.object({
@@ -32,87 +32,39 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // 3. Create Tenant
-    const tenant = await Tenant.create({
-      name: validatedData.companyName,
-      status: 'ACTIVE',
-      subscriptionPlan: 'FREE',
-    });
+    // 3. Get or Create Platform User Role
+    let platformRole = await Role.findOne({ name: 'Platform User', tenantId: { $exists: false } });
+    if (!platformRole) {
+      platformRole = await Role.create({
+        name: 'Platform User',
+        description: 'Default role for a newly registered user without a tenant',
+        isDefault: true,
+      });
+    }
 
-    // 4. Create Default Admin Role for the Tenant
-    const adminRole = await Role.create({
-      tenantId: tenant._id,
-      name: 'Tenant Admin',
-      description: 'Full access administrator',
-      isDefault: true,
-    });
-
-    // 4b. Seed Default Permissions for Tenant Admin
-    const defaultActions = [
-      'user:create', 'user:read', 'user:update', 'user:delete',
-      'project:create', 'project:read', 'project:update', 'project:delete',
-      'task:create', 'task:read', 'task:update', 'task:delete',
-      'billing:read', 'billing:update',
-      'file:upload', 'file:delete',
-      'audit:read',
-    ];
-
-    const permissionDocs = defaultActions.map((action) => ({
-      tenantId: tenant._id,
-      roleId: adminRole._id,
-      action,
-    }));
-
-    // 4c. Create Default Member Role for the Tenant
-    const memberRole = await Role.create({
-      tenantId: tenant._id,
-      name: 'Member',
-      description: 'Standard team member',
-      isDefault: false,
-    });
-
-    const memberActions = [
-      'user:read',
-      'project:create', 'project:read', 'project:update',
-      'task:create', 'task:read', 'task:update',
-      'file:upload', 'file:read',
-    ];
-
-    const memberPermissionDocs = memberActions.map((action) => ({
-      tenantId: tenant._id,
-      roleId: memberRole._id,
-      action,
-    }));
-
-    permissionDocs.push(...memberPermissionDocs);
-
-    await Permission.insertMany(permissionDocs);
-
-    // 5. Hash Password & Create User
+    // 4. Hash Password & Create User
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(validatedData.password, salt);
 
     const user = await User.create({
-      tenantId: tenant._id,
       firstName: validatedData.firstName,
       lastName: validatedData.lastName,
       email: validatedData.email,
       passwordHash,
-      roleId: adminRole._id,
+      developerRole: validatedData.developerRole,
+      roleId: platformRole._id,
     });
 
-    // 6. Generate JWT
+    // 5. Generate JWT
     const token = generateToken({
       userId: user._id.toString(),
-      tenantId: tenant._id.toString(),
-      roleId: adminRole._id.toString(),
+      roleId: platformRole._id.toString(),
     });
 
     res.status(201).json({
       message: 'Registration successful',
       token,
-      tenant: { id: tenant._id, name: tenant.name },
-      user: { id: user._id, email: user.email, firstName: user.firstName, role: adminRole.name }
+      user: { id: user._id, email: user.email, firstName: user.firstName, lastName: user.lastName, developerRole: user.developerRole }
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {
@@ -146,8 +98,8 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     // 4. Generate JWT
     const token = generateToken({
       userId: user._id.toString(),
-      tenantId: user.tenantId.toString(),
       roleId: user.roleId.toString(),
+      ...(user.tenantId && { tenantId: user.tenantId.toString() }),
     });
 
     res.status(200).json({

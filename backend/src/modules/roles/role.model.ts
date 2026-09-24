@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IRole extends Document {
-  tenantId: mongoose.Types.ObjectId;
+  tenantId?: mongoose.Types.ObjectId;
   name: string;
   description?: string;
   isDefault: boolean;
@@ -11,7 +11,7 @@ export interface IRole extends Document {
 
 const RoleSchema: Schema = new Schema(
   {
-    tenantId: { type: Schema.Types.ObjectId, ref: 'Tenant', required: true, index: true },
+    tenantId: { type: Schema.Types.ObjectId, ref: 'Tenant', index: true },
     name: { type: String, required: true },
     description: { type: String },
     isDefault: { type: Boolean, default: false },

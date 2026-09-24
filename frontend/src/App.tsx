@@ -65,9 +65,14 @@ function AppRoutes() {
         element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <AcceptInvite />}
       />
 
-      {/* Protected SaaS App Routes */}
+      {/* Dashboard - Full page with its own light-theme nav */}
+      <Route
+        path="/dashboard"
+        element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" replace />}
+      />
+
+      {/* Protected SaaS App Routes (with sidebar/navbar layout) */}
       <Route element={<ProtectedLayout />}>
-        <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/projects" element={<Projects />} />
         <Route path="/billing" element={<Billing />} />
       </Route>

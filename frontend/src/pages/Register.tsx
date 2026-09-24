@@ -32,27 +32,24 @@ const staggerContainer: Variants = {
 
 export const Register = () => {
   const [formData, setFormData] = useState({
-    workspaceName: '',
     firstName: '',
     lastName: '',
     email: '',
     password: '',
+    developerRole: 'Full-Stack Developer',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
 
   const { login } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.workspaceName) {
-      setError('Please enter a workspace name');
-      return;
-    }
-    if (!formData.firstName || !formData.lastName || !formData.email || !formData.password) {
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.password || !formData.developerRole) {
       setError('Please fill in all fields');
       return;
     }
@@ -78,7 +75,10 @@ export const Register = () => {
       }
 
       login(data.token, data.user, data.tenant);
-      navigate('/dashboard');
+      setShowSuccessPopup(true);
+      setTimeout(() => {
+        navigate('/dashboard');
+      }, 1500);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -116,6 +116,26 @@ export const Register = () => {
           }}
         />
       </div>
+
+      {/* Success Popup Overlay */}
+      {showSuccessPopup && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/60 backdrop-blur-sm transition-all duration-300">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            className="bg-white rounded-[2rem] p-8 shadow-2xl border border-slate-100 flex flex-col items-center max-w-sm w-full mx-4"
+          >
+            <div className="w-20 h-20 bg-[#c8f542]/20 rounded-full flex items-center justify-center mb-6">
+              <ShieldCheck className="w-10 h-10 text-[#5E9F71]" />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-900 mb-2 text-center tracking-tight">Account Created Successfully!</h2>
+            <p className="text-slate-500 text-center text-sm leading-relaxed mb-6">
+              Welcome to TenantStack. Redirecting you to the dashboard...
+            </p>
+            <div className="w-6 h-6 border-4 border-[#c8f542]/30 border-t-[#c8f542] rounded-full animate-spin"></div>
+          </motion.div>
+        </div>
+      )}
       
       {/* Subtle Lime Glow Element */}
       <div className="absolute top-20 right-1/4 w-32 h-32 bg-[#c8f542]/20 rounded-full blur-3xl pointer-events-none" />
@@ -265,21 +285,31 @@ export const Register = () => {
                   />
                 </div>
 
-                {/* Row 3: Workspace Name */}
+                {/* Row 3: Developer Role */}
                 <div>
                   <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Workspace Name <span className="text-rose-500">*</span>
+                    Developer Role <span className="text-rose-500">*</span>
                   </label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.workspaceName}
-                    onChange={(e) => setFormData({ ...formData, workspaceName: e.target.value })}
-                    onFocus={() => setFocusedField('workspaceName')}
-                    onBlur={() => setFocusedField(null)}
-                    className={`w-full bg-slate-50 border ${focusedField === 'workspaceName' ? 'border-[#c8f542] ring-2 ring-[#c8f542]/20' : 'border-slate-200'} rounded-xl py-3 px-4 text-sm text-slate-900 placeholder-slate-400 focus:outline-none transition-all`}
-                    placeholder="e.g. Personal Projects"
-                  />
+                  <div className="relative">
+                    <select
+                      required
+                      value={formData.developerRole}
+                      onChange={(e) => setFormData({ ...formData, developerRole: e.target.value })}
+                      onFocus={() => setFocusedField('developerRole')}
+                      onBlur={() => setFocusedField(null)}
+                      className={`w-full bg-slate-50 border ${focusedField === 'developerRole' ? 'border-[#c8f542] ring-2 ring-[#c8f542]/20' : 'border-slate-200'} rounded-xl py-3 px-4 text-sm text-slate-900 focus:outline-none transition-all appearance-none cursor-pointer`}
+                    >
+                      <option value="Full-Stack Developer">Full-Stack Developer</option>
+                      <option value="Backend Engineer">Backend Engineer</option>
+                      <option value="Frontend Developer">Frontend Developer</option>
+                      <option value="DevOps / SRE">DevOps / SRE</option>
+                      <option value="Student / Hobbyist">Student / Hobbyist</option>
+                      <option value="Other">Other</option>
+                    </select>
+                    <div className="absolute right-4 top-3.5 pointer-events-none text-slate-400">
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"></path></svg>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Row 4: Password */}
