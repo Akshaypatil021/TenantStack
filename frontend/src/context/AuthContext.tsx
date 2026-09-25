@@ -12,6 +12,10 @@ interface User {
 interface Tenant {
   id: string;
   name: string;
+  subscriptionPlan?: string;
+  computePlan?: string;
+  storagePlan?: string;
+  allocatedResources?: any;
 }
 
 interface AuthContextType {

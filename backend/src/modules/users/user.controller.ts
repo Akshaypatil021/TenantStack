@@ -146,7 +146,7 @@ export const acceptInvitation = async (req: Request, res: Response): Promise<voi
     // Generate JWT
     const jwtToken = generateToken({
       userId: user._id.toString(),
-      tenantId: user.tenantId.toString(),
+      tenantId: user.tenantId?.toString(),
       roleId: user.roleId.toString(),
     });
 

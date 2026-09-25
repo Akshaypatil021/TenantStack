@@ -17,7 +17,7 @@ const RegisterSchema = z.object({
 
 const LoginSchema = z.object({
   email: z.string().email(),
-  password: z.string().min(6),
+  password: z.string().min(4),
 });
 
 export const register = async (req: Request, res: Response): Promise<void> => {
@@ -102,10 +102,31 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       ...(user.tenantId && { tenantId: user.tenantId.toString() }),
     });
 
+    let tenantData = null;
+    if (user.tenantId) {
+      const tenant = await Tenant.findById(user.tenantId);
+      if (tenant) {
+        tenantData = {
+          id: tenant._id.toString(),
+          name: tenant.name,
+          status: tenant.status,
+          subscriptionPlan: tenant.subscriptionPlan,
+          allocatedResources: tenant.allocatedResources,
+        };
+      }
+    }
+
     res.status(200).json({
       message: 'Login successful',
       token,
-      user: { id: user._id, email: user.email, firstName: user.firstName }
+      user: {
+        id: user._id.toString(),
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        developerRole: user.developerRole,
+      },
+      tenant: tenantData,
     });
   } catch (error: any) {
     if (error instanceof z.ZodError) {

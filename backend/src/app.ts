@@ -22,7 +22,7 @@ app.use('/api', limiter);
 
 // Health Check Route
 app.get('/health', (req: Request, res: Response) => {
-  res.status(200).json({ status: 'ok', message: 'TenantFlow API is running.' });
+  res.status(200).json({ status: 'ok', message: 'TenantStack API is running.' });
 });
 
 import path from 'path';
@@ -31,6 +31,8 @@ import projectRoutes from './modules/projects/project.routes';
 import subscriptionRoutes from './modules/subscriptions/subscription.routes';
 import fileRoutes from './modules/files/file.routes';
 import userRoutes from './modules/users/user.routes';
+import paymentRoutes from './modules/payments/payment.routes';
+import adminRoutes from './modules/admin/admin.routes';
 
 // Serve uploads directory
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
@@ -41,6 +43,8 @@ app.use('/api/v1/projects', projectRoutes);
 app.use('/api/v1/subscriptions', subscriptionRoutes);
 app.use('/api/v1/files', fileRoutes);
 app.use('/api/v1/users', userRoutes);
+app.use('/api/v1/payments', paymentRoutes);
+app.use('/api/v1/admin', adminRoutes);
 
 // Global Error Handler placeholder
 app.use((err: any, req: Request, res: Response, next: Function) => {

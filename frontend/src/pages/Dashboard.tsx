@@ -1,10 +1,12 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { useSessionTimeout } from '../hooks/useSessionTimeout';
+import { PlansModal, type PlanCategory } from '../components/PlansModal';
 import { 
   Server, HardDrive, Rocket, ArrowRight, Plus, 
   Cpu, Database, Globe, Shield, Zap, ChevronRight,
   BarChart3, Clock, CheckCircle2, Sparkles, Layers,
-  LogOut, Settings, User, CreditCard, Bell
+  LogOut, Settings, User, CreditCard, Bell, AlertTriangle
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { motion, type Variants } from 'framer-motion';
@@ -30,6 +32,13 @@ export const Dashboard = () => {
   const { user, tenant, logout } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'overview' | 'compute' | 'storage'>('overview');
+  const [isPlansModalOpen, setIsPlansModalOpen] = useState(false);
+  const [plansModalCategory, setPlansModalCategory] = useState<PlanCategory>('compute');
+
+  const openPlans = (cat: PlanCategory = 'compute') => {
+    setPlansModalCategory(cat);
+    setIsPlansModalOpen(true);
+  };
   
   const hasResources = !!tenant; // User has active resources if they have a tenantId
   const userInitials = `${user?.firstName?.charAt(0) || ''}${user?.lastName?.charAt(0) || ''}`.toUpperCase() || 'U';
@@ -38,6 +47,18 @@ export const Dashboard = () => {
     logout();
     navigate('/');
   };
+
+  const handleAutoLogout = () => {
+    logout();
+    navigate('/login?expired=true');
+  };
+
+  // 2-minute inactivity auto-logout hook
+  const { timeLeft, formattedTime, isWarning, resetTimer } = useSessionTimeout({
+    timeoutMinutes: 2,
+    warningSeconds: 30,
+    onTimeout: handleAutoLogout,
+  });
 
   return (
     <div className="min-h-screen bg-[#fafbfc] text-slate-900 selection:bg-[#c8f542] selection:text-slate-900">
@@ -62,7 +83,12 @@ export const Dashboard = () => {
             {(['overview', 'compute', 'storage'] as const).map((tab) => (
               <button
                 key={tab}
-                onClick={() => setActiveTab(tab)}
+                onClick={() => {
+                  setActiveTab(tab);
+                  if (tab === 'compute' || tab === 'storage') {
+                    openPlans(tab);
+                  }
+                }}
                 className={`px-4 py-1.5 rounded-lg text-sm font-medium capitalize transition-all duration-200 ${
                   activeTab === tab 
                     ? 'bg-white text-slate-900 shadow-sm' 
@@ -76,15 +102,39 @@ export const Dashboard = () => {
 
           {/* Right Actions */}
           <div className="flex items-center gap-3">
+            {/* Login Session Timer Badge */}
+            <div 
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium border transition-all ${
+                isWarning 
+                  ? 'bg-amber-50 border-amber-300 text-amber-900 shadow-sm' 
+                  : 'bg-slate-50 border-slate-200/80 text-slate-600'
+              }`}
+              title="Session timer: automatically logs out after 2 min inactivity. Any activity resets timer."
+            >
+              <Clock className={`w-3.5 h-3.5 ${isWarning ? 'text-amber-600 animate-spin' : 'text-[#5E9F71]'}`} />
+              <div className="flex items-center gap-1.5">
+                <span className="hidden sm:inline text-slate-500">Session:</span>
+                <span className={`font-mono font-bold ${isWarning ? 'text-amber-700' : 'text-slate-800'}`}>
+                  {formattedTime}
+                </span>
+              </div>
+              <span 
+                className={`w-2 h-2 rounded-full ${isWarning ? 'bg-amber-500 animate-ping' : 'bg-emerald-500 animate-pulse'}`} 
+              />
+            </div>
+
             <button className="relative p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition">
               <Bell className="w-5 h-5" />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#c8f542] rounded-full"></span>
             </button>
+            <Link to="/admin" className="p-2 text-slate-400 hover:text-[#5E9F71] hover:bg-[#c8f542]/10 rounded-xl transition" title="Admin Panel">
+              <Shield className="w-5 h-5" />
+            </Link>
             <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition">
               <Settings className="w-5 h-5" />
             </button>
             <div className="w-px h-8 bg-slate-200 mx-1"></div>
-            <div className="flex items-center gap-3 group cursor-pointer" onClick={handleLogout}>
+            <div className="flex items-center gap-3 group cursor-pointer" onClick={handleLogout} title="Sign Out">
               <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#c8f542] to-[#5E9F71] flex items-center justify-center text-slate-900 font-bold text-sm shadow-md">
                 {userInitials}
               </div>
@@ -162,9 +212,13 @@ export const Dashboard = () => {
             <motion.div variants={scrollReveal} className="mb-8">
               <div className="flex items-center justify-between mb-5">
                 <h2 className="text-xl font-bold text-slate-900 tracking-tight">Deploy Your First Resource</h2>
-                <Link to="/" className="text-sm text-[#5E9F71] hover:text-[#4a8a5f] font-medium flex items-center gap-1 transition">
+                <button
+                  type="button"
+                  onClick={() => openPlans('compute')}
+                  className="text-sm text-[#5E9F71] hover:text-[#4a8a5f] font-medium flex items-center gap-1 transition cursor-pointer"
+                >
                   View all plans <ArrowRight className="w-4 h-4" />
-                </Link>
+                </button>
               </div>
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -172,6 +226,7 @@ export const Dashboard = () => {
                 {/* Compute Node Card */}
                 <motion.div 
                   whileHover={{ y: -4 }}
+                  onClick={() => openPlans('compute')}
                   className="group bg-white border border-slate-100 rounded-[1.5rem] p-7 hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 cursor-pointer relative overflow-hidden"
                 >
                   <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-[#c8f542]/10 to-transparent rounded-bl-full"></div>
@@ -200,7 +255,14 @@ export const Dashboard = () => {
                         <span className="text-2xl font-bold text-slate-900">$0</span>
                         <span className="text-sm text-slate-400 ml-1">/mo to start</span>
                       </div>
-                      <button className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 transition shadow-lg shadow-slate-900/20 group-hover:shadow-xl group-hover:shadow-slate-900/30">
+                      <button 
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openPlans('compute');
+                        }}
+                        className="bg-slate-900 hover:bg-slate-800 text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 transition shadow-lg shadow-slate-900/20 group-hover:shadow-xl group-hover:shadow-slate-900/30"
+                      >
                         <Rocket className="w-4 h-4" />
                         Deploy Now
                       </button>
@@ -211,6 +273,7 @@ export const Dashboard = () => {
                 {/* Storage Bucket Card */}
                 <motion.div 
                   whileHover={{ y: -4 }}
+                  onClick={() => openPlans('storage')}
                   className="group bg-white border border-slate-100 rounded-[1.5rem] p-7 hover:shadow-xl hover:shadow-slate-200/50 transition-all duration-300 cursor-pointer relative overflow-hidden"
                 >
                   <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-blue-50 to-transparent rounded-bl-full"></div>
@@ -239,7 +302,14 @@ export const Dashboard = () => {
                         <span className="text-2xl font-bold text-slate-900">$0</span>
                         <span className="text-sm text-slate-400 ml-1">/mo to start</span>
                       </div>
-                      <button className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 transition shadow-lg shadow-blue-600/20 group-hover:shadow-xl group-hover:shadow-blue-600/30">
+                      <button 
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openPlans('storage');
+                        }}
+                        className="bg-blue-600 hover:bg-blue-500 text-white px-5 py-2.5 rounded-xl text-sm font-semibold flex items-center gap-2 transition shadow-lg shadow-blue-600/20 group-hover:shadow-xl group-hover:shadow-blue-600/30"
+                      >
                         <Plus className="w-4 h-4" />
                         Create Bucket
                       </button>
@@ -302,12 +372,13 @@ export const Dashboard = () => {
                     Upgrade to Solo Dev or Pro Dev for more vCPUs, storage, and premium support. Start building faster.
                   </p>
                 </div>
-                <Link 
-                  to="/"
-                  className="relative z-10 bg-[#c8f542] hover:bg-[#d4ff4f] text-slate-900 font-bold px-6 py-3 rounded-xl text-sm flex items-center gap-2 transition shadow-lg shadow-[#c8f542]/20 whitespace-nowrap"
+                <button 
+                  type="button"
+                  onClick={() => openPlans('compute')}
+                  className="relative z-10 bg-[#c8f542] hover:bg-[#d4ff4f] text-slate-900 font-bold px-6 py-3 rounded-xl text-sm flex items-center gap-2 transition shadow-lg shadow-[#c8f542]/20 whitespace-nowrap cursor-pointer"
                 >
                   View Plans <ArrowRight className="w-4 h-4" />
-                </Link>
+                </button>
               </div>
             </motion.div>
           </>
@@ -319,10 +390,36 @@ export const Dashboard = () => {
             {/* Resource Metrics Grid */}
             <motion.div variants={scrollReveal} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
               {[
-                { label: 'CPU Usage', value: '24%', icon: Cpu, color: 'text-[#5E9F71]', bg: 'bg-[#c8f542]/15' },
-                { label: 'Storage Used', value: '1.2 GB', icon: Database, color: 'text-blue-500', bg: 'bg-blue-50' },
-                { label: 'Active Nodes', value: '2', icon: Globe, color: 'text-amber-500', bg: 'bg-amber-50' },
-                { label: 'Uptime', value: '99.98%', icon: BarChart3, color: 'text-emerald-500', bg: 'bg-emerald-50' },
+                { 
+                  label: 'CPU Usage', 
+                  value: tenant?.computePlan ? '24%' : '4%', 
+                  icon: Cpu, 
+                  color: 'text-[#5E9F71]', 
+                  bg: 'bg-[#c8f542]/15' 
+                },
+                { 
+                  label: 'Storage Used', 
+                  value: tenant?.storagePlan ? '3.8 GB' : '1.2 GB', 
+                  icon: Database, 
+                  color: 'text-blue-500', 
+                  bg: 'bg-blue-50' 
+                },
+                { 
+                  label: 'Active Instances', 
+                  value: `${tenant?.allocatedResources?.instances?.length || 1}`, 
+                  icon: Globe, 
+                  color: 'text-amber-500', 
+                  bg: 'bg-amber-50' 
+                },
+                { 
+                  label: 'Active Plans', 
+                  value: tenant?.computePlan && tenant?.storagePlan 
+                    ? `${tenant.computePlan} + ${tenant.storagePlan}` 
+                    : (tenant?.subscriptionPlan || 'Active Plan'), 
+                  icon: Zap, 
+                  color: 'text-emerald-500', 
+                  bg: 'bg-emerald-50' 
+                },
               ].map((stat) => (
                 <div key={stat.label} className="bg-white border border-slate-100 rounded-2xl p-5">
                   <div className="flex items-center justify-between mb-3">
@@ -331,54 +428,145 @@ export const Dashboard = () => {
                       <stat.icon className={`w-4.5 h-4.5 ${stat.color}`} />
                     </div>
                   </div>
-                  <span className="text-2xl font-bold text-slate-900">{stat.value}</span>
+                  <span className="text-lg sm:text-xl font-bold text-slate-900 truncate block" title={stat.value}>
+                    {stat.value}
+                  </span>
                 </div>
               ))}
             </motion.div>
 
             {/* Active Resources List */}
             <motion.div variants={scrollReveal} className="bg-white border border-slate-100 rounded-2xl p-6 mb-8">
-              <div className="flex items-center justify-between mb-5">
-                <h2 className="text-lg font-bold text-slate-900">Active Resources</h2>
-                <button className="bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-xl text-sm font-semibold flex items-center gap-2 transition">
-                  <Plus className="w-4 h-4" /> Deploy New
-                </button>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-5">
+                <div>
+                  <h2 className="text-lg font-bold text-slate-900">Active Resources & Instances</h2>
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    Workspace: <span className="font-semibold text-slate-700">{tenant?.name || 'Default Workspace'}</span>
+                    {tenant?.computePlan && (
+                      <> · Compute: <span className="font-semibold text-[#5E9F71]">{tenant.computePlan}</span></>
+                    )}
+                    {tenant?.storagePlan && (
+                      <> · Storage: <span className="font-semibold text-blue-600">{tenant.storagePlan}</span></>
+                    )}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <button 
+                    type="button"
+                    onClick={() => openPlans('compute')}
+                    className="bg-slate-900 hover:bg-slate-800 text-white px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Compute
+                  </button>
+                  <button 
+                    type="button"
+                    onClick={() => openPlans('storage')}
+                    className="bg-blue-600 hover:bg-blue-500 text-white px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold flex items-center gap-1.5 transition cursor-pointer"
+                  >
+                    <Plus className="w-3.5 h-3.5" /> Storage
+                  </button>
+                </div>
               </div>
-              <div className="space-y-3">
-                {[
+
+              {/* Instances filtered by active tab */}
+              {(() => {
+                const allInstances = tenant?.allocatedResources?.instances || [
                   { name: 'prod-api-server', type: 'Compute', status: 'Running', ip: '192.168.1.42', uptime: '14d 6h' },
                   { name: 'dev-storage-main', type: 'Storage', status: 'Running', ip: '—', uptime: '7d 12h' },
-                ].map((resource) => (
-                  <div key={resource.name} className="flex items-center justify-between p-4 bg-slate-50/80 rounded-xl border border-slate-100 hover:bg-slate-50 transition">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${resource.type === 'Compute' ? 'bg-slate-900 text-[#c8f542]' : 'bg-blue-600 text-white'}`}>
-                        {resource.type === 'Compute' ? <Server className="w-5 h-5" /> : <HardDrive className="w-5 h-5" />}
-                      </div>
-                      <div>
-                        <p className="text-sm font-semibold text-slate-900 font-mono">{resource.name}</p>
-                        <p className="text-xs text-slate-400">{resource.type} · {resource.ip}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      <div className="flex items-center gap-1.5">
-                        <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
-                        <span className="text-xs font-medium text-emerald-600">{resource.status}</span>
-                      </div>
-                      <div className="flex items-center gap-1.5 text-slate-400">
-                        <Clock className="w-3.5 h-3.5" />
-                        <span className="text-xs font-medium">{resource.uptime}</span>
-                      </div>
-                      <button className="text-slate-400 hover:text-slate-600 transition">
-                        <ChevronRight className="w-4 h-4" />
+                ];
+
+                const filtered = allInstances.filter((resource: any) => {
+                  if (activeTab === 'compute') return resource.type === 'Compute';
+                  if (activeTab === 'storage') return resource.type === 'Storage';
+                  return true;
+                });
+
+                if (filtered.length === 0) {
+                  return (
+                    <div className="p-8 text-center bg-slate-50/60 rounded-xl border border-dashed border-slate-200">
+                      <p className="text-sm font-semibold text-slate-700">No {activeTab} instances currently active</p>
+                      <p className="text-xs text-slate-400 mt-1">Deploy a {activeTab} instance to enable this service in your workspace.</p>
+                      <button
+                        type="button"
+                        onClick={() => openPlans(activeTab as PlanCategory)}
+                        className="mt-3 px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition cursor-pointer"
+                      >
+                        Deploy {activeTab === 'compute' ? 'Compute Node' : 'Storage Bucket'}
                       </button>
                     </div>
+                  );
+                }
+
+                return (
+                  <div className="space-y-3">
+                    {filtered.map((resource: any) => (
+                      <div key={resource.id || resource.name} className="flex items-center justify-between p-4 bg-slate-50/80 rounded-xl border border-slate-100 hover:bg-slate-50 transition">
+                        <div className="flex items-center gap-4">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${resource.type === 'Compute' ? 'bg-slate-900 text-[#c8f542]' : 'bg-blue-600 text-white'}`}>
+                            {resource.type === 'Compute' ? <Server className="w-5 h-5" /> : <HardDrive className="w-5 h-5" />}
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-slate-900 font-mono">{resource.name}</p>
+                            <p className="text-xs text-slate-400">
+                              {resource.type} · {resource.ip || 'Cloud Instance'}
+                              {resource.vCpu && ` · ${resource.vCpu} vCPU, ${resource.ramGb}GB RAM`}
+                              {resource.storageGb && ` · ${resource.storageGb}GB NVMe Storage`}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-4">
+                          <div className="flex items-center gap-1.5">
+                            <div className="w-2 h-2 bg-emerald-400 rounded-full animate-pulse"></div>
+                            <span className="text-xs font-medium text-emerald-600">{resource.status || 'Running'}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-slate-400">
+                            <Clock className="w-3.5 h-3.5" />
+                            <span className="text-xs font-medium">{resource.uptime || 'Active'}</span>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                );
+              })()}
             </motion.div>
           </>
         )}
       </motion.main>
+
+      {/* Inactivity Warning Toast (shows during final 60 seconds of inactivity) */}
+      {isWarning && (
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="fixed bottom-6 right-6 z-50 max-w-sm bg-white border border-amber-300 shadow-2xl rounded-2xl p-4 flex items-start gap-3.5"
+        >
+          <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
+            <AlertTriangle className="w-5 h-5" />
+          </div>
+          <div className="flex-1">
+            <h4 className="text-sm font-bold text-slate-900">Session Expiring Soon</h4>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Auto-logout in <span className="font-mono font-bold text-amber-600">{timeLeft}s</span> due to 2 min inactivity.
+            </p>
+            <div className="mt-2.5 flex items-center gap-2">
+              <button
+                onClick={resetTimer}
+                className="bg-slate-900 hover:bg-slate-800 text-[#c8f542] px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow-sm"
+              >
+                Stay Logged In
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Dedicated Resource Plans Modal (Compute & Storage) */}
+      <PlansModal
+        isOpen={isPlansModalOpen}
+        onClose={() => setIsPlansModalOpen(false)}
+        initialCategory={plansModalCategory}
+      />
     </div>
   );
 };

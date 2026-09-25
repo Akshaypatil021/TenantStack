@@ -10,6 +10,7 @@ import { Dashboard } from './pages/Dashboard';
 import { Projects } from './pages/Projects';
 import { Billing } from './pages/Billing';
 import { AcceptInvite } from './pages/AcceptInvite';
+import { AdminDashboard } from './pages/AdminDashboard';
 
 // Scroll to top on route transition
 const ScrollToTop = () => {
@@ -44,7 +45,7 @@ const ProtectedLayout = () => {
 };
 
 function AppRoutes() {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
 
   return (
     <Routes>
@@ -54,21 +55,27 @@ function AppRoutes() {
       {/* Public Auth Routes */}
       <Route
         path="/login"
-        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Login />}
+        element={isAuthenticated ? <Navigate to={user?.email === 'admin@gmail.com' ? "/admin" : "/dashboard"} replace /> : <Login />}
       />
       <Route
         path="/register"
-        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <Register />}
+        element={isAuthenticated ? <Navigate to={user?.email === 'admin@gmail.com' ? "/admin" : "/dashboard"} replace /> : <Register />}
       />
       <Route
         path="/invite/:token"
-        element={isAuthenticated ? <Navigate to="/dashboard" replace /> : <AcceptInvite />}
+        element={isAuthenticated ? <Navigate to={user?.email === 'admin@gmail.com' ? "/admin" : "/dashboard"} replace /> : <AcceptInvite />}
       />
 
       {/* Dashboard - Full page with its own light-theme nav */}
       <Route
         path="/dashboard"
         element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" replace />}
+      />
+
+      {/* Admin Dashboard - Full page with its own layout */}
+      <Route
+        path="/admin"
+        element={isAuthenticated ? <AdminDashboard /> : <Navigate to="/login" replace />}
       />
 
       {/* Protected SaaS App Routes (with sidebar/navbar layout) */}
@@ -80,7 +87,7 @@ function AppRoutes() {
       {/* Default Catch-all */}
       <Route
         path="*"
-        element={<Navigate to={isAuthenticated ? "/dashboard" : "/"} replace />}
+        element={<Navigate to={isAuthenticated ? (user?.email === 'admin@gmail.com' ? "/admin" : "/dashboard") : "/"} replace />}
       />
     </Routes>
   );

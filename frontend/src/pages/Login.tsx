@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import {
   Layers,
@@ -8,15 +8,16 @@ import {
   ShieldCheck,
   Zap,
   ArrowRight,
+  Clock,
 } from 'lucide-react';
 import { motion, type Variants } from 'framer-motion';
 
 const scrollReveal: Variants = {
   hidden: { opacity: 0, y: 40 },
-  visible: { 
-    opacity: 1, 
-    y: 0, 
-    transition: { duration: 1.5, ease: [0.22, 1, 0.36, 1] } 
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 1.5, ease: [0.22, 1, 0.36, 1] }
   }
 };
 
@@ -40,6 +41,8 @@ export const Login = () => {
 
   const { login } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const isSessionExpired = searchParams.get('expired') === 'true';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -59,8 +62,12 @@ export const Login = () => {
         throw new Error(data.error || 'Login failed');
       }
 
-      login(data.token, data.user);
-      navigate('/dashboard');
+      login(data.token, data.user, data.tenant);
+      if (data.user.email === 'admin@gmail.com') {
+        navigate('/admin');
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -72,8 +79,8 @@ export const Login = () => {
     <div className="min-h-screen bg-white text-slate-900 relative selection:bg-[#c8f542] selection:text-slate-900 overflow-hidden">
       {/* Subtle Grid Background with Radial Fade (Matching Landing & Register) */}
       <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
-        <div 
-          className="absolute inset-0" 
+        <div
+          className="absolute inset-0"
           style={{
             backgroundImage: 'linear-gradient(to right, rgba(145, 151, 157, 0.6) 1px, transparent 1px), linear-gradient(to bottom, rgba(141, 151, 163, 0.6) 1px, transparent 1px)',
             backgroundSize: '6.5rem 6.5rem',
@@ -82,7 +89,7 @@ export const Login = () => {
           }}
         />
       </div>
-      
+
       {/* Subtle Lime Glow Element */}
       <div className="absolute top-20 right-1/4 w-32 h-32 bg-[#c8f542]/20 rounded-full blur-3xl pointer-events-none" />
 
@@ -117,7 +124,7 @@ export const Login = () => {
         className="relative z-10 w-full max-w-7xl mx-auto px-[48px] pt-10 pb-20 lg:pt-20"
       >
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 lg:gap-8 items-start">
-          
+
           {/* Left Side: Typography & Trust Highlights */}
           <motion.div variants={scrollReveal} className="lg:col-span-5 flex flex-col justify-center h-full">
             <div className="max-w-md">
@@ -160,13 +167,25 @@ export const Login = () => {
 
           {/* Right Side: Floating Form Card */}
           <motion.div variants={scrollReveal} className="lg:col-span-7 lg:pl-10 relative">
-            
+
             {/* The decorative icon placed behind the form top right */}
             <div className="absolute -top-12 -right-8 w-24 h-24 bg-[#c8f542] rounded-3xl -z-10 transform rotate-12 opacity-80 hidden lg:flex items-center justify-center shadow-lg">
-               <Layers className="w-10 h-10 text-slate-900" />
+              <Layers className="w-10 h-10 text-slate-900" />
             </div>
 
             <div className="bg-white rounded-[2.5rem] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 p-8 sm:p-12 relative z-10">
+              {isSessionExpired && !error && (
+                <div className="mb-8 p-4 bg-amber-50 border border-amber-200 rounded-xl flex items-start gap-3">
+                  <div className="w-5 h-5 bg-amber-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <Clock className="w-3.5 h-3.5 text-amber-600" />
+                  </div>
+                  <div>
+                    <p className="text-amber-900 text-sm font-semibold">Session Expired</p>
+                    <p className="text-amber-700 text-xs mt-0.5">You were automatically logged out after 2 minutes of inactivity. Please sign in again.</p>
+                  </div>
+                </div>
+              )}
+
               {error && (
                 <div className="mb-8 p-4 bg-rose-50 border border-rose-100 rounded-xl flex items-start gap-3">
                   <div className="w-5 h-5 bg-rose-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
@@ -190,11 +209,10 @@ export const Login = () => {
                     onChange={(e) => setEmail(e.target.value)}
                     onFocus={() => setFocusedField('email')}
                     onBlur={() => setFocusedField(null)}
-                    className={`w-full bg-slate-50 border ${
-                      focusedField === 'email'
+                    className={`w-full bg-slate-50 border ${focusedField === 'email'
                         ? 'border-[#c8f542] ring-2 ring-[#c8f542]/20'
                         : 'border-slate-200'
-                    } rounded-xl py-3 px-4 text-sm text-slate-900 placeholder-slate-400 focus:outline-none transition-all`}
+                      } rounded-xl py-3 px-4 text-sm text-slate-900 placeholder-slate-400 focus:outline-none transition-all`}
                     placeholder="developer@example.com"
                   />
                 </div>
@@ -221,11 +239,10 @@ export const Login = () => {
                       onChange={(e) => setPassword(e.target.value)}
                       onFocus={() => setFocusedField('password')}
                       onBlur={() => setFocusedField(null)}
-                      className={`w-full bg-slate-50 border ${
-                        focusedField === 'password'
+                      className={`w-full bg-slate-50 border ${focusedField === 'password'
                           ? 'border-[#c8f542] ring-2 ring-[#c8f542]/20'
                           : 'border-slate-200'
-                      } rounded-xl py-3 pl-4 pr-12 text-sm text-slate-900 placeholder-slate-400 focus:outline-none transition-all`}
+                        } rounded-xl py-3 pl-4 pr-12 text-sm text-slate-900 placeholder-slate-400 focus:outline-none transition-all`}
                       placeholder="Enter your password"
                     />
                     <button
@@ -284,7 +301,7 @@ export const Login = () => {
         </div>
       </motion.main>
 
-      {/* ─── Bottom CTA Banner (Matching Landing Page) ─── */}
+      {/* ─── dffdfddd Banner (Matching Landing Page) ─── */}
       <section className="relative z-10 max-w-6xl mx-auto px-8 py-[60px]">
         <motion.div
           initial="hidden"
@@ -316,7 +333,7 @@ export const Login = () => {
               <span className="w-9 h-9 rounded-full bg-[#c8f542] group-hover:bg-[#1c1c1f] flex items-center justify-center relative overflow-hidden flex-shrink-0 transition-colors duration-300 shadow-sm">
                 {/* Outgoing dark arrow on lime circle (slides right on hover) */}
                 <ArrowRight className="w-4 h-4 text-slate-900 absolute transition-all duration-300 ease-out transform translate-x-0 opacity-100 group-hover:translate-x-7 group-hover:opacity-0 stroke-[2.7]" />
-                
+
                 {/* Incoming white arrow on black circle (slides from left to center on hover) */}
                 <ArrowRight className="w-4 h-4 text-white absolute transition-all duration-300 ease-out transform -translate-x-7 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 stroke-[2.7]" />
               </span>
@@ -341,7 +358,7 @@ export const Login = () => {
                 <div className="flex items-center gap-2.5 mb-5">
                   <div className="w-9 h-9 rounded-xl bg-[#c8f542] flex items-center justify-center shadow-sm">
                     <svg className="w-5 h-5 text-slate-950" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 1.5l8.66 5v11L12 22.5l-8.66-5v-11L12 1.5zm0 2.31L4.84 7.96l7.16 4.13 7.16-4.13L12 3.81zm-7.66 5.5v7.38l6.66 3.85v-7.38L4.34 9.31zm15.32 0l-6.66 3.85v7.38l6.66-3.85V9.31z"/>
+                      <path d="M12 1.5l8.66 5v11L12 22.5l-8.66-5v-11L12 1.5zm0 2.31L4.84 7.96l7.16 4.13 7.16-4.13L12 3.81zm-7.66 5.5v7.38l6.66 3.85v-7.38L4.34 9.31zm15.32 0l-6.66 3.85v7.38l6.66-3.85V9.31z" />
                     </svg>
                   </div>
                   <span className="font-bold text-2xl text-slate-900 tracking-tight">TenantStack</span>
@@ -355,22 +372,22 @@ export const Login = () => {
               <div className="flex items-center gap-4 text-slate-700">
                 <a href="#facebook" onClick={(e) => e.preventDefault()} className="hover:text-slate-950 transition-colors" aria-label="Facebook">
                   <svg className="w-[18px] h-[18px] fill-current" viewBox="0 0 24 24">
-                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
                   </svg>
                 </a>
                 <a href="#x" onClick={(e) => e.preventDefault()} className="hover:text-slate-950 transition-colors" aria-label="X">
                   <svg className="w-[18px] h-[18px] fill-current" viewBox="0 0 24 24">
-                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                   </svg>
                 </a>
                 <a href="#github" onClick={(e) => e.preventDefault()} className="hover:text-slate-950 transition-colors" aria-label="GitHub">
                   <svg className="w-[18px] h-[18px] fill-current" viewBox="0 0 24 24">
-                    <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+                    <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
                   </svg>
                 </a>
                 <a href="#linkedin" onClick={(e) => e.preventDefault()} className="hover:text-slate-950 transition-colors" aria-label="LinkedIn">
                   <svg className="w-[18px] h-[18px] fill-current" viewBox="0 0 24 24">
-                    <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.45a1.65 1.65 0 1 0 0 3.3 1.65 1.65 0 0 0 0-3.3z"/>
+                    <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.45a1.65 1.65 0 1 0 0 3.3 1.65 1.65 0 0 0 0-3.3z" />
                   </svg>
                 </a>
               </div>

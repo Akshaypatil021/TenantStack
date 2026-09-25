@@ -2,7 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IInvoice extends Document {
   tenantId: mongoose.Types.ObjectId;
-  plan: 'FREE' | 'PRO' | 'BUSINESS';
+  plan: string;
   amount: number;
   currency: string;
   transactionId: string;
@@ -14,9 +14,9 @@ export interface IInvoice extends Document {
 const InvoiceSchema: Schema = new Schema(
   {
     tenantId: { type: Schema.Types.ObjectId, ref: 'Tenant', required: true, index: true },
-    plan: { type: String, enum: ['FREE', 'PRO', 'BUSINESS'], required: true },
+    plan: { type: String, required: true },
     amount: { type: Number, required: true },
-    currency: { type: String, default: 'USD' },
+    currency: { type: String, default: 'INR' },
     transactionId: { type: String, required: true, unique: true },
     status: { type: String, enum: ['PAID', 'FAILED'], default: 'PAID' },
   },
