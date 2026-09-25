@@ -16,6 +16,7 @@ export const getAdminStats = async (req: AuthenticatedRequest, res: Response): P
       totalTenants,
       activeTenants,
       totalPaidUsers,
+      pendingApprovals,
       totalInvoices,
       revenueAgg,
       monthlyRevenueAgg,
@@ -28,6 +29,7 @@ export const getAdminStats = async (req: AuthenticatedRequest, res: Response): P
       Tenant.countDocuments(),
       Tenant.countDocuments({ status: 'ACTIVE' }),
       PaidUser.countDocuments({ status: 'ACTIVE' }),
+      PaidUser.countDocuments({ status: 'PENDING_APPROVAL' }),
       Invoice.countDocuments(),
       Invoice.aggregate([
         { $match: { status: 'PAID' } },
@@ -79,6 +81,7 @@ export const getAdminStats = async (req: AuthenticatedRequest, res: Response): P
         totalTenants,
         activeTenants,
         totalPaidUsers,
+        pendingApprovals,
         freeUsers,
         totalInvoices,
         totalRevenue,
@@ -186,7 +189,7 @@ export const getAllSubscriptions = async (req: AuthenticatedRequest, res: Respon
     const status = req.query.status as string;
 
     const query: any = {};
-    if (status) query.status = status;
+    if (status && status !== 'ALL') query.status = status;
 
     const [subscriptions, total] = await Promise.all([
       PaidUser.find(query)
@@ -353,6 +356,15 @@ export const declineSubscription = async (req: AuthenticatedRequest, res: Respon
 
     paidUser.status = 'CANCELLED';
     await paidUser.save();
+
+    // If tenant exists and was in PENDING state, update to INACTIVE
+    if (paidUser.tenantId) {
+      const tenant = await Tenant.findById(paidUser.tenantId);
+      if (tenant && tenant.status === 'PENDING') {
+        tenant.status = 'INACTIVE';
+        await tenant.save();
+      }
+    }
 
     res.status(200).json({
       success: true,

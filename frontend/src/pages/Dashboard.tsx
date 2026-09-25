@@ -5,7 +5,7 @@ import { PlansModal, type PlanCategory } from '../components/PlansModal';
 import { 
   Server, HardDrive, Rocket, ArrowRight, Plus, 
   Cpu, Database, Globe, Shield, Zap, ChevronRight,
-  BarChart3, Clock, CheckCircle2, Sparkles, Layers,
+  Clock, CheckCircle2, Sparkles, Layers,
   LogOut, Settings, User, CreditCard, Bell, AlertTriangle
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
