@@ -214,34 +214,34 @@ export const LandingPage = () => {
         </motion.p>
 
         {/* CTA Buttons */}
-        <motion.div variants={scrollReveal} className="flex flex-col sm:flex-row items-center justify-center gap-4 mt-10">
+        <motion.div variants={scrollReveal} className="flex flex-col sm:flex-row items-center justify-center gap-5 mt-10">
           {/* Primary - Get Started */}
           <Link
             to="/register"
-            className="group inline-flex items-center gap-4 bg-white hover:bg-[#c8f542] text-slate-900 font-semibold text-[15px] pl-7 pr-1.5 py-1.5 rounded-full transition-all duration-300 shadow-md hover:shadow-xl hover:scale-105 border border-slate-200/80 hover:border-transparent cursor-pointer"
+            className="group inline-flex items-center gap-4 bg-slate-900 hover:bg-[#c8f542] text-white hover:text-slate-900 font-semibold text-[16px] pl-8 pr-1.5 py-1.5 rounded-full transition-all duration-300 shadow-md hover:shadow-xl hover:scale-105 border border-slate-900 hover:border-transparent cursor-pointer"
           >
             <span>Get Started</span>
-            <span className="w-9 h-9 rounded-full bg-[#c8f542] group-hover:bg-[#1c1c1f] flex items-center justify-center relative overflow-hidden flex-shrink-0 transition-colors duration-300 shadow-sm">
+            <span className="w-[46px] h-[46px] rounded-full bg-[#c8f542] group-hover:bg-[#1c1c1f] flex items-center justify-center relative overflow-hidden flex-shrink-0 transition-colors duration-300 shadow-sm">
               {/* Outgoing dark arrow on lime circle (slides right on hover) */}
-              <ArrowRight className="w-4 h-4 text-slate-900 absolute transition-all duration-300 ease-out transform translate-x-0 opacity-100 group-hover:translate-x-7 group-hover:opacity-0 stroke-[2.7]" />
+              <ArrowRight className="w-5 h-5 text-slate-900 absolute transition-all duration-300 ease-out transform translate-x-0 opacity-100 group-hover:translate-x-9 group-hover:opacity-0 stroke-[2.7]" />
               
               {/* Incoming white arrow on black circle (slides from left to center on hover) */}
-              <ArrowRight className="w-4 h-4 text-white absolute transition-all duration-300 ease-out transform -translate-x-7 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 stroke-[2.7]" />
+              <ArrowRight className="w-5 h-4 text-white absolute transition-all duration-300 ease-out transform -translate-x-9 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 stroke-[2.7]" />
             </span>
           </Link>
 
           {/* Secondary - Learn More */}
           <a
             href="#features"
-            className="group inline-flex items-center gap-4 bg-white hover:bg-[#c8f542] text-slate-900 font-semibold text-[15px] pl-7 pr-1.5 py-1.5 rounded-full transition-all duration-300 shadow-md hover:shadow-xl hover:scale-105 border border-slate-200/80 hover:border-transparent cursor-pointer"
+            className="group inline-flex items-center gap-4 bg-white hover:bg-[#c8f542] text-slate-900 font-semibold text-[16px] pl-8 pr-1.5 py-1.5 rounded-full transition-all duration-300 shadow-md hover:shadow-xl hover:scale-105 border border-slate-200/80 hover:border-transparent cursor-pointer"
           >
             <span>Learn More</span>
-            <span className="w-9 h-9 rounded-full bg-[#c8f542] group-hover:bg-[#1c1c1f] flex items-center justify-center relative overflow-hidden flex-shrink-0 transition-colors duration-300 shadow-sm">
+            <span className="w-[46px] h-[46px] rounded-full bg-[#c8f542] group-hover:bg-[#1c1c1f] flex items-center justify-center relative overflow-hidden flex-shrink-0 transition-colors duration-300 shadow-sm">
               {/* Outgoing dark arrow on lime circle (slides right on hover) */}
-              <ArrowRight className="w-4 h-4 text-slate-900 absolute transition-all duration-300 ease-out transform translate-x-0 opacity-100 group-hover:translate-x-7 group-hover:opacity-0 stroke-[2.7]" />
+              <ArrowRight className="w-5 h-5 text-slate-900 absolute transition-all duration-300 ease-out transform translate-x-0 opacity-100 group-hover:translate-x-9 group-hover:opacity-0 stroke-[2.7]" />
               
               {/* Incoming white arrow on black circle (slides from left to center on hover) */}
-              <ArrowRight className="w-4 h-4 text-white absolute transition-all duration-300 ease-out transform -translate-x-7 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 stroke-[2.7]" />
+              <ArrowRight className="w-5 h-5 text-white absolute transition-all duration-300 ease-out transform -translate-x-9 opacity-0 group-hover:translate-x-0 group-hover:opacity-100 stroke-[2.7]" />
             </span>
           </a>
         </motion.div>

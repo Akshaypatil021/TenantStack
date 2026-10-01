@@ -61,3 +61,61 @@ export const sendInvitationEmail = async (
     throw new Error('Failed to send invitation email');
   }
 };
+
+/**
+ * Send project-level invitation email to a collaborator.
+ * Uses a separate invite route (/invite/project/:token) so the frontend
+ * can distinguish between tenant invites and project invites.
+ */
+export const sendProjectInvitationEmail = async (
+  toEmail: string,
+  inviteToken: string,
+  projectName: string,
+  inviterName: string,
+  roleName: string
+): Promise<void> => {
+  try {
+    const inviteUrl = `http://localhost:5173/invite/project/${inviteToken}`;
+
+    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+      console.log('=============================================');
+      console.log(`[MOCK EMAIL - PROJECT INVITE] To: ${toEmail}`);
+      console.log(`[MOCK EMAIL - PROJECT INVITE] Subject: ${inviterName} invited you to collaborate on "${projectName}"`);
+      console.log(`[MOCK EMAIL - PROJECT INVITE] Role: ${roleName}`);
+      console.log(`[MOCK EMAIL - PROJECT INVITE] Link: ${inviteUrl}`);
+      console.log('=============================================');
+      return;
+    }
+
+    const transporter = createTransporter();
+
+    const info = await transporter.sendMail({
+      from: `"TenantFlow" <${process.env.SMTP_USER}>`,
+      to: toEmail,
+      subject: `${inviterName} invited you to collaborate on "${projectName}"`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px;">
+          <h2 style="color: #0f172a;">You're Invited to Collaborate 🚀</h2>
+          <p style="color: #475569; font-size: 16px;">
+            <strong>${inviterName}</strong> has invited you to join the project
+            <strong>"${projectName}"</strong> as a <strong>${roleName}</strong>.
+          </p>
+          <div style="margin: 30px 0;">
+            <a href="${inviteUrl}" style="background-color: #c8f542; color: #0f172a; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+              Accept & Join Project
+            </a>
+          </div>
+          <p style="color: #94a3b8; font-size: 12px; margin-top: 40px;">
+            This invitation expires in 7 days. If you did not expect this, you can safely ignore this email.
+          </p>
+        </div>
+      `,
+    });
+
+    console.log(`Project invite email sent: ${info.messageId}`);
+  } catch (error) {
+    console.error('Error sending project invitation email:', error);
+    throw new Error('Failed to send project invitation email');
+  }
+};
+

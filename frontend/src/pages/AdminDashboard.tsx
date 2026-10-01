@@ -9,7 +9,8 @@ import {
   Zap, Clock, UserCheck, Activity,
   FileText, RefreshCw, AlertTriangle, CheckCircle2,
   XCircle, Cpu, Database, X, Home,
-  PanelLeftClose, PanelLeftOpen, Menu, Info, Shield, ClipboardList
+  PanelLeftClose, PanelLeftOpen, Menu, Info, Shield, ClipboardList,
+  Sparkles, ArrowRight
 } from 'lucide-react';
 
 // ─── Animations ───
@@ -30,6 +31,8 @@ interface AdminStats {
   activeTenants: number;
   totalPaidUsers: number;
   pendingApprovals?: number;
+  suspendedTenants?: number;
+  failedInvoices?: number;
   freeUsers: number;
   totalInvoices: number;
   totalRevenue: number;
@@ -439,12 +442,12 @@ export const AdminDashboard = () => {
                         !isExpanded ? (
                           <span className="absolute top-1.5 right-1.5 w-2.5 h-2.5 rounded-full bg-amber-500 ring-2 ring-white animate-pulse" />
                         ) : (
-                          <span className={`ml-auto px-2 py-0.5 text-[11px] font-extrabold rounded-full ${
+                          <span className={`ml-auto flex items-center justify-center min-w-[20px] h-5 px-1.5 text-[11px] font-bold rounded-full ${
                             isActive
-                              ? 'bg-[#c8f542] text-slate-950'
-                              : 'bg-amber-400 text-amber-950 animate-pulse'
+                              ? 'bg-slate-900 text-[#c8f542] shadow-sm'
+                              : 'bg-amber-100 text-amber-700'
                           }`}>
-                            {tab.badge} Pending
+                            {tab.badge}
                           </span>
                         )
                       )}
@@ -723,6 +726,55 @@ export const AdminDashboard = () => {
           {/* ─── 1. OVERVIEW TAB ─── */}
           {activeTab === 'overview' && stats && (
             <>
+              {/* Operational Briefing Card */}
+              {(stats.pendingApprovals || 0) > 0 && (
+                <motion.div variants={fadeUp} className="mb-8 bg-white border border-slate-200 shadow-sm rounded-2xl p-6 md:p-8 flex flex-col md:flex-row gap-6 justify-between relative overflow-hidden">
+                  <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-[#c8f542]/20 to-transparent opacity-50 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
+                  
+                  <div className="relative z-10 flex-1">
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#c8f542]/20 border border-[#c8f542]/50 text-slate-800 text-xs font-bold mb-4">
+                      <Sparkles className="w-3.5 h-3.5 text-slate-700" />
+                      <span>Operational briefing</span>
+                    </div>
+                    
+                    <h2 className="text-2xl md:text-[28px] font-extrabold text-slate-900 tracking-tight leading-none mb-2">Good afternoon.</h2>
+                    <p className="text-slate-500 mb-6 text-sm md:text-base">You have operational items requiring attention today.</p>
+                    
+                    <div className="flex flex-wrap gap-x-6 gap-y-3">
+                      <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                        <div className="w-2 h-2 rounded-full bg-purple-500" />
+                        {stats.pendingApprovals || 0} payments awaiting verification
+                      </div>
+                      <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                        <div className="w-2 h-2 rounded-full bg-rose-500" />
+                        {stats.failedInvoices || 0} overdue invoices
+                      </div>
+                      <div className="flex items-center gap-2 text-sm font-semibold text-slate-700">
+                        <div className="w-2 h-2 rounded-full bg-amber-500" />
+                        {stats.suspendedTenants || 0} open maintenance tickets
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="relative z-10 flex flex-col gap-3 justify-center md:min-w-[260px]">
+                    <button 
+                      onClick={() => { setActiveTab('subscriptions'); setSubFilter('PENDING_APPROVAL'); }}
+                      className="w-full flex items-center justify-between px-5 py-3 bg-slate-900 hover:bg-[#c8f542] text-white hover:text-slate-900 rounded-xl text-[15px] font-bold transition-all shadow-md hover:shadow-lg"
+                    >
+                      <span>Review attention queue</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                    <button 
+                      onClick={() => setActiveTab('invoices')}
+                      className="w-full flex items-center justify-between px-5 py-3 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 hover:border-slate-300 rounded-xl text-[15px] font-bold transition-all"
+                    >
+                      <span>View billing collection</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+
               {/* KPI Stat Cards */}
               <motion.div variants={fadeUp} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
                 {[

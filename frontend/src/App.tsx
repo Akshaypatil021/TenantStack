@@ -10,6 +10,7 @@ import { Dashboard } from './pages/Dashboard';
 import { Projects } from './pages/Projects';
 import { Billing } from './pages/Billing';
 import { AcceptInvite } from './pages/AcceptInvite';
+import { AcceptProjectInvite } from './pages/AcceptProjectInvite';
 import { AdminDashboard } from './pages/AdminDashboard';
 
 // Scroll to top on route transition
@@ -65,6 +66,10 @@ function AppRoutes() {
         path="/invite/:token"
         element={isAuthenticated ? <Navigate to={user?.email === 'admin@gmail.com' ? "/admin" : "/dashboard"} replace /> : <AcceptInvite />}
       />
+      <Route
+        path="/invite/project/:token"
+        element={isAuthenticated ? <Navigate to={user?.email === 'admin@gmail.com' ? "/admin" : "/dashboard"} replace /> : <AcceptProjectInvite />}
+      />
 
       {/* Dashboard - Full page with its own light-theme nav */}
       <Route
@@ -75,7 +80,7 @@ function AppRoutes() {
       {/* Admin Dashboard - Full page with its own layout */}
       <Route
         path="/admin"
-        element={isAuthenticated ? <AdminDashboard /> : <Navigate to="/login" replace />}
+        element={isAuthenticated && user?.email === 'admin@gmail.com' ? <AdminDashboard /> : <Navigate to={isAuthenticated ? "/dashboard" : "/login"} replace />}
       />
 
       {/* Protected SaaS App Routes (with sidebar/navbar layout) */}

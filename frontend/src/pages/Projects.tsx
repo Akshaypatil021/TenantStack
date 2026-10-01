@@ -10,7 +10,12 @@ import {
   Upload, 
   Trash2, 
   HardDrive, 
-  FileText 
+  FileText,
+  Users,
+  UserPlus,
+  Shield,
+  Clock,
+  UserCheck
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
@@ -31,6 +36,18 @@ export const Projects = () => {
   const [uploading, setUploading] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
   const [isFileLimitError, setIsFileLimitError] = useState(false);
+
+  // Collaborators State
+  const [activeProjectForMembers, setActiveProjectForMembers] = useState<any>(null);
+  const [projectMembers, setProjectMembers] = useState<any[]>([]);
+  const [projectInvitations, setProjectInvitations] = useState<any[]>([]);
+  const [membersLoading, setMembersLoading] = useState(false);
+  
+  const [inviteEmail, setInviteEmail] = useState('');
+  const [inviteRole, setInviteRole] = useState('CONTRIBUTOR');
+  const [inviteError, setInviteError] = useState<string | null>(null);
+  const [inviteSuccess, setInviteSuccess] = useState<string | null>(null);
+  const [isInviting, setIsInviting] = useState(false);
 
   useEffect(() => {
     fetchProjects();
@@ -171,6 +188,101 @@ export const Projects = () => {
     }
   };
 
+  // ─── Collaborators Functions ───
+
+  const openMembersModal = async (project: any) => {
+    setActiveProjectForMembers(project);
+    setInviteError(null);
+    setInviteSuccess(null);
+    setMembersLoading(true);
+    try {
+      const res = await fetch(`http://localhost:5000/api/v1/projects/${project._id}/members`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setProjectMembers(data.members || []);
+        setProjectInvitations(data.pendingInvitations || []);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setMembersLoading(false);
+    }
+  };
+
+  const handleInviteUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setInviteError(null);
+    setInviteSuccess(null);
+    setIsInviting(true);
+
+    try {
+      const res = await fetch(`http://localhost:5000/api/v1/projects/${activeProjectForMembers._id}/invite`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ email: inviteEmail, role: inviteRole }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Failed to invite user');
+      }
+
+      setInviteSuccess(`Invitation sent to ${inviteEmail}`);
+      setInviteEmail('');
+      setInviteRole('CONTRIBUTOR');
+      
+      // Refresh members list
+      openMembersModal(activeProjectForMembers);
+    } catch (err: any) {
+      setInviteError(err.message);
+    } finally {
+      setIsInviting(false);
+    }
+  };
+
+  const handleRemoveMember = async (memberId: string) => {
+    if (!confirm('Are you sure you want to remove this member?')) return;
+    
+    try {
+      const res = await fetch(`http://localhost:5000/api/v1/projects/${activeProjectForMembers._id}/members/${memberId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.ok) {
+        setProjectMembers(projectMembers.filter((m) => m.user._id !== memberId));
+      } else {
+        const data = await res.json();
+        alert(data.error || 'Failed to remove member');
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleRevokeInvite = async (invitationId: string) => {
+    if (!confirm('Are you sure you want to revoke this invitation?')) return;
+
+    try {
+      const res = await fetch(`http://localhost:5000/api/v1/projects/${activeProjectForMembers._id}/invitations/${invitationId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (res.ok) {
+        setProjectInvitations(projectInvitations.filter((i) => i._id !== invitationId));
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -261,13 +373,20 @@ export const Projects = () => {
                 </p>
               </div>
 
-              <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between">
+              <div className="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between gap-2">
+                <button
+                  onClick={() => openMembersModal(project)}
+                  className="flex-1 text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold px-3 py-2 rounded-xl transition flex items-center justify-center gap-1.5"
+                >
+                  <Users className="w-3.5 h-3.5" />
+                  Members
+                </button>
                 <button
                   onClick={() => openFileModal(project)}
-                  className="text-xs bg-slate-800 hover:bg-slate-700 text-purple-300 font-semibold px-3 py-2 rounded-xl transition flex items-center gap-1.5"
+                  className="flex-1 text-xs bg-slate-800 hover:bg-slate-700 text-purple-300 font-semibold px-3 py-2 rounded-xl transition flex items-center justify-center gap-1.5"
                 >
                   <Paperclip className="w-3.5 h-3.5" />
-                  Files & Attachments
+                  Files
                 </button>
               </div>
             </div>
@@ -459,6 +578,156 @@ export const Projects = () => {
                     </button>
                   </div>
                 ))
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Collaborators Modal */}
+      {activeProjectForMembers && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-slate-900 border border-slate-800 w-full max-w-2xl rounded-2xl p-6 shadow-2xl relative max-h-[90vh] flex flex-col">
+            <button
+              onClick={() => setActiveProjectForMembers(null)}
+              className="absolute right-4 top-4 text-slate-400 hover:text-white"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <h2 className="text-xl font-bold text-white mb-1">
+              Project Members: <span className="text-purple-400">{activeProjectForMembers.name}</span>
+            </h2>
+            <p className="text-xs text-slate-400 mb-6">Manage who has access to this project.</p>
+
+            {/* Invite Form */}
+            <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 mb-6">
+              <h3 className="text-sm font-semibold text-white mb-3 flex items-center gap-2">
+                <UserPlus className="w-4 h-4 text-purple-400" />
+                Invite Collaborator
+              </h3>
+              
+              {inviteError && (
+                <div className="mb-3 p-3 bg-rose-500/10 border border-rose-500/20 text-rose-400 text-xs rounded-lg flex items-start gap-2">
+                  <AlertTriangle className="w-4 h-4 shrink-0" />
+                  <p>{inviteError}</p>
+                </div>
+              )}
+              {inviteSuccess && (
+                <div className="mb-3 p-3 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs rounded-lg">
+                  <p>{inviteSuccess}</p>
+                </div>
+              )}
+
+              <form onSubmit={handleInviteUser} className="flex flex-col sm:flex-row gap-3">
+                <input
+                  type="email"
+                  required
+                  placeholder="colleague@example.com"
+                  value={inviteEmail}
+                  onChange={(e) => setInviteEmail(e.target.value)}
+                  className="flex-1 bg-slate-800 border border-slate-600 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                />
+                <select
+                  value={inviteRole}
+                  onChange={(e) => setInviteRole(e.target.value)}
+                  className="bg-slate-800 border border-slate-600 rounded-lg p-2 text-sm text-white focus:outline-none focus:border-purple-500"
+                >
+                  <option value="ADMIN">Admin</option>
+                  <option value="CONTRIBUTOR">Contributor</option>
+                  <option value="VIEWER">Viewer</option>
+                </select>
+                <button
+                  type="submit"
+                  disabled={isInviting}
+                  className="bg-purple-600 hover:bg-purple-500 text-white font-semibold px-4 py-2 rounded-lg text-sm transition whitespace-nowrap disabled:opacity-50"
+                >
+                  {isInviting ? 'Sending...' : 'Send Invite'}
+                </button>
+              </form>
+            </div>
+
+            {/* Members List */}
+            <div className="flex-1 overflow-y-auto">
+              <h3 className="text-sm font-semibold text-slate-300 mb-3 border-b border-slate-800 pb-2">Active Members</h3>
+              {membersLoading ? (
+                <p className="text-center py-4 text-slate-500 text-xs">Loading members...</p>
+              ) : (
+                <div className="space-y-2 mb-6">
+                  {projectMembers.map((member) => (
+                    <div key={member.user._id} className="bg-slate-800/40 p-3 rounded-lg flex items-center justify-between group">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center text-white font-bold text-xs">
+                          {member.user.firstName.charAt(0)}{member.user.lastName?.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-white">
+                            {member.user.firstName} {member.user.lastName}
+                          </p>
+                          <p className="text-[10px] text-slate-400">{member.user.email}</p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-3">
+                        <span className={`text-[10px] px-2 py-1 rounded border font-semibold flex items-center gap-1 ${
+                          member.role === 'OWNER' ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' :
+                          member.role === 'ADMIN' ? 'bg-purple-500/10 border-purple-500/20 text-purple-400' :
+                          member.role === 'CONTRIBUTOR' ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' :
+                          'bg-slate-500/10 border-slate-500/20 text-slate-400'
+                        }`}>
+                          {member.role === 'OWNER' && <Shield className="w-3 h-3" />}
+                          {member.role}
+                        </span>
+                        
+                        {member.role !== 'OWNER' && (
+                          <button
+                            onClick={() => handleRemoveMember(member.user._id)}
+                            className="text-slate-500 hover:text-rose-400 opacity-0 group-hover:opacity-100 transition p-1"
+                            title="Remove member"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Pending Invitations */}
+              {projectInvitations.length > 0 && (
+                <>
+                  <h3 className="text-sm font-semibold text-slate-300 mb-3 border-b border-slate-800 pb-2">Pending Invitations</h3>
+                  <div className="space-y-2">
+                    {projectInvitations.map((invite) => (
+                      <div key={invite._id} className="bg-slate-800/40 p-3 rounded-lg flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-slate-400">
+                            <Clock className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-semibold text-white">{invite.email}</p>
+                            <p className="text-[10px] text-slate-400">
+                              Expires {new Date(invite.expiresAt).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-3">
+                          <span className="text-[10px] px-2 py-1 rounded border bg-slate-500/10 border-slate-500/20 text-slate-400 font-semibold">
+                            {invite.role}
+                          </span>
+                          <button
+                            onClick={() => handleRevokeInvite(invite._id)}
+                            className="text-xs text-rose-400 hover:text-rose-300 px-2 py-1 rounded hover:bg-rose-500/10 transition"
+                          >
+                            Revoke
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </>
               )}
             </div>
           </div>

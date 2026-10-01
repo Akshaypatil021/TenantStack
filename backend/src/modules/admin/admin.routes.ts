@@ -8,12 +8,33 @@ import {
   approveSubscription,
   declineSubscription,
 } from './admin.controller';
-import { authenticate } from '../../middleware/auth.middleware';
+import { authenticate, AuthenticatedRequest } from '../../middleware/auth.middleware';
+import { Response, NextFunction } from 'express';
+import User from '../users/user.model';
 
 const router = Router();
 
-// All admin routes require authentication
+// Middleware to enforce admin access
+const requireAdmin = async (req: AuthenticatedRequest, res: Response, next: NextFunction): Promise<void> => {
+  try {
+    if (!req.user || !req.user.userId) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const user = await User.findById(req.user.userId);
+    if (!user || user.email !== 'admin@gmail.com') {
+      res.status(403).json({ error: 'Forbidden: Admin access required' });
+      return;
+    }
+    next();
+  } catch (error) {
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+// All admin routes require authentication and admin role
 router.use(authenticate);
+router.use(requireAdmin);
 
 // Dashboard overview stats
 router.get('/stats', getAdminStats);

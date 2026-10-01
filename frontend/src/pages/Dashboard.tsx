@@ -127,9 +127,11 @@ export const Dashboard = () => {
               <Bell className="w-5 h-5" />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#c8f542] rounded-full"></span>
             </button>
-            <Link to="/admin" className="p-2 text-slate-400 hover:text-[#5E9F71] hover:bg-[#c8f542]/10 rounded-xl transition" title="Admin Panel">
-              <Shield className="w-5 h-5" />
-            </Link>
+            {user?.email === 'admin@gmail.com' && (
+              <Link to="/admin" className="p-2 text-slate-400 hover:text-[#5E9F71] hover:bg-[#c8f542]/10 rounded-xl transition" title="Admin Panel">
+                <Shield className="w-5 h-5" />
+              </Link>
+            )}
             <button className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition">
               <Settings className="w-5 h-5" />
             </button>

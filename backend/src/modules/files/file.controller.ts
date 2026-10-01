@@ -8,7 +8,25 @@ import { StorageService } from '../../services/storage.service';
 import { getOrSetCache, invalidateCache } from '../../services/redis.service';
 
 /**
+ * Helper: Check if a user has access to a project.
+ * Returns the project document if access is granted, null otherwise.
+ * Access is granted if user is the project creator OR is in the members array.
+ */
+const verifyProjectAccess = async (projectId: string, userId: string, tenantId: string) => {
+  const project = await Project.findOne({ _id: projectId, tenantId });
+  if (!project) return null;
+
+  const isCreator = project.createdBy.toString() === userId;
+  const isMember = project.members.some((m) => m.user.toString() === userId);
+
+  if (!isCreator && !isMember) return null;
+
+  return project;
+};
+
+/**
  * Upload a file to a project
+ * Access: Project creator + all project members with OWNER/ADMIN/CONTRIBUTOR role
  */
 export const uploadFile = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
@@ -25,13 +43,24 @@ export const uploadFile = async (req: AuthenticatedRequest, res: Response): Prom
       return;
     }
 
-    // Verify project belongs to tenant
-    const project = await Project.findOne({ _id: projectId, tenantId: req.user.tenantId });
+    // Verify project access (creator or member)
+    const project = await verifyProjectAccess(projectId as string, req.user.userId, req.user.tenantId as string);
     if (!project) {
-      // Clean up uploaded file if project not found
+      // Clean up uploaded file if project not found or no access
       StorageService.deleteFile(file.path);
-      res.status(404).json({ error: 'Project not found' });
+      res.status(403).json({ error: 'Access Denied: You do not have access to this project' });
       return;
+    }
+
+    // Check member role: VIEWER cannot upload files
+    const isCreator = project.createdBy.toString() === req.user.userId;
+    if (!isCreator) {
+      const memberEntry = project.members.find((m) => m.user.toString() === req.user!.userId);
+      if (memberEntry && memberEntry.role === 'VIEWER') {
+        StorageService.deleteFile(file.path);
+        res.status(403).json({ error: 'Viewer role cannot upload files. Contact the project admin.' });
+        return;
+      }
     }
 
     const fileSizeBytes = file.size;
@@ -69,7 +98,8 @@ export const uploadFile = async (req: AuthenticatedRequest, res: Response): Prom
 };
 
 /**
- * Get all files for a specific project (Tenant isolated)
+ * Get all files for a specific project (Tenant + Project Member isolated)
+ * Access: Project creator + all project members
  */
 export const getProjectFiles = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
@@ -79,6 +109,13 @@ export const getProjectFiles = async (req: AuthenticatedRequest, res: Response):
     }
 
     const { projectId } = req.params;
+
+    // Verify project access
+    const project = await verifyProjectAccess(projectId as string, req.user.userId, req.user.tenantId as string);
+    if (!project) {
+      res.status(403).json({ error: 'Access Denied: You do not have access to this project' });
+      return;
+    }
 
     const files = await FileModel.find({
       tenantId: req.user.tenantId,
@@ -95,7 +132,8 @@ export const getProjectFiles = async (req: AuthenticatedRequest, res: Response):
 };
 
 /**
- * Delete a file (Tenant isolated)
+ * Delete a file (Tenant + Project Member isolated)
+ * Access: Project OWNER/ADMIN, or the user who uploaded the file
  */
 export const deleteFile = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
@@ -113,6 +151,28 @@ export const deleteFile = async (req: AuthenticatedRequest, res: Response): Prom
 
     if (!file) {
       res.status(404).json({ error: 'File not found or access denied' });
+      return;
+    }
+
+    // Verify project access for the file's project
+    const project = await verifyProjectAccess(
+      file.projectId.toString(),
+      req.user.userId,
+      req.user.tenantId as string
+    );
+    if (!project) {
+      res.status(403).json({ error: 'Access Denied: You do not have access to this project' });
+      return;
+    }
+
+    // Only OWNER/ADMIN or the uploader can delete files
+    const isCreator = project.createdBy.toString() === req.user.userId;
+    const memberEntry = project.members.find((m) => m.user.toString() === req.user!.userId);
+    const isAdminLevel = isCreator || (memberEntry && ['OWNER', 'ADMIN'].includes(memberEntry.role));
+    const isUploader = file.uploadedBy.toString() === req.user.userId;
+
+    if (!isAdminLevel && !isUploader) {
+      res.status(403).json({ error: 'Only project admins or the file uploader can delete files' });
       return;
     }
 
