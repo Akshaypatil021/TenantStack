@@ -2,10 +2,13 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   FolderKanban, 
-  CreditCard, 
   LogOut, 
   Layers,
-  Building2
+  Building2,
+  Activity,
+  Users,
+  Server,
+  HardDrive
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
@@ -19,38 +22,44 @@ export const Sidebar = () => {
   };
 
   const navItems = [
-    { name: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+    { name: 'Overview', path: '/dashboard', icon: LayoutDashboard },
     { name: 'Projects', path: '/projects', icon: FolderKanban },
-    { name: 'Billing & Plans', path: '/billing', icon: CreditCard },
+    { name: 'Compute', path: '/compute', icon: Server },
+    { name: 'Storage', path: '/storage', icon: HardDrive },
+    { name: 'Activity', path: '/activity', icon: Activity },
+    { name: 'Team', path: '/team', icon: Users },
   ];
 
   return (
-    <aside className="w-64 bg-slate-900 border-r border-slate-800 flex flex-col justify-between h-screen sticky top-0">
+    <aside className="w-64 bg-white border-r border-slate-100 flex flex-col justify-between h-screen sticky top-0 z-40">
       <div>
         {/* Brand Logo */}
-        <div className="p-6 flex items-center gap-3 border-b border-slate-800">
-          <div className="bg-gradient-to-tr from-purple-600 to-indigo-500 p-2.5 rounded-xl shadow-lg shadow-purple-500/20">
-            <Layers className="w-6 h-6 text-white" />
+        <div className="h-16 px-6 flex items-center gap-3 border-b border-slate-100">
+          <div className="relative shrink-0">
+            <div className="absolute inset-0 bg-[#c8f542] rounded-xl blur-md opacity-40"></div>
+            <div className="relative bg-slate-900 text-[#c8f542] p-2 rounded-xl">
+              <Layers className="w-5 h-5" />
+            </div>
           </div>
           <div>
-            <h1 className="font-bold text-lg text-white tracking-wider">TenantFlow</h1>
-            <p className="text-xs text-purple-400 font-medium">SaaS Platform</p>
+            <h1 className="font-bold text-base text-slate-900 tracking-wider">TenantStack</h1>
+            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">Workspace</p>
           </div>
         </div>
 
         {/* Tenant Indicator */}
         {tenant && (
-          <div className="mx-4 my-4 p-3 bg-slate-800/60 rounded-lg border border-slate-700/50 flex items-center gap-3">
-            <Building2 className="w-5 h-5 text-indigo-400 shrink-0" />
+          <div className="mx-4 my-4 p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center gap-3">
+            <Building2 className="w-5 h-5 text-slate-400 shrink-0" />
             <div className="truncate">
-              <p className="text-xs text-slate-400 font-medium">Organization</p>
-              <p className="text-sm font-semibold text-slate-200 truncate">{tenant.name}</p>
+              <p className="text-xs text-slate-500 font-medium">Organization</p>
+              <p className="text-sm font-semibold text-slate-900 truncate">{tenant.name}</p>
             </div>
           </div>
         )}
 
         {/* Navigation Links */}
-        <nav className="p-4 space-y-1">
+        <nav className="p-4 space-y-1.5">
           {navItems.map((item) => {
             const Icon = item.icon;
             return (
@@ -58,15 +67,19 @@ export const Sidebar = () => {
                 key={item.path}
                 to={item.path}
                 className={({ isActive }) =>
-                  `flex items-center gap-3 px-4 py-3 rounded-lg font-medium text-sm transition-all duration-200 ${
+                  `relative w-full flex items-center gap-3 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all duration-200 group ${
                     isActive
-                      ? 'bg-purple-600/10 text-purple-400 border border-purple-500/20 shadow-sm'
-                      : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+                      ? 'bg-slate-900 text-white shadow-sm'
+                      : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
                   }`
                 }
               >
-                <Icon className="w-5 h-5" />
-                {item.name}
+                {({ isActive }) => (
+                  <>
+                    <Icon className={`w-5 h-5 shrink-0 ${isActive ? 'text-[#c8f542]' : 'text-slate-400 group-hover:text-slate-600'}`} />
+                    {item.name}
+                  </>
+                )}
               </NavLink>
             );
           })}
@@ -74,12 +87,12 @@ export const Sidebar = () => {
       </div>
 
       {/* Logout */}
-      <div className="p-4 border-t border-slate-800">
+      <div className="p-4 border-t border-slate-100">
         <button
           onClick={handleLogout}
-          className="w-full flex items-center gap-3 px-4 py-3 rounded-lg font-medium text-sm text-rose-400 hover:bg-rose-500/10 hover:text-rose-300 transition-colors"
+          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-xl font-semibold text-sm text-rose-600 hover:bg-rose-50 transition-colors group"
         >
-          <LogOut className="w-5 h-5" />
+          <LogOut className="w-5 h-5 text-rose-500 group-hover:text-rose-600" />
           Sign Out
         </button>
       </div>

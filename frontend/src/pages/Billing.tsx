@@ -81,8 +81,8 @@ export const Billing = () => {
     <div className="space-y-8">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white tracking-tight">Billing & Subscriptions</h1>
-        <p className="text-sm text-slate-400 mt-1">Manage your plan limits, payment methods, and invoices</p>
+        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Billing & Subscriptions</h1>
+        <p className="text-sm text-slate-500 mt-1">Manage your plan limits, payment methods, and invoices</p>
       </div>
 
       {actionMessage && (
@@ -104,36 +104,36 @@ export const Billing = () => {
           return (
             <div
               key={plan.name}
-              className={`bg-slate-900 border rounded-2xl p-6 relative flex flex-col justify-between transition duration-200 ${
+              className={`bg-white shadow-sm border rounded-2xl p-6 relative flex flex-col justify-between transition duration-200 ${
                 plan.popular
                   ? 'border-purple-500/50 shadow-xl shadow-purple-500/10'
-                  : 'border-slate-800'
+                  : 'border-slate-200'
               }`}
             >
               {plan.popular && (
-                <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[10px] font-bold uppercase tracking-wider rounded-full">
+                <span className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-gradient-to-r from-purple-600 to-indigo-600 text-slate-900 text-[10px] font-bold uppercase tracking-wider rounded-full">
                   Most Popular
                 </span>
               )}
 
               <div>
                 <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-bold text-white">{plan.name}</h3>
+                  <h3 className="text-xl font-bold text-slate-900">{plan.name}</h3>
                   {isCurrent && (
                     <span className="px-2.5 py-0.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold rounded-full">
                       Active
                     </span>
                   )}
                 </div>
-                <p className="text-xs text-slate-400 mt-1">{plan.description}</p>
+                <p className="text-xs text-slate-500 mt-1">{plan.description}</p>
                 <div className="mt-4 flex items-baseline gap-1">
-                  <span className="text-3xl font-bold text-white">{plan.price}</span>
+                  <span className="text-3xl font-bold text-slate-900">{plan.price}</span>
                   <span className="text-slate-600 text-xs font-medium">/month</span>
                 </div>
 
                 <ul className="mt-6 space-y-3">
                   {plan.features.map((feature, idx) => (
-                    <li key={idx} className="flex items-center gap-2 text-xs text-slate-300">
+                    <li key={idx} className="flex items-center gap-2 text-xs text-slate-600">
                       <Check className="w-4 h-4 text-purple-400 shrink-0" />
                       <span>{feature}</span>
                     </li>
@@ -145,14 +145,14 @@ export const Billing = () => {
                 {isCurrent ? (
                   <button
                     disabled
-                    className="w-full bg-slate-800 text-slate-600 font-semibold py-2.5 rounded-xl text-xs cursor-default"
+                    className="w-full bg-slate-100 text-slate-600 font-semibold py-2.5 rounded-xl text-xs cursor-default"
                   >
                     Current Plan
                   </button>
                 ) : (
                   <button
                     onClick={() => handleUpgrade(plan.name as any)}
-                    className="w-full bg-purple-600 hover:bg-purple-500 text-white font-semibold py-2.5 rounded-xl text-xs transition shadow-lg shadow-purple-600/20 flex items-center justify-center gap-1.5"
+                    className="w-full bg-purple-600 hover:bg-purple-500 text-slate-900 font-semibold py-2.5 rounded-xl text-xs transition shadow-lg shadow-purple-600/20 flex items-center justify-center gap-1.5"
                   >
                     <Zap className="w-3.5 h-3.5" />
                     Upgrade to {plan.name}
@@ -165,18 +165,18 @@ export const Billing = () => {
       </div>
 
       {/* Invoice Receipts Table */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6">
+      <div className="bg-white shadow-sm border border-slate-200 rounded-2xl p-6">
         <div className="flex items-center gap-2 mb-6">
           <Receipt className="w-5 h-5 text-purple-400" />
-          <h2 className="text-lg font-bold text-white">Payment Invoices</h2>
+          <h2 className="text-lg font-bold text-slate-900">Payment Invoices</h2>
         </div>
 
         {invoices.length === 0 ? (
           <p className="text-slate-600 text-xs text-center py-6">No billing invoices found yet.</p>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-left text-xs text-slate-300">
-              <thead className="bg-slate-800/50 text-slate-400 font-semibold uppercase tracking-wider border-b border-slate-800">
+            <table className="w-full text-left text-xs text-slate-600">
+              <thead className="bg-slate-100/50 text-slate-500 font-semibold uppercase tracking-wider border-b border-slate-200">
                 <tr>
                   <th className="p-3">Transaction ID</th>
                   <th className="p-3">Plan</th>
@@ -187,16 +187,16 @@ export const Billing = () => {
               </thead>
               <tbody className="divide-y divide-slate-800">
                 {invoices.map((inv) => (
-                  <tr key={inv._id} className="hover:bg-slate-800/30">
+                  <tr key={inv._id} className="hover:bg-slate-100/30">
                     <td className="p-3 font-mono text-purple-300">{inv.transactionId}</td>
-                    <td className="p-3 font-bold text-white">{inv.plan}</td>
+                    <td className="p-3 font-bold text-slate-900">{inv.plan}</td>
                     <td className="p-3 text-slate-200">${inv.amount} USD</td>
                     <td className="p-3">
                       <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-400 font-semibold rounded-full">
                         {inv.status}
                       </span>
                     </td>
-                    <td className="p-3 text-slate-400">{new Date(inv.createdAt).toLocaleString()}</td>
+                    <td className="p-3 text-slate-500">{new Date(inv.createdAt).toLocaleString()}</td>
                   </tr>
                 ))}
               </tbody>

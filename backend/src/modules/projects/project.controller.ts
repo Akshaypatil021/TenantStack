@@ -10,12 +10,14 @@ import { invalidateCache } from '../../services/redis.service';
 import { sendProjectInvitationEmail } from '../../services/email.service';
 import { generateToken } from '../../utils/jwt.util';
 import bcrypt from 'bcrypt';
+import { logActivity } from '../activity/activity.controller';
 
 // ─── Validation Schemas ───
 
 const CreateProjectSchema = z.object({
   name: z.string().min(2),
   description: z.string().optional(),
+  githubRepoUrl: z.string().url().optional(),
 });
 
 const InviteToProjectSchema = z.object({
@@ -45,6 +47,7 @@ export const createProject = async (req: AuthenticatedRequest, res: Response): P
       createdBy: userId,
       name: validatedData.name,
       description: validatedData.description,
+      githubRepoUrl: validatedData.githubRepoUrl,
       status: 'TODO',
       members: [
         {
@@ -60,6 +63,14 @@ export const createProject = async (req: AuthenticatedRequest, res: Response): P
       invalidateCache(`tenant:${tenantId}:projects:count`),
       invalidateCache(`tenant:${tenantId}:subscription`),
     ]);
+
+    await logActivity(
+      tenantId as string,
+      userId as string,
+      'PROJECT_CREATED',
+      `Created project: ${project.name}`,
+      { projectId: project._id, githubRepoUrl: validatedData.githubRepoUrl }
+    );
 
     res.status(201).json({ message: 'Project created successfully', project });
   } catch (error: any) {
@@ -187,6 +198,14 @@ export const inviteToProject = async (req: AuthenticatedRequest, res: Response):
       validatedData.role
     );
 
+    await logActivity(
+      tenantId as string,
+      userId as string,
+      'USER_INVITED',
+      `Invited ${validatedData.email} to project: ${project.name} as ${validatedData.role}`,
+      { projectId, email: validatedData.email, role: validatedData.role }
+    );
+
     res.status(200).json({
       message: 'Project invitation sent successfully',
       invitation: {
@@ -203,7 +222,7 @@ export const inviteToProject = async (req: AuthenticatedRequest, res: Response):
       res.status(400).json({ error: 'An invitation is already pending for this email on this project' });
     } else {
       console.error('Invite to project error:', error);
-      res.status(500).json({ error: 'Internal Server Error' });
+      res.status(500).json({ error: error.message || 'Internal Server Error' });
     }
   }
 };

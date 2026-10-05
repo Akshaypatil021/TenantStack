@@ -66,7 +66,18 @@ export const Login = () => {
       if (data.user.email === 'admin@gmail.com') {
         navigate('/admin');
       } else {
-        navigate('/dashboard');
+        const hasPlan = !!(
+          data.tenant?.computePlan ||
+          data.tenant?.storagePlan ||
+          data.tenant?.subscriptionPlan ||
+          data.tenant?.allocatedResources?.computePlan ||
+          data.tenant?.allocatedResources?.storagePlan
+        );
+        if (hasPlan) {
+          navigate('/dashboard');
+        } else {
+          navigate('/onboarding');
+        }
       }
     } catch (err: any) {
       setError(err.message);
@@ -223,12 +234,12 @@ export const Login = () => {
                     <label className="block text-sm font-semibold text-slate-700">
                       Password <span className="text-rose-500">*</span>
                     </label>
-                    <button
-                      type="button"
+                    <Link
+                      to="/forgot-password"
                       className="text-xs text-[#5E9F71] hover:underline font-medium transition"
                     >
                       Forgot password?
-                    </button>
+                    </Link>
                   </div>
                   <div className="relative">
                     <input

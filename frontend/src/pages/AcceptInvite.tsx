@@ -114,330 +114,242 @@ export const AcceptInvite = () => {
     if (score <= 1) return { score: 1, label: 'Weak', color: 'bg-rose-500' };
     if (score <= 2) return { score: 2, label: 'Fair', color: 'bg-amber-500' };
     if (score <= 3) return { score: 3, label: 'Good', color: 'bg-blue-500' };
-    return { score: 4, label: 'Strong', color: 'bg-emerald-500' };
+    return { score: 4, label: 'Strong', color: 'bg-[#5E9F71]' };
   })();
 
   if (fetching) {
     return (
-      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-500"></div>
+      <div className="min-h-screen bg-white flex flex-col justify-center items-center p-4">
+        <div className="w-12 h-12 border-4 border-slate-200 border-t-[#c8f542] rounded-full animate-spin mb-4"></div>
+        <p className="text-slate-500 font-medium animate-pulse">Loading invitation details...</p>
+      </div>
+    );
+  }
+
+  if (error && !inviteDetails) {
+    return (
+      <div className="min-h-screen bg-white text-slate-900 relative selection:bg-[#c8f542] selection:text-slate-900 flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
+        <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+          <div className="bg-white py-8 px-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 sm:rounded-[2.5rem] sm:px-10 text-center">
+            <div className="w-16 h-16 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <span className="text-2xl text-rose-600 font-bold">!</span>
+            </div>
+            
+            <h2 className="text-2xl font-bold text-slate-900 mb-3">Invitation Error</h2>
+            <p className="text-slate-500 mb-8">{error}</p>
+            
+            <Link
+              to="/login"
+              className="inline-flex items-center justify-center gap-2 bg-[#18181b] hover:bg-slate-800 text-white font-medium py-3 px-6 rounded-full transition-all w-full"
+            >
+              Go to Login
+            </Link>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 flex">
-      {/* Left Branding Panel */}
-      <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden">
-        {/* Animated gradient background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-indigo-950 via-slate-950 to-purple-950" />
-
-        {/* Animated floating orbs */}
+    <div className="min-h-screen bg-white text-slate-900 relative selection:bg-[#c8f542] selection:text-slate-900 overflow-hidden flex flex-col justify-center py-12 px-4 sm:px-6 lg:px-8">
+      {/* Background Grid */}
+      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
         <div
-          className="absolute top-32 right-20 w-80 h-80 bg-indigo-500/20 rounded-full blur-3xl"
-          style={{ animation: 'pulse 5s ease-in-out infinite alternate' }}
-        />
-        <div
-          className="absolute bottom-20 left-16 w-72 h-72 bg-purple-500/15 rounded-full blur-3xl animate-pulse"
-        />
-        
-        {/* Grid pattern overlay */}
-        <div
-          className="absolute inset-0 opacity-[0.03]"
+          className="absolute inset-0"
           style={{
-            backgroundImage:
-              'linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)',
-            backgroundSize: '60px 60px',
+            backgroundImage: 'linear-gradient(to right, rgba(145, 151, 157, 0.6) 1px, transparent 1px), linear-gradient(to bottom, rgba(141, 151, 163, 0.6) 1px, transparent 1px)',
+            backgroundSize: '6.5rem 6.5rem',
+            maskImage: 'radial-gradient(ellipse 80% 50% at 50% 50%, #211818ff 20%, transparent 100%)',
+            WebkitMaskImage: 'radial-gradient(ellipse 80% 50% at 50% 50%, #000 20%, transparent 100%)',
           }}
         />
-
-        {/* Content */}
-        <div className="relative z-10 flex flex-col justify-between p-12 w-full">
-          {/* Logo */}
-          <div className="flex items-center gap-3">
-            <div className="bg-gradient-to-tr from-purple-600 to-indigo-500 p-2.5 rounded-xl shadow-lg shadow-purple-500/25">
-              <Layers className="w-6 h-6 text-white" />
-            </div>
-            <span className="font-bold text-xl text-white tracking-wider">
-              TenantFlow
-            </span>
-          </div>
-
-          {/* Center Content */}
-          <div className="max-w-lg">
-            <h2 className="text-4xl xl:text-5xl font-bold text-white leading-tight tracking-tight">
-              Join your{' '}
-              <span className="bg-gradient-to-r from-indigo-400 via-purple-300 to-pink-400 bg-clip-text text-transparent">
-                workspace
-              </span>
-            </h2>
-            <p className="text-slate-400 text-base mt-5 leading-relaxed">
-              You've been invited to join an organization on TenantFlow. Set up your profile to start collaborating with your team.
-            </p>
-          </div>
-          <div></div>
-        </div>
       </div>
 
-      {/* Right Form Panel */}
-      <div className="flex-1 flex items-center justify-center px-6 py-12 lg:px-16">
-        <div className="w-full max-w-md">
-          {/* Mobile Logo */}
-          <div className="lg:hidden text-center mb-10">
-            <div className="inline-flex p-3 bg-gradient-to-tr from-purple-600 to-indigo-500 rounded-2xl shadow-lg shadow-purple-500/25 mb-4">
-              <Layers className="w-7 h-7 text-white" />
-            </div>
-            <h1 className="text-2xl font-bold text-white tracking-wider">TenantFlow</h1>
-          </div>
+      <div className="absolute top-20 right-1/4 w-32 h-32 bg-[#c8f542]/20 rounded-full blur-3xl pointer-events-none" />
 
-          {/* Header */}
-          <div className="mb-8">
-            <h1 className="text-2xl lg:text-3xl font-bold text-white tracking-tight">
-              Accept Invitation
-            </h1>
-            <p className="text-slate-400 text-sm mt-2">
-              Complete your profile to join the workspace.
+      <div className="sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+        <div className="flex justify-center">
+          <div className="flex items-center gap-2">
+            <div className="w-9 h-9 rounded-full bg-[#c8f542] flex items-center justify-center shadow-sm">
+              <svg viewBox="0 0 32 32" className="w-5 h-5" fill="none" stroke="#0f172a" strokeWidth="2.3" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M16 6 L26 11 L16 16 L6 11 Z" fill="#c8f542" />
+                <path d="M6 11 L6 13.5 L16 18.5 L26 13.5 L26 11" />
+                <path d="M6 17 L16 22 L26 17" />
+                <path d="M6 21 L16 26 L26 21" />
+              </svg>
+            </div>
+            <span className="font-bold text-2xl text-slate-900 tracking-tight">TenantStack</span>
+          </div>
+        </div>
+        <h2 className="mt-8 text-center text-3xl font-bold text-slate-900 tracking-tight">
+          Accept Invitation
+        </h2>
+        <p className="mt-2 text-center text-sm text-slate-500">
+          Complete your profile to join the workspace.
+        </p>
+      </div>
+
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md relative z-10">
+        <div className="bg-white py-8 px-4 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 sm:rounded-[2.5rem] sm:px-10">
+          
+          <div className="mb-8 bg-slate-50 p-6 rounded-2xl border border-slate-100 flex flex-col items-center text-center">
+            <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center mb-4 shadow-sm border border-slate-200">
+              <Layers className="w-6 h-6 text-slate-700" />
+            </div>
+            
+            <p className="text-slate-500 text-sm mb-1">
+              You've been invited to join:
             </p>
+            <h3 className="text-xl font-bold text-slate-900 mb-1">{inviteDetails?.tenant.name || 'Workspace'}</h3>
+            <div className="flex items-center justify-center gap-2 text-xs font-medium mt-3 bg-white px-3 py-1.5 rounded-full border border-slate-200 shadow-sm">
+              <span className="text-slate-500">Role:</span>
+              <span className="text-[#5E9F71]">{inviteDetails?.role.name || 'Member'}</span>
+            </div>
           </div>
 
-          {/* Error state if invite invalid */}
-          {error && !inviteDetails ? (
-            <div className="bg-slate-900 border border-slate-800 rounded-xl p-6 text-center shadow-xl">
-              <div className="w-12 h-12 bg-rose-500/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <span className="text-rose-400 text-xl font-bold">!</span>
-              </div>
-              <h3 className="text-lg font-semibold text-white mb-2">Invitation Error</h3>
-              <p className="text-slate-400 text-sm mb-6">{error}</p>
-              <Link
-                to="/login"
-                className="inline-flex items-center gap-2 text-purple-400 hover:text-purple-300 text-sm font-medium transition"
-              >
-                Go to Login <ArrowRight className="w-4 h-4" />
-              </Link>
+          {error && (
+            <div className="mb-6 p-3 bg-rose-50 text-rose-600 text-sm font-medium rounded-xl border border-rose-100 flex items-center justify-center">
+              <p>{error}</p>
             </div>
-          ) : inviteDetails ? (
-            <>
-              {/* Error Alert */}
-              {error && (
-                <div className="mb-6 p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-start gap-3 animate-[slideDown_0.3s_ease-out]">
-                  <div className="w-5 h-5 bg-rose-500/20 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <span className="text-rose-400 text-xs font-bold">!</span>
-                  </div>
-                  <p className="text-rose-400 text-sm">{error}</p>
-                </div>
-              )}
+          )}
 
-              {/* Organization Preview */}
-              <div className="bg-slate-900/60 border border-slate-800 rounded-xl p-4 flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-gradient-to-br from-purple-600 to-indigo-500 rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-purple-500/20">
-                  {inviteDetails.tenant?.name?.[0]?.toUpperCase() || 'O'}
+          <form className="space-y-5" onSubmit={handleSubmit}>
+            {/* Email (Read only) */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2 ml-1">
+                Work Email
+              </label>
+              <div className="relative flex items-center rounded-xl overflow-hidden border border-slate-200 bg-slate-50">
+                <div className="pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <Mail className="h-5 w-5" />
                 </div>
-                <div className="flex-1">
-                  <p className="text-slate-400 text-xs uppercase tracking-wider font-semibold mb-0.5">Invited to</p>
-                  <p className="text-white text-sm font-semibold truncate">
-                    {inviteDetails.tenant?.name || 'Workspace'}
-                  </p>
-                </div>
-                <div className="px-2.5 py-1 bg-purple-500/20 text-purple-400 rounded text-xs font-semibold">
-                  {inviteDetails.role?.name || 'Member'}
+                <input
+                  type="email"
+                  disabled
+                  className="block w-full bg-transparent py-3 pl-3 pr-3 text-slate-500 cursor-not-allowed sm:text-sm"
+                  value={inviteDetails?.email || ''}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              {/* First Name */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2 ml-1">
+                  First Name
+                </label>
+                <div className={`relative flex items-center transition-all duration-300 rounded-xl overflow-hidden border ${focusedField === 'firstName' ? 'border-[#c8f542] ring-2 ring-[#c8f542]/20' : 'border-slate-200'}`}>
+                  <div className="pl-3.5 flex items-center pointer-events-none text-slate-400">
+                    <User className="h-5 w-5" />
+                  </div>
+                  <input
+                    required
+                    type="text"
+                    className="block w-full bg-slate-50 py-3 pl-3 pr-3 text-slate-900 placeholder-slate-400 focus:outline-none sm:text-sm"
+                    placeholder="John"
+                    value={formData.firstName}
+                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    onFocus={() => setFocusedField('firstName')}
+                    onBlur={() => setFocusedField(null)}
+                  />
                 </div>
               </div>
 
-              {/* Form */}
-              <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Email (Read-only) */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                    Work Email
-                  </label>
-                  <div className="relative rounded-xl">
-                    <Mail className="w-5 h-5 absolute left-3.5 top-3.5 text-slate-500" />
-                    <input
-                      type="email"
-                      readOnly
-                      value={inviteDetails.email}
-                      className="w-full bg-slate-900/40 border border-slate-800 rounded-xl py-3 pl-11 pr-4 text-sm text-slate-400 cursor-not-allowed"
-                    />
-                  </div>
+              {/* Last Name */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-2 ml-1">
+                  Last Name
+                </label>
+                <div className={`relative flex items-center transition-all duration-300 rounded-xl overflow-hidden border ${focusedField === 'lastName' ? 'border-[#c8f542] ring-2 ring-[#c8f542]/20' : 'border-slate-200'}`}>
+                  <input
+                    required
+                    type="text"
+                    className="block w-full bg-slate-50 py-3 px-4 text-slate-900 placeholder-slate-400 focus:outline-none sm:text-sm"
+                    placeholder="Doe"
+                    value={formData.lastName}
+                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    onFocus={() => setFocusedField('lastName')}
+                    onBlur={() => setFocusedField(null)}
+                  />
                 </div>
+              </div>
+            </div>
 
-                {/* Name Fields */}
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                      First Name
-                    </label>
-                    <div
-                      className={`relative rounded-xl transition-all duration-300 ${
-                        focusedField === 'firstName'
-                          ? 'ring-2 ring-purple-500/40 shadow-lg shadow-purple-500/10'
-                          : ''
-                      }`}
-                    >
-                      <User
-                        className={`w-5 h-5 absolute left-3.5 top-3.5 transition-colors duration-200 ${
-                          focusedField === 'firstName'
-                            ? 'text-purple-400'
-                            : 'text-slate-500'
-                        }`}
-                      />
-                      <input
-                        type="text"
-                        required
-                        value={formData.firstName}
-                        onChange={(e) =>
-                          setFormData({ ...formData, firstName: e.target.value })
-                        }
-                        onFocus={() => setFocusedField('firstName')}
-                        onBlur={() => setFocusedField(null)}
-                        className="w-full bg-slate-900/80 border border-slate-800 rounded-xl py-3 pl-11 pr-4 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-purple-500/50 transition-all"
-                        placeholder="John"
-                      />
-                    </div>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                      Last Name
-                    </label>
-                    <div
-                      className={`relative rounded-xl transition-all duration-300 ${
-                        focusedField === 'lastName'
-                          ? 'ring-2 ring-purple-500/40 shadow-lg shadow-purple-500/10'
-                          : ''
-                      }`}
-                    >
-                      <input
-                        type="text"
-                        required
-                        value={formData.lastName}
-                        onChange={(e) =>
-                          setFormData({ ...formData, lastName: e.target.value })
-                        }
-                        onFocus={() => setFocusedField('lastName')}
-                        onBlur={() => setFocusedField(null)}
-                        className="w-full bg-slate-900/80 border border-slate-800 rounded-xl py-3 px-4 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-purple-500/50 transition-all"
-                        placeholder="Doe"
-                      />
-                    </div>
-                  </div>
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-2 ml-1">
+                Create Password
+              </label>
+              <div className={`relative flex items-center transition-all duration-300 rounded-xl overflow-hidden border ${focusedField === 'password' ? 'border-[#c8f542] ring-2 ring-[#c8f542]/20' : 'border-slate-200'}`}>
+                <div className="pl-3.5 flex items-center pointer-events-none text-slate-400">
+                  <Lock className="h-5 w-5" />
                 </div>
-
-                {/* Password */}
-                <div>
-                  <label className="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">
-                    Create Password
-                  </label>
-                  <div
-                    className={`relative rounded-xl transition-all duration-300 ${
-                      focusedField === 'password'
-                        ? 'ring-2 ring-purple-500/40 shadow-lg shadow-purple-500/10'
-                        : ''
-                    }`}
-                  >
-                    <Lock
-                      className={`w-5 h-5 absolute left-3.5 top-3.5 transition-colors duration-200 ${
-                        focusedField === 'password'
-                          ? 'text-purple-400'
-                          : 'text-slate-500'
-                      }`}
-                    />
-                    <input
-                      type={showPassword ? 'text' : 'password'}
-                      required
-                      minLength={6}
-                      value={formData.password}
-                      onChange={(e) =>
-                        setFormData({ ...formData, password: e.target.value })
-                      }
-                      onFocus={() => setFocusedField('password')}
-                      onBlur={() => setFocusedField(null)}
-                      className="w-full bg-slate-900/80 border border-slate-800 rounded-xl py-3 pl-11 pr-12 text-sm text-white placeholder-slate-600 focus:outline-none focus:border-purple-500/50 transition-all"
-                      placeholder="Min 6 characters"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3.5 top-3.5 text-slate-500 hover:text-slate-300 transition"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="w-5 h-5" />
-                      ) : (
-                        <Eye className="w-5 h-5" />
-                      )}
-                    </button>
-                  </div>
-
-                  {/* Password Strength */}
-                  {formData.password && (
-                    <div className="mt-3 flex items-center gap-2">
-                      <div className="flex-1 flex gap-1">
-                        {[1, 2, 3, 4].map((level) => (
-                          <div
-                            key={level}
-                            className={`h-1 flex-1 rounded-full transition-all duration-300 ${
-                              passwordStrength.score >= level
-                                ? passwordStrength.color
-                                : 'bg-slate-800'
-                            }`}
-                          />
-                        ))}
-                      </div>
-                      <span
-                        className={`text-[10px] font-semibold uppercase tracking-wider ${
-                          passwordStrength.score <= 1
-                            ? 'text-rose-400'
-                            : passwordStrength.score <= 2
-                            ? 'text-amber-400'
-                            : passwordStrength.score <= 3
-                            ? 'text-blue-400'
-                            : 'text-emerald-400'
-                        }`}
-                      >
-                        {passwordStrength.label}
-                      </span>
-                    </div>
-                  )}
-                </div>
-
-                {/* Submit Button */}
+                <input
+                  required
+                  type={showPassword ? 'text' : 'password'}
+                  className="block w-full bg-slate-50 py-3 pl-3 pr-10 text-slate-900 placeholder-slate-400 focus:outline-none sm:text-sm"
+                  placeholder="Min. 6 characters"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  onFocus={() => setFocusedField('password')}
+                  onBlur={() => setFocusedField(null)}
+                />
                 <button
-                  type="submit"
-                  disabled={loading}
-                  className="w-full bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-semibold py-3.5 rounded-xl transition-all duration-300 shadow-lg shadow-purple-600/25 hover:shadow-xl hover:shadow-purple-600/30 flex items-center justify-center gap-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed group mt-6"
+                  type="button"
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 transition-colors"
+                  onClick={() => setShowPassword(!showPassword)}
                 >
-                  {loading ? (
-                    <>
-                      <svg
-                        className="w-5 h-5 animate-spin"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        />
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        />
-                      </svg>
-                      Creating Account...
-                    </>
+                  {showPassword ? (
+                    <EyeOff className="h-5 w-5" />
                   ) : (
-                    <>
-                      Join Workspace
-                      <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                    </>
+                    <Eye className="h-5 w-5" />
                   )}
                 </button>
-              </form>
-            </>
-          ) : null}
+              </div>
+
+              {/* Password Strength */}
+              {formData.password && (
+                <div className="mt-3 flex items-center gap-2">
+                  <div className="flex-1 flex gap-1">
+                    {[1, 2, 3, 4].map((level) => (
+                      <div
+                        key={level}
+                        className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
+                          passwordStrength.score >= level
+                            ? passwordStrength.color
+                            : 'bg-slate-200'
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <span
+                    className={`text-[10px] font-semibold uppercase tracking-wider ${
+                      passwordStrength.score <= 1
+                        ? 'text-rose-500'
+                        : passwordStrength.score <= 2
+                        ? 'text-amber-500'
+                        : passwordStrength.score <= 3
+                        ? 'text-blue-500'
+                        : 'text-[#5E9F71]'
+                    }`}
+                  >
+                    {passwordStrength.label}
+                  </span>
+                </div>
+              )}
+            </div>
+
+            <div className="pt-2">
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-[#18181b] hover:bg-slate-800 text-white font-semibold py-3.5 px-4 rounded-full transition-all duration-300 shadow-md flex items-center justify-center text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? 'Creating Account...' : 'Join Workspace'}
+                {!loading && <ArrowRight className="w-4 h-4 ml-2" />}
+              </button>
+            </div>
+          </form>
         </div>
       </div>
     </div>

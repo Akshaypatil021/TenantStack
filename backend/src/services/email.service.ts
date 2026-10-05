@@ -22,7 +22,9 @@ export const sendInvitationEmail = async (
     // For development without real credentials, just log the URL
     const inviteUrl = `http://localhost:5173/invite/${inviteToken}`;
     
-    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    const isDummyCredentials = !process.env.SMTP_USER || process.env.SMTP_USER === 'your_email@gmail.com' || !process.env.SMTP_PASS;
+    
+    if (isDummyCredentials) {
       console.log('=============================================');
       console.log(`[MOCK EMAIL] To: ${toEmail}`);
       console.log(`[MOCK EMAIL] Subject: You've been invited to join ${companyName} on TenantFlow`);
@@ -77,7 +79,9 @@ export const sendProjectInvitationEmail = async (
   try {
     const inviteUrl = `http://localhost:5173/invite/project/${inviteToken}`;
 
-    if (!process.env.SMTP_USER || !process.env.SMTP_PASS) {
+    const isDummyCredentials = !process.env.SMTP_USER || process.env.SMTP_USER === 'your_email@gmail.com' || !process.env.SMTP_PASS;
+
+    if (isDummyCredentials) {
       console.log('=============================================');
       console.log(`[MOCK EMAIL - PROJECT INVITE] To: ${toEmail}`);
       console.log(`[MOCK EMAIL - PROJECT INVITE] Subject: ${inviterName} invited you to collaborate on "${projectName}"`);
@@ -119,3 +123,51 @@ export const sendProjectInvitationEmail = async (
   }
 };
 
+export const sendPasswordResetEmail = async (
+  toEmail: string,
+  resetToken: string
+): Promise<void> => {
+  try {
+    const resetUrl = `http://localhost:5173/reset-password/${resetToken}`;
+
+    const isDummyCredentials = !process.env.SMTP_USER || process.env.SMTP_USER === 'your_email@gmail.com' || !process.env.SMTP_PASS;
+
+    if (isDummyCredentials) {
+      console.log('=============================================');
+      console.log(`[MOCK EMAIL - PASSWORD RESET] To: ${toEmail}`);
+      console.log(`[MOCK EMAIL - PASSWORD RESET] Subject: Reset Your Password`);
+      console.log(`[MOCK EMAIL - PASSWORD RESET] Link: ${resetUrl}`);
+      console.log('=============================================');
+      return;
+    }
+
+    const transporter = createTransporter();
+
+    const info = await transporter.sendMail({
+      from: `"TenantFlow" <${process.env.SMTP_USER}>`,
+      to: toEmail,
+      subject: `Reset Your Password - TenantFlow`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 10px;">
+          <h2 style="color: #0f172a;">Password Reset Request</h2>
+          <p style="color: #475569; font-size: 16px;">
+            You requested to reset your password. Click the button below to set a new password:
+          </p>
+          <div style="margin: 30px 0;">
+            <a href="${resetUrl}" style="background-color: #c8f542; color: #0f172a; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
+              Reset Password
+            </a>
+          </div>
+          <p style="color: #94a3b8; font-size: 12px; margin-top: 40px;">
+            This link expires in 1 hour. If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.
+          </p>
+        </div>
+      `,
+    });
+
+    console.log(`Password reset email sent: ${info.messageId}`);
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
+    throw new Error('Failed to send password reset email');
+  }
+};

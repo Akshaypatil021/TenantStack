@@ -33,6 +33,8 @@ import fileRoutes from './modules/files/file.routes';
 import userRoutes from './modules/users/user.routes';
 import paymentRoutes from './modules/payments/payment.routes';
 import adminRoutes from './modules/admin/admin.routes';
+import activityRoutes from './modules/activity/activity.routes';
+import { startGithubSyncCron } from './services/github.service';
 
 // Serve uploads directory
 app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
@@ -45,11 +47,15 @@ app.use('/api/v1/files', fileRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/activity', activityRoutes);
 
 // Global Error Handler placeholder
 app.use((err: any, req: Request, res: Response, next: Function) => {
   console.error(err.stack);
   res.status(500).json({ error: err.message || 'Internal Server Error' });
 });
+
+// Start background cron jobs
+startGithubSyncCron();
 
 export default app;

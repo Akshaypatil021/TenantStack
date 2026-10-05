@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import { useSessionTimeout } from '../hooks/useSessionTimeout';
 import { PlansModal, type PlanCategory } from '../components/PlansModal';
 import { 
   Server, HardDrive, Rocket, ArrowRight, Plus, 
   Cpu, Database, Globe, Shield, Zap, ChevronRight,
-  Clock, CheckCircle2, Sparkles, Layers,
-  LogOut, Settings, User, CreditCard, Bell, AlertTriangle
+  Clock, CheckCircle2, Sparkles,
+  LogOut, Settings, User, CreditCard, Bell
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { Sidebar } from '../components/Sidebar';
 import { motion, type Variants } from 'framer-motion';
 
 const scrollReveal: Variants = {
@@ -31,7 +31,6 @@ const staggerContainer: Variants = {
 export const Dashboard = () => {
   const { user, tenant, logout } = useAuth();
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<'overview' | 'compute' | 'storage'>('overview');
   const [isPlansModalOpen, setIsPlansModalOpen] = useState(false);
   const [plansModalCategory, setPlansModalCategory] = useState<PlanCategory>('compute');
 
@@ -48,81 +47,17 @@ export const Dashboard = () => {
     navigate('/');
   };
 
-  const handleAutoLogout = () => {
-    logout();
-    navigate('/login?expired=true');
-  };
-
-  // 2-minute inactivity auto-logout hook
-  const { timeLeft, formattedTime, isWarning, resetTimer } = useSessionTimeout({
-    timeoutMinutes: 2,
-    warningSeconds: 30,
-    onTimeout: handleAutoLogout,
-  });
-
   return (
-    <div className="min-h-screen bg-[#fafbfc] text-slate-900 selection:bg-[#c8f542] selection:text-slate-900">
-      
+    <div className="flex min-h-screen bg-[#fafbfc] text-slate-900 selection:bg-[#c8f542] selection:text-slate-900">
+      <Sidebar />
+      <div className="flex-1 flex flex-col min-w-0">
+        
       {/* ─── Top Navigation Bar ─── */}
       <header className="sticky top-0 z-50 bg-white/80 backdrop-blur-xl border-b border-slate-100">
-        <div className="max-w-[1400px] mx-auto px-6 md:px-10 h-16 flex items-center justify-between">
-          
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="relative">
-              <div className="absolute inset-0 bg-[#c8f542] rounded-xl blur-md opacity-40 group-hover:opacity-60 transition-opacity"></div>
-              <div className="relative bg-slate-900 text-[#c8f542] p-2 rounded-xl">
-                <Layers className="w-5 h-5" />
-              </div>
-            </div>
-            <span className="text-lg font-bold tracking-tight text-slate-900">TenantStack</span>
-          </Link>
-
-          {/* Center Nav Tabs */}
-          <nav className="hidden md:flex items-center bg-slate-100/80 rounded-xl p-1">
-            {(['overview', 'compute', 'storage'] as const).map((tab) => (
-              <button
-                key={tab}
-                onClick={() => {
-                  setActiveTab(tab);
-                  if (tab === 'compute' || tab === 'storage') {
-                    openPlans(tab);
-                  }
-                }}
-                className={`px-4 py-1.5 rounded-lg text-sm font-medium capitalize transition-all duration-200 ${
-                  activeTab === tab 
-                    ? 'bg-white text-slate-900 shadow-sm' 
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                {tab}
-              </button>
-            ))}
-          </nav>
+        <div className="max-w-[1400px] mx-auto px-6 md:px-10 h-16 flex items-center justify-end">
 
           {/* Right Actions */}
           <div className="flex items-center gap-3">
-            {/* Login Session Timer Badge */}
-            <div 
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-medium border transition-all ${
-                isWarning 
-                  ? 'bg-amber-50 border-amber-300 text-amber-900 shadow-sm' 
-                  : 'bg-slate-50 border-slate-200/80 text-slate-600'
-              }`}
-              title="Session timer: automatically logs out after 2 min inactivity. Any activity resets timer."
-            >
-              <Clock className={`w-3.5 h-3.5 ${isWarning ? 'text-amber-600 animate-spin' : 'text-[#5E9F71]'}`} />
-              <div className="flex items-center gap-1.5">
-                <span className="hidden sm:inline text-slate-500">Session:</span>
-                <span className={`font-mono font-bold ${isWarning ? 'text-amber-700' : 'text-slate-800'}`}>
-                  {formattedTime}
-                </span>
-              </div>
-              <span 
-                className={`w-2 h-2 rounded-full ${isWarning ? 'bg-amber-500 animate-ping' : 'bg-emerald-500 animate-pulse'}`} 
-              />
-            </div>
-
             <button className="relative p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition">
               <Bell className="w-5 h-5" />
               <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#c8f542] rounded-full"></span>
@@ -163,7 +98,7 @@ export const Dashboard = () => {
           <div className="flex items-center gap-2 mb-1">
             <span className="text-[#5E9F71] font-semibold text-sm">Dashboard</span>
             <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
-            <span className="text-slate-400 text-sm capitalize">{activeTab}</span>
+            <span className="text-slate-400 text-sm capitalize">overview</span>
           </div>
           <h1 className="text-3xl lg:text-4xl font-bold text-slate-900 tracking-tight">
             Welcome back, {user?.firstName} 👋
@@ -477,23 +412,19 @@ export const Dashboard = () => {
                   { name: 'dev-storage-main', type: 'Storage', status: 'Running', ip: '—', uptime: '7d 12h' },
                 ];
 
-                const filtered = allInstances.filter((resource: any) => {
-                  if (activeTab === 'compute') return resource.type === 'Compute';
-                  if (activeTab === 'storage') return resource.type === 'Storage';
-                  return true;
-                });
+                const filtered = allInstances;
 
                 if (filtered.length === 0) {
                   return (
                     <div className="p-8 text-center bg-slate-50/60 rounded-xl border border-dashed border-slate-200">
-                      <p className="text-sm font-semibold text-slate-700">No {activeTab} instances currently active</p>
-                      <p className="text-xs text-slate-400 mt-1">Deploy a {activeTab} instance to enable this service in your workspace.</p>
+                      <p className="text-sm font-semibold text-slate-700">No instances currently active</p>
+                      <p className="text-xs text-slate-400 mt-1">Deploy an instance to enable services in your workspace.</p>
                       <button
                         type="button"
-                        onClick={() => openPlans(activeTab as PlanCategory)}
+                        onClick={() => openPlans('compute')}
                         className="mt-3 px-4 py-2 bg-slate-900 text-white rounded-xl text-xs font-semibold hover:bg-slate-800 transition cursor-pointer"
                       >
-                        Deploy {activeTab === 'compute' ? 'Compute Node' : 'Storage Bucket'}
+                        Deploy Compute Node
                       </button>
                     </div>
                   );
@@ -536,39 +467,13 @@ export const Dashboard = () => {
         )}
       </motion.main>
 
-      {/* Inactivity Warning Toast (shows during final 60 seconds of inactivity) */}
-      {isWarning && (
-        <motion.div 
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="fixed bottom-6 right-6 z-50 max-w-sm bg-white border border-amber-300 shadow-2xl rounded-2xl p-4 flex items-start gap-3.5"
-        >
-          <div className="w-10 h-10 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0">
-            <AlertTriangle className="w-5 h-5" />
-          </div>
-          <div className="flex-1">
-            <h4 className="text-sm font-bold text-slate-900">Session Expiring Soon</h4>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Auto-logout in <span className="font-mono font-bold text-amber-600">{timeLeft}s</span> due to 2 min inactivity.
-            </p>
-            <div className="mt-2.5 flex items-center gap-2">
-              <button
-                onClick={resetTimer}
-                className="bg-slate-900 hover:bg-slate-800 text-[#c8f542] px-3 py-1.5 rounded-lg text-xs font-semibold transition shadow-sm"
-              >
-                Stay Logged In
-              </button>
-            </div>
-          </div>
-        </motion.div>
-      )}
-
       {/* Dedicated Resource Plans Modal (Compute & Storage) */}
       <PlansModal
         isOpen={isPlansModalOpen}
         onClose={() => setIsPlansModalOpen(false)}
         initialCategory={plansModalCategory}
       />
+      </div>
     </div>
   );
 };

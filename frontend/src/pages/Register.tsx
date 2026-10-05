@@ -77,7 +77,7 @@ export const Register = () => {
       login(data.token, data.user, data.tenant);
       setShowSuccessPopup(true);
       setTimeout(() => {
-        navigate('/dashboard');
+        navigate('/onboarding');
       }, 1500);
     } catch (err: any) {
       setError(err.message);
@@ -130,7 +130,7 @@ export const Register = () => {
             </div>
             <h2 className="text-2xl font-bold text-slate-900 mb-2 text-center tracking-tight">Account Created Successfully!</h2>
             <p className="text-slate-500 text-center text-sm leading-relaxed mb-6">
-              Welcome to TenantStack. Redirecting you to the dashboard...
+              Welcome to TenantStack. Let's set up your workspace...
             </p>
             <div className="w-6 h-6 border-4 border-[#c8f542]/30 border-t-[#c8f542] rounded-full animate-spin"></div>
           </motion.div>

@@ -6,6 +6,8 @@ export interface IUser extends Document {
   email: string;
   passwordHash: string;
   developerRole: string;
+  resetPasswordToken?: string;
+  resetPasswordExpire?: Date;
   tenantId?: mongoose.Types.ObjectId;
   roleId: mongoose.Types.ObjectId;
   createdAt: Date;
@@ -19,6 +21,8 @@ const UserSchema: Schema = new Schema(
     email: { type: String, required: true, unique: true },
     passwordHash: { type: String, required: true },
     developerRole: { type: String, required: true },
+    resetPasswordToken: { type: String },
+    resetPasswordExpire: { type: Date },
     tenantId: { type: Schema.Types.ObjectId, ref: 'Tenant' },
     roleId: { type: Schema.Types.ObjectId, ref: 'Role', required: true },
   },

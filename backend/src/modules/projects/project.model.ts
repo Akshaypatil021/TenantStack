@@ -15,6 +15,8 @@ export interface IProject extends Document {
   createdBy: mongoose.Types.ObjectId;
   members: IProjectMember[];
   status: 'TODO' | 'IN_PROGRESS' | 'COMPLETED' | 'ARCHIVED';
+  githubRepoUrl?: string;
+  lastSyncedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -44,6 +46,8 @@ const ProjectSchema: Schema = new Schema(
       enum: ['TODO', 'IN_PROGRESS', 'COMPLETED', 'ARCHIVED'], 
       default: 'TODO' 
     },
+    githubRepoUrl: { type: String },
+    lastSyncedAt: { type: Date },
   },
   { timestamps: true }
 );

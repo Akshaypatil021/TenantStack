@@ -6,6 +6,8 @@ import User from '../users/user.model';
 import Role from '../roles/role.model';
 import Permission from '../permissions/permission.model';
 import { generateToken } from '../../utils/jwt.util';
+import crypto from 'crypto';
+import { sendPasswordResetEmail } from '../../services/email.service';
 
 const RegisterSchema = z.object({
   firstName: z.string().min(2),
@@ -135,5 +137,85 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       console.error('Login error:', error);
       res.status(500).json({ error: 'Internal Server Error' });
     }
+  }
+};
+export const forgotPassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      res.status(400).json({ error: 'Email is required' });
+      return;
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      // Don't leak whether user exists or not
+      res.status(200).json({ message: 'If an account exists, a reset link has been sent.' });
+      return;
+    }
+
+    // Generate token
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    
+    // Hash token and set to resetPasswordToken field
+    user.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+    
+    // Set token expiration to 1 hour
+    user.resetPasswordExpire = new Date(Date.now() + 60 * 60 * 1000);
+    
+    await user.save();
+
+    try {
+      await sendPasswordResetEmail(user.email, resetToken);
+      res.status(200).json({ message: 'If an account exists, a reset link has been sent.' });
+    } catch (err) {
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpire = undefined;
+      await user.save();
+      res.status(500).json({ error: 'Email could not be sent' });
+    }
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+export const resetPassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    if (!password || password.length < 6) {
+      res.status(400).json({ error: 'Password must be at least 6 characters' });
+      return;
+    }
+
+    // Hash the token from the URL to compare with database
+    const resetPasswordToken = crypto.createHash('sha256').update(token).digest('hex');
+
+    const user = await User.findOne({
+      resetPasswordToken,
+      resetPasswordExpire: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      res.status(400).json({ error: 'Invalid or expired password reset token' });
+      return;
+    }
+
+    // Set new password
+    const salt = await bcrypt.genSalt(10);
+    user.passwordHash = await bcrypt.hash(password, salt);
+    
+    // Clear reset fields
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    
+    await user.save();
+
+    res.status(200).json({ message: 'Password has been reset successfully' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
   }
 };
