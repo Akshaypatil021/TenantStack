@@ -8,6 +8,9 @@ import Permission from '../permissions/permission.model';
 import { generateToken } from '../../utils/jwt.util';
 import crypto from 'crypto';
 import { sendPasswordResetEmail } from '../../services/email.service';
+import { OAuth2Client } from 'google-auth-library';
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 const RegisterSchema = z.object({
   firstName: z.string().min(2),
@@ -191,7 +194,7 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
     }
 
     // Hash the token from the URL to compare with database
-    const resetPasswordToken = crypto.createHash('sha256').update(token).digest('hex');
+    const resetPasswordToken = crypto.createHash('sha256').update(token as string).digest('hex');
 
     const user = await User.findOne({
       resetPasswordToken,
@@ -217,5 +220,88 @@ export const resetPassword = async (req: Request, res: Response): Promise<void> 
   } catch (error) {
     console.error('Reset password error:', error);
     res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+export const googleAuth = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { token } = req.body;
+
+    if (!token) {
+      res.status(400).json({ error: 'Token is required' });
+      return;
+    }
+
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+
+    const payload = ticket.getPayload();
+    
+    if (!payload || !payload.email) {
+      res.status(400).json({ error: 'Invalid Google token' });
+      return;
+    }
+
+    const { email, given_name, family_name } = payload;
+
+    // Check if user exists
+    let user = await User.findOne({ email });
+    let isNewUser = false;
+    let platformRole = await Role.findOne({ name: 'Platform User', tenantId: { $exists: false } });
+    
+    if (!platformRole) {
+      platformRole = await Role.create({
+        name: 'Platform User',
+        description: 'Default role for a newly registered user without a tenant',
+        isDefault: true,
+      });
+    }
+
+    if (!user) {
+      // Create user if they don't exist
+      isNewUser = true;
+      user = await User.create({
+        firstName: given_name || 'Google',
+        lastName: family_name || 'User',
+        email,
+        passwordHash: 'oauth-login', // Placeholder since they login via Google
+        developerRole: 'Developer', // Default role since it's not provided by Google
+        roleId: platformRole._id,
+      });
+    }
+
+    // Generate JWT
+    const jwtToken = generateToken({
+      userId: user._id.toString(),
+      roleId: user.roleId.toString(),
+      ...(user.tenantId && { tenantId: user.tenantId.toString() }),
+    });
+
+    // Fetch actual tenant data
+    let tenantData = null;
+    if (user.tenantId) {
+      const tenant = await Tenant.findById(user.tenantId);
+      if (tenant) {
+        tenantData = {
+          id: tenant._id.toString(),
+          name: tenant.name,
+          status: tenant.status,
+          subscriptionPlan: tenant.subscriptionPlan,
+          allocatedResources: tenant.allocatedResources,
+        };
+      }
+    }
+
+    res.status(isNewUser ? 201 : 200).json({
+      message: isNewUser ? 'Registration successful via Google' : 'Login successful via Google',
+      token: jwtToken,
+      user: { id: user._id, email: user.email, firstName: user.firstName, lastName: user.lastName, developerRole: user.developerRole },
+      tenant: tenantData
+    });
+  } catch (error: any) {
+    console.error('Google Auth Error:', error);
+    res.status(500).json({ error: 'Google authentication failed' });
   }
 };

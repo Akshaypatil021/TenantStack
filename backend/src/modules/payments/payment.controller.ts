@@ -16,9 +16,12 @@ const PLAN_RATES_INR: Record<string, { monthly: number; yearly: number }> = {
   'Compute Node': { monthly: 3499, yearly: 28999 },
   
   // Storage & Workspace Plans
-  'Free Tier': { monthly: 0, yearly: 0 },
-  'Solo Dev': { monthly: 449, yearly: 4299 },
-  'Pro Dev': { monthly: 1299, yearly: 12999 },
+  'Starter Dev': { monthly: 449, yearly: 4299 },
+  'Solo Dev': { monthly: 1299, yearly: 11999 },
+  'Pro Dev': { monthly: 2999, yearly: 27999 },
+
+  // Backward compatibility alias
+  'Free Tier': { monthly: 449, yearly: 4299 },
 };
 
 // Plan Tier hierarchy for downgrade protection
@@ -29,9 +32,10 @@ export const PLAN_TIERS: Record<string, Record<string, number>> = {
     'Compute Node': 3,
   },
   storage: {
-    'Free Tier': 1,
+    'Starter Dev': 1,
     'Solo Dev': 2,
     'Pro Dev': 3,
+    'Free Tier': 1,
   },
 };
 
@@ -255,7 +259,7 @@ export const verifyPayment = async (req: AuthenticatedRequest, res: Response): P
             status: 'Running',
             ip: 's3.ap-south-1.tenantstack.cloud',
             uptime: 'Just started',
-            storageGb: planName.includes('Pro') ? 50 : planName.includes('Solo') ? 15 : 1,
+            storageGb: planName.includes('Pro') ? 100 : planName.includes('Solo') ? 25 : 5,
             planName,
           },
         ];
@@ -467,11 +471,28 @@ export const getMySubscriptions = async (req: AuthenticatedRequest, res: Respons
 
     const subscriptions = await PaidUser.find({
       userId,
-      status: 'ACTIVE',
-    });
+      status: { $in: ['ACTIVE', 'PENDING_APPROVAL'] },
+    }).sort({ createdAt: -1 });
 
-    const computeSub = subscriptions.find((s) => s.category === 'compute' && new Date(s.expiresAt) > new Date());
-    const storageSub = subscriptions.find((s) => s.category === 'storage' && new Date(s.expiresAt) > new Date());
+    const computeSub = subscriptions.find((s) => s.category === 'compute' && s.status === 'ACTIVE' && new Date(s.expiresAt) > new Date());
+    const storageSub = subscriptions.find((s) => s.category === 'storage' && s.status === 'ACTIVE' && new Date(s.expiresAt) > new Date());
+
+    const pendingCompute = subscriptions.find((s) => s.category === 'compute' && s.status === 'PENDING_APPROVAL');
+    const pendingStorage = subscriptions.find((s) => s.category === 'storage' && s.status === 'PENDING_APPROVAL');
+
+    // Check tenant storage plan from tenant model if active
+    let tenantStoragePlan: string | null = null;
+    let tenantStatus: string | null = null;
+    if (req.user?.tenantId) {
+      const tenant = await Tenant.findById(req.user.tenantId).lean();
+      if (tenant) {
+        tenantStatus = tenant.status;
+        const plan = tenant.storagePlan || tenant.allocatedResources?.storagePlan;
+        if (plan && ['Starter Dev', 'Solo Dev', 'Pro Dev'].includes(plan)) {
+          tenantStoragePlan = plan;
+        }
+      }
+    }
 
     res.status(200).json({
       success: true,
@@ -479,6 +500,12 @@ export const getMySubscriptions = async (req: AuthenticatedRequest, res: Respons
         compute: computeSub || null,
         storage: storageSub || null,
       },
+      pending: {
+        compute: pendingCompute || null,
+        storage: pendingStorage || null,
+      },
+      tenantStoragePlan,
+      tenantStatus,
       tiers: PLAN_TIERS,
     });
   } catch (error: any) {

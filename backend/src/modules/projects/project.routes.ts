@@ -8,6 +8,9 @@ import {
   getProjectMembers,
   removeMember,
   revokeProjectInvitation,
+  getAssociatedTeamMembers,
+  updateProject,
+  syncProjectGithub,
 } from './project.controller';
 import { authenticate } from '../../middleware/auth.middleware';
 import { requirePermission } from '../../middleware/rbac.middleware';
@@ -15,6 +18,9 @@ import { checkResourceLimit } from '../../middleware/limit.middleware';
 import { checkProjectAccess } from '../../middleware/projectAccess.middleware';
 
 const router = Router();
+
+// ─── Team Members across associated projects ───
+router.get('/team/members', authenticate, getAssociatedTeamMembers);
 
 // ─── Project CRUD (existing, secured) ───
 router.post('/', authenticate, requirePermission('project:create'), checkResourceLimit('projects'), createProject);
@@ -61,6 +67,22 @@ router.delete(
   authenticate,
   checkProjectAccess(['OWNER', 'ADMIN']),
   revokeProjectInvitation
+);
+
+// Update project details (Only OWNER/ADMIN)
+router.put(
+  '/:projectId',
+  authenticate,
+  checkProjectAccess(['OWNER', 'ADMIN']),
+  updateProject
+);
+
+// Manually trigger GitHub repository sync (Any project member)
+router.post(
+  '/:projectId/sync',
+  authenticate,
+  checkProjectAccess(),
+  syncProjectGithub
 );
 
 export default router;

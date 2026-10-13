@@ -780,7 +780,7 @@ export const AdminDashboard = () => {
                 {[
                   { label: 'Total Users', value: stats.totalUsers, icon: Users, color: 'text-blue-600', bgColor: 'bg-blue-50', sub: 'Registered developers' },
                   { label: 'Active Tenants', value: stats.activeTenants, icon: Building2, color: 'text-emerald-600', bgColor: 'bg-emerald-50', sub: `of ${stats.totalTenants} total tenants` },
-                  { label: 'Paid Subscriptions', value: stats.totalPaidUsers, icon: UserCheck, color: 'text-[#5E9F71]', bgColor: 'bg-[#c8f542]/20', sub: `${stats.freeUsers} on free tier` },
+                  { label: 'Paid Subscriptions', value: stats.totalPaidUsers, icon: UserCheck, color: 'text-[#5E9F71]', bgColor: 'bg-[#c8f542]/20', sub: `${stats.freeUsers} without active plan` },
                   { label: 'Total Revenue', value: `₹${stats.totalRevenue.toLocaleString()}`, icon: TrendingUp, color: 'text-amber-600', bgColor: 'bg-amber-50', sub: `${stats.totalInvoices} settled invoices` },
                 ].map((kpi) => {
                   const Icon = kpi.icon;

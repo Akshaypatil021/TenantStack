@@ -21,7 +21,7 @@ const TenantSchema: Schema = new Schema(
     name: { type: String, required: true },
     domain: { type: String, unique: true, sparse: true },
     status: { type: String, enum: ['ACTIVE', 'SUSPENDED', 'INACTIVE', 'PENDING'], default: 'ACTIVE' },
-    subscriptionPlan: { type: String, default: 'FREE' },
+    subscriptionPlan: { type: String, default: 'Starter Dev' },
     computePlan: { type: String },
     storagePlan: { type: String },
     planCategory: { type: String, default: 'compute' },

@@ -9,6 +9,7 @@ import {
   Headset,
   ArrowRight
 } from 'lucide-react';
+import { GoogleLogin } from '@react-oauth/google';
 import { motion, type Variants } from 'framer-motion';
 
 const scrollReveal: Variants = {
@@ -83,6 +84,26 @@ export const Register = () => {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (credential: string) => {
+    try {
+      const res = await fetch('http://localhost:5000/api/v1/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: credential }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Google signup failed');
+      
+      login(data.token, data.user, data.tenant);
+      setShowSuccessPopup(true);
+      setTimeout(() => {
+        navigate(data.tenant ? '/dashboard' : '/onboarding');
+      }, 1500);
+    } catch (err: any) {
+      setError(err.message);
     }
   };
 
@@ -386,6 +407,32 @@ export const Register = () => {
                       </>
                     )}
                   </button>
+                </div>
+                
+                <div className="relative my-6">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-slate-200"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-4 bg-white text-slate-500">Or continue with</span>
+                  </div>
+                </div>
+
+                <div className="flex justify-center w-full">
+                  <GoogleLogin
+                    onSuccess={(credentialResponse) => {
+                      if (credentialResponse.credential) {
+                        handleGoogleSuccess(credentialResponse.credential);
+                      }
+                    }}
+                    onError={() => {
+                      setError('Google sign up was unsuccessful.');
+                    }}
+                    useOneTap
+                    shape="circle"
+                    width="100%"
+                    theme="outline"
+                  />
                 </div>
                 
                 {/* Mobile Login Link */}

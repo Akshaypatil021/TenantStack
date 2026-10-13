@@ -34,7 +34,6 @@ export const requirePermission = (requiredAction: string) => {
         });
         return;
       }
-
       next();
     } catch (error: any) {
       console.error('RBAC Middleware Error:', error);

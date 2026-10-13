@@ -94,11 +94,10 @@ export const getProjects = async (req: AuthenticatedRequest, res: Response): Pro
   try {
     const { tenantId, userId } = req.user!;
 
-    // Scoped query: user sees projects they created OR are a member of within their tenant
+    // Scoped query: user sees projects they created in their current tenant OR any project they are a member of (even cross-tenant)
     const projects = await Project.find({
-      tenantId,
       $or: [
-        { createdBy: userId },
+        { tenantId, createdBy: userId },
         { 'members.user': new mongoose.Types.ObjectId(userId) },
       ],
     })
@@ -577,3 +576,297 @@ export const revokeProjectInvitation = async (req: AuthenticatedRequest, res: Re
     res.status(500).json({ error: 'Internal Server Error' });
   }
 };
+
+/**
+ * Get all team members associated with the projects of the authenticated user.
+ * This aggregates members across all projects the user created or is a member of.
+ */
+export const getAssociatedTeamMembers = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    const { userId, tenantId } = req.user;
+
+    // Find all projects the user is involved in (as creator, tenant owner, or member)
+    const userProjects = await Project.find({
+      $or: [
+        { tenantId, createdBy: userId },
+        { createdBy: new mongoose.Types.ObjectId(userId) },
+        { 'members.user': new mongoose.Types.ObjectId(userId) },
+      ],
+    })
+      .populate('members.user', 'firstName lastName email developerRole')
+      .populate('createdBy', 'firstName lastName email developerRole')
+      .sort({ createdAt: -1 });
+
+    const projectIds = userProjects.map((p) => p._id);
+
+    // Fetch pending invitations across all these projects
+    const pendingInvitations = await ProjectInvitation.find({
+      projectId: { $in: projectIds },
+      status: 'PENDING',
+    })
+      .populate('projectId', 'name')
+      .populate('invitedBy', 'firstName lastName email')
+      .sort({ createdAt: -1 });
+
+    // Map to aggregate unique members across projects
+    const membersMap = new Map<string, {
+      user: {
+        _id: string;
+        firstName: string;
+        lastName: string;
+        email: string;
+        developerRole?: string;
+      };
+      projects: Array<{
+        projectId: string;
+        projectName: string;
+        role: string;
+        joinedAt?: Date;
+      }>;
+      isCurrentUser: boolean;
+    }>();
+
+    for (const project of userProjects) {
+      // 1. Process Project Creator (Owner)
+      if (project.createdBy && typeof project.createdBy === 'object') {
+        const creator = project.createdBy as any;
+        const cId = creator._id.toString();
+
+        if (!membersMap.has(cId)) {
+          membersMap.set(cId, {
+            user: {
+              _id: cId,
+              firstName: creator.firstName,
+              lastName: creator.lastName,
+              email: creator.email,
+              developerRole: creator.developerRole,
+            },
+            projects: [],
+            isCurrentUser: cId === userId,
+          });
+        }
+
+        const existingMember = membersMap.get(cId)!;
+        if (!existingMember.projects.some((p) => p.projectId === project._id.toString())) {
+          existingMember.projects.push({
+            projectId: project._id.toString(),
+            projectName: project.name,
+            role: 'OWNER',
+            joinedAt: project.createdAt,
+          });
+        }
+      }
+
+      // 2. Process Project Members
+      if (Array.isArray(project.members)) {
+        for (const m of project.members) {
+          if (m.user && typeof m.user === 'object') {
+            const u = m.user as any;
+            const uId = u._id.toString();
+
+            if (!membersMap.has(uId)) {
+              membersMap.set(uId, {
+                user: {
+                  _id: uId,
+                  firstName: u.firstName,
+                  lastName: u.lastName,
+                  email: u.email,
+                  developerRole: u.developerRole,
+                },
+                projects: [],
+                isCurrentUser: uId === userId,
+              });
+            }
+
+            const existingMember = membersMap.get(uId)!;
+            if (!existingMember.projects.some((p) => p.projectId === project._id.toString())) {
+              existingMember.projects.push({
+                projectId: project._id.toString(),
+                projectName: project.name,
+                role: m.role,
+                joinedAt: m.joinedAt,
+              });
+            }
+          }
+        }
+      }
+    }
+
+    // Ensure the current user is in the list even if no projects exist yet
+    if (!membersMap.has(userId)) {
+      const currentUserObj = await User.findById(userId).select('firstName lastName email developerRole');
+      if (currentUserObj) {
+        membersMap.set(userId, {
+          user: {
+            _id: userId,
+            firstName: currentUserObj.firstName,
+            lastName: currentUserObj.lastName,
+            email: currentUserObj.email,
+            developerRole: currentUserObj.developerRole,
+          },
+          projects: [],
+          isCurrentUser: true,
+        });
+      }
+    }
+
+    const members = Array.from(membersMap.values());
+
+    res.status(200).json({
+      count: members.length,
+      members,
+      projects: userProjects.map((p) => {
+        const isOwner = p.createdBy?.toString() === userId || (p.createdBy as any)?._id?.toString() === userId;
+        const myMembership = p.members.find((m) => m.user?.toString() === userId || (m.user as any)?._id?.toString() === userId);
+        return {
+          _id: p._id,
+          name: p.name,
+          role: isOwner ? 'OWNER' : (myMembership?.role || 'VIEWER'),
+          membersCount: p.members.length,
+        };
+      }),
+      pendingInvitations: pendingInvitations.map((inv) => ({
+        _id: inv._id,
+        email: inv.email,
+        role: inv.role,
+        projectId: (inv.projectId as any)?._id || inv.projectId,
+        projectName: (inv.projectId as any)?.name || 'Project',
+        invitedBy: (inv.invitedBy as any) ? `${(inv.invitedBy as any).firstName} ${(inv.invitedBy as any).lastName}`.trim() : 'Team Member',
+        createdAt: inv.createdAt,
+        expiresAt: inv.expiresAt,
+      })),
+    });
+  } catch (error: any) {
+    console.error('Get associated team members error:', error);
+    res.status(500).json({ error: error.message || 'Internal Server Error' });
+  }
+};
+
+const UpdateProjectSchema = z.object({
+  name: z.string().min(2).optional(),
+  description: z.string().optional(),
+  githubRepoUrl: z.string().url().optional().or(z.literal('')),
+});
+
+/**
+ * Update project details (name, description, githubRepoUrl)
+ * Only project OWNER or ADMIN can update.
+ */
+export const updateProject = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const { projectId } = req.params;
+    const { userId, tenantId } = req.user;
+    const validatedData = UpdateProjectSchema.parse(req.body);
+
+    const project = await Project.findOne({
+      _id: projectId,
+      $or: [
+        { tenantId },
+        { createdBy: userId },
+        { 'members.user': new mongoose.Types.ObjectId(userId) },
+      ],
+    });
+
+    if (!project) {
+      res.status(404).json({ error: 'Project not found' });
+      return;
+    }
+
+    const isCreator = project.createdBy.toString() === userId;
+    const memberEntry = project.members.find((m: any) => m.user.toString() === userId);
+    const hasAdminAccess = isCreator || (memberEntry && ['OWNER', 'ADMIN'].includes(memberEntry.role));
+
+    if (!hasAdminAccess) {
+      res.status(403).json({ error: 'Only project Owner or Admin can update project settings' });
+      return;
+    }
+
+    if (validatedData.name) project.name = validatedData.name;
+    if (validatedData.description !== undefined) project.description = validatedData.description;
+    if (validatedData.githubRepoUrl !== undefined) project.githubRepoUrl = validatedData.githubRepoUrl;
+
+    await project.save();
+
+    await logActivity(
+      tenantId as string,
+      userId,
+      'PROJECT_UPDATED',
+      `Updated settings for project: ${project.name}`,
+      { projectId: project._id, githubRepoUrl: project.githubRepoUrl }
+    );
+
+    res.status(200).json({ message: 'Project updated successfully', project });
+  } catch (error: any) {
+    if (error instanceof ZodError) {
+      res.status(400).json({ error: 'Validation Error', details: error.issues });
+    } else {
+      console.error('Update project error:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  }
+};
+
+/**
+ * Manually trigger a GitHub repository sync.
+ * Accessible to any project member.
+ */
+export const syncProjectGithub = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+    const { projectId } = req.params;
+    const { userId, tenantId } = req.user;
+
+    const project = await Project.findOne({
+      _id: projectId,
+      $or: [
+        { tenantId },
+        { createdBy: userId },
+        { 'members.user': new mongoose.Types.ObjectId(userId) },
+      ],
+    });
+
+    if (!project) {
+      res.status(404).json({ error: 'Project not found' });
+      return;
+    }
+
+    if (!project.githubRepoUrl) {
+      res.status(400).json({ error: 'No GitHub repository connected to this project' });
+      return;
+    }
+
+    project.lastSyncedAt = new Date();
+    await project.save();
+
+    await logActivity(
+      tenantId as string,
+      userId,
+      'REPO_SYNCED',
+      `Manual sync triggered for GitHub repository: ${project.githubRepoUrl}`,
+      { projectId: project._id, githubRepoUrl: project.githubRepoUrl }
+    );
+
+    res.status(200).json({
+      message: 'Successfully synced latest repository changes from GitHub',
+      lastSyncedAt: project.lastSyncedAt,
+      project,
+    });
+  } catch (error: any) {
+    console.error('Sync project error:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+

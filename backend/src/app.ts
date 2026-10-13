@@ -34,6 +34,9 @@ import userRoutes from './modules/users/user.routes';
 import paymentRoutes from './modules/payments/payment.routes';
 import adminRoutes from './modules/admin/admin.routes';
 import activityRoutes from './modules/activity/activity.routes';
+import taskRoutes from './modules/tasks/task.routes';
+import dashboardRoutes from './modules/dashboard/dashboard.routes';
+import storageRoutes from './modules/storage/storage.routes';
 import { startGithubSyncCron } from './services/github.service';
 
 // Serve uploads directory
@@ -42,12 +45,15 @@ app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 // Setup API Routes
 app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/projects', projectRoutes);
+app.use('/api/v1/projects', taskRoutes);
 app.use('/api/v1/subscriptions', subscriptionRoutes);
 app.use('/api/v1/files', fileRoutes);
 app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/payments', paymentRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/activity', activityRoutes);
+app.use('/api/v1/dashboard', dashboardRoutes);
+app.use('/api/v1/storage', storageRoutes);
 
 // Global Error Handler placeholder
 app.use((err: any, req: Request, res: Response, next: Function) => {

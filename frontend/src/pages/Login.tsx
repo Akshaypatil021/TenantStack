@@ -10,6 +10,7 @@ import {
   ArrowRight,
   Clock,
 } from 'lucide-react';
+import { GoogleLogin } from '@react-oauth/google';
 import { motion, type Variants } from 'framer-motion';
 
 const scrollReveal: Variants = {
@@ -83,6 +84,38 @@ export const Login = () => {
       setError(err.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleGoogleSuccess = async (credential: string) => {
+    try {
+      const res = await fetch('http://localhost:5000/api/v1/auth/google', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: credential }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Google login failed');
+      
+      login(data.token, data.user, data.tenant);
+      if (data.user.email === 'admin@gmail.com') {
+        navigate('/admin');
+      } else {
+        const hasPlan = !!(
+          data.tenant?.computePlan ||
+          data.tenant?.storagePlan ||
+          data.tenant?.subscriptionPlan ||
+          data.tenant?.allocatedResources?.computePlan ||
+          data.tenant?.allocatedResources?.storagePlan
+        );
+        if (hasPlan) {
+          navigate('/dashboard');
+        } else {
+          navigate('/onboarding');
+        }
+      }
+    } catch (err: any) {
+      setError(err.message);
     }
   };
 
@@ -292,6 +325,32 @@ export const Login = () => {
                       </>
                     )}
                   </button>
+                </div>
+
+                <div className="relative my-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-slate-200"></div>
+                  </div>
+                  <div className="relative flex justify-center text-sm">
+                    <span className="px-4 bg-white text-slate-500">Or continue with</span>
+                  </div>
+                </div>
+
+                <div className="flex justify-center w-full pb-2">
+                  <GoogleLogin
+                    onSuccess={(credentialResponse) => {
+                      if (credentialResponse.credential) {
+                        handleGoogleSuccess(credentialResponse.credential);
+                      }
+                    }}
+                    onError={() => {
+                      setError('Google login was unsuccessful.');
+                    }}
+                    useOneTap
+                    shape="circle"
+                    width="100%"
+                    theme="outline"
+                  />
                 </div>
 
                 {/* Registration Link */}

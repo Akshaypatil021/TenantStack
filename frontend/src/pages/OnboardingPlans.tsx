@@ -55,7 +55,7 @@ export const OnboardingPlans: React.FC = () => {
   const navigate = useNavigate();
   const [category, setCategory] = useState<PlanCategory>("storage");
   const [isYearly, setIsYearly] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState("Free Tier");
+  const [selectedPlan, setSelectedPlan] = useState("Solo Dev");
   const [provisioningPlan, setProvisioningPlan] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -102,30 +102,30 @@ export const OnboardingPlans: React.FC = () => {
 
   const storagePlans = [
     {
-      name: "Free Tier", isTrial: true, priceMonthly: 0, priceYearly: 0,
-      originalYearly: undefined, discountBadge: undefined, badge: "Free Forever",
-      description: "Ideal for personal learning, experiments, and small side projects.",
-      usersMonthly: 1, usersYearly: 1, unitName: "Team User",
-      features: ["3 Active Projects", "1 GB NVMe Storage", "1,000 API Requests/day", "Community Support"],
-      yearlyExtraFeatures: [] as string[],
-      buttonText: "Get Started Free", popular: false,
+      name: "Starter Dev", isTrial: false, priceMonthly: 5, priceYearly: 49,
+      originalYearly: 60, discountBadge: "18% OFF", badge: "Starter",
+      description: "Ideal for individual developers, learning, and lightweight projects.",
+      usersMonthly: 1, usersYearly: 2, unitName: "Team User",
+      features: ["3 Active Projects", "5 GB NVMe Storage", "5,000 API Requests/day", "Community Support"],
+      yearlyExtraFeatures: ["+2 GB Extra Storage Bonus", "Email Support Access"],
+      buttonText: "Select Starter Dev", popular: false,
     },
     {
-      name: "Solo Dev", isTrial: false, priceMonthly: 5, priceYearly: 49,
-      originalYearly: 60, discountBadge: "18% OFF", badge: undefined,
+      name: "Solo Dev", isTrial: false, priceMonthly: 15, priceYearly: 139,
+      originalYearly: 180, discountBadge: "23% OFF", badge: undefined,
       description: "Built for individual developers and indie hackers launching apps.",
-      usersMonthly: 3, usersYearly: 5, unitName: "Team Users",
-      features: ["15 Active Projects", "15 GB NVMe Storage", "25,000 API Requests/day"],
-      yearlyExtraFeatures: ["+5 GB Extra Storage Bonus", "Automated Daily Backups"],
+      usersMonthly: 5, usersYearly: 8, unitName: "Team Users",
+      features: ["15 Active Projects", "25 GB NVMe Storage", "50,000 API Requests/day"],
+      yearlyExtraFeatures: ["+10 GB Extra Storage Bonus", "Automated Daily Backups"],
       popular: true, buttonText: "Select Solo Dev",
     },
     {
-      name: "Pro Dev", isTrial: false, priceMonthly: 15, priceYearly: 149,
-      originalYearly: 180, discountBadge: "17% OFF", badge: undefined,
+      name: "Pro Dev", isTrial: false, priceMonthly: 35, priceYearly: 319,
+      originalYearly: 420, discountBadge: "24% OFF", badge: undefined,
       description: "For power developers and freelancers building client solutions.",
-      usersMonthly: 10, usersYearly: 15, unitName: "Team Users",
-      features: ["Unlimited Active Projects", "50 GB NVMe Storage", "100,000 API Requests/day"],
-      yearlyExtraFeatures: ["+15 GB Extra Storage Bonus", "Automated Daily Backups", "Priority Email & Chat Support"],
+      usersMonthly: 15, usersYearly: 20, unitName: "Team Users",
+      features: ["Unlimited Active Projects", "100 GB NVMe Storage", "200,000 API Requests/day"],
+      yearlyExtraFeatures: ["+25 GB Extra Storage Bonus", "Automated Daily Backups", "Priority 24/7 Dedicated Support"],
       buttonText: "Select Pro Dev", popular: false,
     },
   ];
@@ -153,10 +153,10 @@ export const OnboardingPlans: React.FC = () => {
           body: JSON.stringify({ planName, category, isYearly, isFree: true }),
         });
         const verifyData = await verifyRes.json();
-        if (!verifyRes.ok) throw new Error(verifyData.error || "Failed to activate Free Tier");
+        if (!verifyRes.ok) throw new Error(verifyData.error || `Failed to activate ${planName}`);
         login(verifyData.token, verifyData.user, verifyData.tenant);
         setProvisioningPlan(null);
-        setSuccessMessage("Free Tier activated! Redirecting to your dashboard...");
+        setSuccessMessage(`"${planName}" activated! Redirecting to your dashboard...`);
         setTimeout(() => navigate("/dashboard", { replace: true }), 1600);
         return;
       }
@@ -281,7 +281,7 @@ export const OnboardingPlans: React.FC = () => {
             Set up your workspace
           </h1>
           <p className="text-slate-500 text-base sm:text-lg max-w-xl mx-auto leading-relaxed">
-            Choose a plan to activate your cloud resources. Start free -- no credit card required.
+            Choose a plan to activate your cloud resources and launch your workspace.
           </p>
         </motion.div>
 
@@ -289,7 +289,7 @@ export const OnboardingPlans: React.FC = () => {
           <div className="inline-flex p-1.5 bg-white border border-slate-200/80 rounded-2xl shadow-sm">
             <button
               type="button"
-              onClick={() => { setCategory("storage"); setSelectedPlan("Free Tier"); }}
+              onClick={() => { setCategory("storage"); setSelectedPlan("Solo Dev"); }}
               className={`flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-bold transition-all cursor-pointer ${category === "storage" ? "bg-slate-900 text-[#c8f542] shadow-md" : "text-slate-500 hover:text-slate-900"}`}
             >
               <HardDrive className="w-4 h-4" />

@@ -921,36 +921,42 @@ export const LandingPage = () => {
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={staggerContainer} className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {[
             {
-              name: 'Free Tier',
-              isTrial: true,
-              priceMonthly: 0,
-              priceYearly: 0,
-              badge: 'Free Forever',
-              description: 'Ideal for personal learning, experiments, and small side projects.',
-              usersMonthly: 1,
-              usersYearly: 1,
-              features: [
-                '3 Active Projects',
-                '1 GB NVMe Storage',
-                '1,000 API Requests/day',
-                'Community Support',
-              ],
-              buttonText: 'Get Started Free',
-              isDark: false,
-            },
-            {
-              name: 'Solo Dev',
+              name: 'Starter Dev',
               isTrial: false,
               priceMonthly: 5,
               priceYearly: 49,
               originalYearly: 60,
               discountBadge: '18% OFF',
-              description: 'Built for individual developers and indie hackers launching apps.',
-              usersMonthly: 3,
-              usersYearly: 5,
-              features: ['15 Active Projects', '15 GB NVMe Storage', '25,000 API Requests/day'],
+              badge: 'Starter',
+              description: 'Ideal for individual developers, learning, and lightweight projects.',
+              usersMonthly: 1,
+              usersYearly: 2,
+              features: [
+                '3 Active Projects',
+                '5 GB NVMe Storage',
+                '5,000 API Requests/day',
+                'Community Support',
+              ],
               yearlyExtraFeatures: [
-                '+5 GB Extra Storage Bonus',
+                '+2 GB Extra Storage Bonus',
+                'Email Support Access',
+              ],
+              buttonText: 'Select Starter Dev',
+              isDark: false,
+            },
+            {
+              name: 'Solo Dev',
+              isTrial: false,
+              priceMonthly: 15,
+              priceYearly: 139,
+              originalYearly: 180,
+              discountBadge: '23% OFF',
+              description: 'Built for individual developers and indie hackers launching apps.',
+              usersMonthly: 5,
+              usersYearly: 8,
+              features: ['15 Active Projects', '25 GB NVMe Storage', '50,000 API Requests/day'],
+              yearlyExtraFeatures: [
+                '+10 GB Extra Storage Bonus',
                 'Automated Daily Backups',
               ],
               popular: true,
@@ -960,18 +966,18 @@ export const LandingPage = () => {
             {
               name: 'Pro Dev',
               isTrial: false,
-              priceMonthly: 15,
-              priceYearly: 149,
-              originalYearly: 180,
-              discountBadge: '17% OFF',
+              priceMonthly: 35,
+              priceYearly: 319,
+              originalYearly: 420,
+              discountBadge: '24% OFF',
               description: 'For power developers and freelancers building client solutions.',
-              usersMonthly: 10,
-              usersYearly: 15,
-              features: ['Unlimited Active Projects', '50 GB NVMe Storage', '100,000 API Requests/day'],
+              usersMonthly: 15,
+              usersYearly: 20,
+              features: ['Unlimited Active Projects', '100 GB NVMe Storage', '200,000 API Requests/day'],
               yearlyExtraFeatures: [
-                '+15 GB Extra Storage Bonus',
+                '+25 GB Extra Storage Bonus',
                 'Automated Daily Backups',
-                'Priority Email & Chat Support',
+                'Priority 24/7 Dedicated Support',
               ],
               buttonText: 'Select Pro Dev',
               isDark: false,
@@ -1017,7 +1023,7 @@ export const LandingPage = () => {
                         )}
                       </span>
                       <span className={`text-sm font-medium ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-                        {plan.isTrial ? 'for 7 days only' : (isYearly ? 'per year' : 'per month')}
+                        {isYearly ? 'per year' : 'per month'}
                       </span>
                     </div>
 
@@ -1142,7 +1148,7 @@ export const LandingPage = () => {
                       : 'bg-[#18181b] hover:bg-[#c8f542] text-white hover:text-slate-900 shadow-md hover:shadow-lg hover:shadow-[#c8f542]/20'
                   }`}
                 >
-                  {plan.isTrial ? 'Start 7-Day Free Trial' : `Select ${plan.name} Plan`}
+                  {plan.buttonText || `Select ${plan.name} Plan`}
                   <ArrowRight className="w-4 h-4 ml-1" />
                 </Link>
               </div>
