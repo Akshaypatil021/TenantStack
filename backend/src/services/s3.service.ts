@@ -4,11 +4,20 @@ import {
   GetObjectCommand,
   DeleteObjectCommand,
   HeadObjectCommand,
+  HeadBucketCommand,
 } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import fs from 'fs';
 import path from 'path';
 import { Readable } from 'stream';
+
+export class S3MaintenanceError extends Error {
+  public readonly code = 'STORAGE_UNDER_MAINTENANCE';
+  constructor(message = 'AWS S3 Cloud Storage is currently under maintenance. Please try again after some time.') {
+    super(message);
+    this.name = 'S3MaintenanceError';
+  }
+}
 
 export type StorageCategory = 'DOCUMENT' | 'DATASET' | 'IMAGE' | 'CODE' | 'ARCHIVE' | 'OTHER';
 export type StorageProvider = 'AWS_S3' | 'LOCAL';
@@ -79,11 +88,67 @@ export class S3Service {
     }
   }
 
+  private static lastHealthCheckTime: number = 0;
+  private static cachedHealthStatus: { isHealthy: boolean; isUnderMaintenance: boolean; message?: string } = {
+    isHealthy: true,
+    isUnderMaintenance: false,
+  };
+
   /**
    * Check if AWS S3 is configured with real credentials
    */
   public static isS3Active(): boolean {
     return this.getClient() !== null;
+  }
+
+  /**
+   * Checks whether the configured S3 bucket actually exists and is accessible.
+   * If the bucket was deleted or is unreachable, flags maintenance mode.
+   * Cached for 15 seconds to avoid excessive network trips.
+   */
+  public static async checkBucketHealth(forceRefresh = false): Promise<{
+    isHealthy: boolean;
+    isUnderMaintenance: boolean;
+    message?: string;
+  }> {
+    const client = this.getClient();
+    if (!client) {
+      return {
+        isHealthy: false,
+        isUnderMaintenance: false,
+      };
+    }
+
+    const now = Date.now();
+    if (!forceRefresh && now - this.lastHealthCheckTime < 15000) {
+      return this.cachedHealthStatus;
+    }
+
+    try {
+      await client.send(new HeadBucketCommand({ Bucket: this.bucketName }));
+      this.cachedHealthStatus = {
+        isHealthy: true,
+        isUnderMaintenance: false,
+      };
+      this.lastHealthCheckTime = now;
+      return this.cachedHealthStatus;
+    } catch (err: any) {
+      const statusCode = err.$metadata?.httpStatusCode;
+      const errorName = err.name || err.Code || '';
+
+      console.warn(`[S3Service] HeadBucket check failed for bucket "${this.bucketName}":`, errorName || err.message);
+
+      const isMissing = statusCode === 404 || errorName === 'NotFound' || errorName === 'NoSuchBucket';
+      this.cachedHealthStatus = {
+        isHealthy: false,
+        isUnderMaintenance: true,
+        message: isMissing
+          ? `AWS S3 bucket "${this.bucketName}" is currently under maintenance or unavailable. File uploads are temporarily paused.`
+          : 'AWS S3 Cloud Storage is currently undergoing maintenance. Please try again after some time.',
+      };
+      this.lastHealthCheckTime = now;
+      return this.cachedHealthStatus;
+    }
   }
 
   /**
@@ -195,8 +260,21 @@ export class S3Service {
           s3Key,
           s3Bucket: this.bucketName,
         };
-      } catch (error) {
-        console.warn('[S3Service] Upload to S3 failed, falling back to local storage:', error);
+      } catch (error: any) {
+        console.warn('[S3Service] Upload to S3 failed:', error?.name || error?.message);
+        const statusCode = error?.$metadata?.httpStatusCode;
+        const errorName = error?.name || error?.Code || '';
+
+        // If bucket is deleted or not found, trigger maintenance mode
+        if (statusCode === 404 || errorName === 'NotFound' || errorName === 'NoSuchBucket' || errorName === 'AllAccessDisabled') {
+          this.cachedHealthStatus = {
+            isHealthy: false,
+            isUnderMaintenance: true,
+            message: `AWS S3 bucket "${this.bucketName}" is currently under maintenance or unavailable. File uploads are temporarily paused.`,
+          };
+          this.lastHealthCheckTime = Date.now();
+          throw new S3MaintenanceError(`AWS S3 bucket "${this.bucketName}" is currently under maintenance. Please try again after some time.`);
+        }
       }
     }
 

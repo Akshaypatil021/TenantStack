@@ -2,7 +2,7 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../../middleware/auth.middleware';
 import StorageModel from './storage.model';
 import Tenant from '../tenants/tenant.model';
-import { S3Service } from '../../services/s3.service';
+import { S3Service, S3MaintenanceError } from '../../services/s3.service';
 import GeminiService from '../../services/gemini.service';
 import { PLAN_CONFIG } from '../../config/plan.config';
 import { logActivity } from '../activity/activity.controller';
@@ -106,6 +106,9 @@ export const getStorageObjects = async (req: AuthenticatedRequest, res: Response
       }
     });
 
+    // Check S3 bucket health status (cached for 15s)
+    const s3Health = await S3Service.checkBucketHealth();
+
     res.status(200).json({
       files,
       pagination: {
@@ -127,6 +130,9 @@ export const getStorageObjects = async (req: AuthenticatedRequest, res: Response
           bucket: S3Service.getBucketName(),
           region: S3Service.getRegion(),
           prefix: `${tenantId}/storage/`,
+          isHealthy: s3Health.isHealthy,
+          isUnderMaintenance: s3Health.isUnderMaintenance,
+          maintenanceMessage: s3Health.message || null,
         },
       },
     });
@@ -256,6 +262,16 @@ export const uploadStorageObject = async (req: AuthenticatedRequest, res: Respon
     const uniqueSuffix = `${Date.now()}-${crypto.randomBytes(4).toString('hex')}`;
     const generatedFileName = `${cleanBase}_${uniqueSuffix}${ext}`;
 
+    // Check if cloud storage is currently under maintenance
+    const s3Health = await S3Service.checkBucketHealth();
+    if (S3Service.isS3Active() && s3Health.isUnderMaintenance) {
+      res.status(503).json({
+        code: 'STORAGE_UNDER_MAINTENANCE',
+        error: s3Health.message || 'AWS S3 Cloud Storage is currently under maintenance. Please try again after some time.',
+      });
+      return;
+    }
+
     // Upload to AWS S3 (or fallback to local tenant storage)
     const uploadResult = await S3Service.uploadObject({
       tenantId,
@@ -302,6 +318,13 @@ export const uploadStorageObject = async (req: AuthenticatedRequest, res: Respon
     });
   } catch (error: any) {
     console.error('Upload storage object error:', error);
+    if (error.code === 'STORAGE_UNDER_MAINTENANCE' || error.name === 'S3MaintenanceError') {
+      res.status(503).json({
+        code: 'STORAGE_UNDER_MAINTENANCE',
+        error: error.message || 'AWS S3 Cloud Storage is currently under maintenance. Please try again after some time.',
+      });
+      return;
+    }
     res.status(500).json({ error: error.message || 'Internal Server Error uploading file' });
   }
 };
@@ -344,23 +367,48 @@ export const downloadStorageObject = async (req: AuthenticatedRequest, res: Resp
     }
 
     // Stream the object directly to client
-    const streamResult = await S3Service.getObjectStream({
-      s3Key: file.s3Key,
-      provider: file.storageProvider,
-      localPath: file.localPath,
-      mimeType: file.mimeType,
-    });
+    try {
+      const streamResult = await S3Service.getObjectStream({
+        s3Key: file.s3Key,
+        provider: file.storageProvider,
+        localPath: file.localPath,
+        mimeType: file.mimeType,
+      });
 
-    res.setHeader(
-      'Content-Disposition',
-      `attachment; filename="${encodeURIComponent(file.originalName)}"`
-    );
-    res.setHeader('Content-Type', streamResult.contentType);
-    if (streamResult.contentLength) {
-      res.setHeader('Content-Length', streamResult.contentLength);
+      res.setHeader(
+        'Content-Disposition',
+        `attachment; filename="${encodeURIComponent(file.originalName)}"`
+      );
+      res.setHeader('Content-Type', streamResult.contentType);
+      if (streamResult.contentLength) {
+        res.setHeader('Content-Length', streamResult.contentLength);
+      }
+
+      streamResult.stream.pipe(res);
+    } catch (streamError: any) {
+      console.warn('Storage stream error during download:', streamError?.name || streamError?.message);
+      const statusCode = streamError?.$metadata?.httpStatusCode;
+      const errorName = streamError?.name || streamError?.Code || '';
+
+      const isMissing =
+        statusCode === 404 ||
+        errorName === 'NotFound' ||
+        errorName === 'NoSuchBucket' ||
+        errorName === 'NoSuchKey' ||
+        streamError.message?.toLowerCase().includes('not found');
+
+      if (isMissing) {
+        res.status(410).json({
+          code: 'FILE_CORRUPTED',
+          error: `File Corrupted: The underlying storage block for "${file.originalName}" is missing or corrupted in cloud storage. This file occupies ${file.fileSizeMB} MB of your storage quota. Please delete this corrupted file to free up your storage capacity.`,
+          fileId: file._id,
+          fileName: file.originalName,
+          sizeMB: file.fileSizeMB,
+        });
+        return;
+      }
+      throw streamError;
     }
-
-    streamResult.stream.pipe(res);
   } catch (error: any) {
     console.error('Download storage object error:', error);
     res.status(500).json({ error: 'Internal Server Error downloading file' });
@@ -451,11 +499,35 @@ export const analyzeStorageObject = async (req: AuthenticatedRequest, res: Respo
     }
 
     // Retrieve file buffer
-    const buffer = await S3Service.getObjectBuffer({
-      s3Key: file.s3Key,
-      provider: file.storageProvider,
-      localPath: file.localPath,
-    });
+    let buffer: Buffer;
+    try {
+      buffer = await S3Service.getObjectBuffer({
+        s3Key: file.s3Key,
+        provider: file.storageProvider,
+        localPath: file.localPath,
+      });
+    } catch (bufferError: any) {
+      console.warn('Storage buffer error during AI analysis:', bufferError?.name || bufferError?.message);
+      const statusCode = bufferError?.$metadata?.httpStatusCode;
+      const errorName = bufferError?.name || bufferError?.Code || '';
+
+      const isMissing =
+        statusCode === 404 ||
+        errorName === 'NotFound' ||
+        errorName === 'NoSuchBucket' ||
+        errorName === 'NoSuchKey' ||
+        bufferError.message?.toLowerCase().includes('not found');
+
+      if (isMissing) {
+        res.status(410).json({
+          code: 'FILE_CORRUPTED',
+          error: `Cannot analyze "${file.originalName}": The cloud storage data block is missing or corrupted. This file occupies ${file.fileSizeMB} MB of your storage quota. Please delete this corrupted file from your dashboard to free up space.`,
+          fileId: file._id,
+        });
+        return;
+      }
+      throw bufferError;
+    }
 
     // Run Gemini analysis engine
     const analysis = await GeminiService.analyzeDocument({

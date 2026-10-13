@@ -24,6 +24,7 @@ import {
   Lock,
   Layers,
   ChevronRight,
+  AlertTriangle,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { PlansModal } from '../components/PlansModal';
@@ -42,6 +43,9 @@ interface StorageSummary {
     bucket: string;
     region: string;
     prefix: string;
+    isHealthy?: boolean;
+    isUnderMaintenance?: boolean;
+    maintenanceMessage?: string | null;
   };
 }
 
@@ -84,6 +88,12 @@ export const Storage: React.FC = () => {
   const [isPlansModalOpen, setIsPlansModalOpen] = useState<boolean>(false);
   const [isAiModalOpen, setIsAiModalOpen] = useState<boolean>(false);
   const [selectedFileForAi, setSelectedFileForAi] = useState<StorageFile | null>(null);
+  const [corruptedFileAlert, setCorruptedFileAlert] = useState<{
+    fileId: string;
+    fileName: string;
+    sizeMB: number;
+    message: string;
+  } | null>(null);
 
   // Check Subscription Status & Plan Access
   const checkSubscriptionStatus = useCallback(async (): Promise<{ active: boolean; pending: boolean; plan: string }> => {
@@ -195,7 +205,7 @@ export const Storage: React.FC = () => {
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    setIsDragging(false);
+    setIsDragging(false); 
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       handleFilesUpload(Array.from(e.dataTransfer.files));
     }
@@ -208,6 +218,15 @@ export const Storage: React.FC = () => {
 
     const totalIncomingBytes = uploadFiles.reduce((acc, f) => acc + f.size, 0);
     const totalIncomingMB = totalIncomingBytes / (1024 * 1024);
+
+    // Check if cloud storage is under maintenance
+    if (summary?.s3Info?.isUnderMaintenance) {
+      setUploadFeedback({
+        type: 'error',
+        message: summary.s3Info.maintenanceMessage || 'AWS S3 Cloud Storage is currently under maintenance. File uploads are temporarily paused.',
+      });
+      return;
+    }
 
     if (summary) {
       const remainingMB = Math.max(0, summary.maxStorageMB - summary.totalUsedMB);
@@ -239,6 +258,11 @@ export const Storage: React.FC = () => {
 
         const data = await res.json();
         if (!res.ok) {
+          if (res.status === 503 || data.code === 'STORAGE_UNDER_MAINTENANCE') {
+            errorMsg = data.error || '⚠️ AWS S3 Cloud Storage is currently under maintenance. Please try again after some time.';
+            await fetchStorageData();
+            break;
+          }
           if (res.status === 403 && data.upgradeRequired) {
             errorMsg = data.error || 'Your storage limit is exceeded. Please upgrade your plan.';
             break;
@@ -282,7 +306,19 @@ export const Storage: React.FC = () => {
       });
 
       if (!res.ok) {
-        throw new Error('Failed to download file');
+        const errorData = await res.json().catch(() => null);
+        if (res.status === 410 || errorData?.code === 'FILE_CORRUPTED') {
+          setCorruptedFileAlert({
+            fileId: file._id,
+            fileName: file.originalName,
+            sizeMB: file.fileSizeMB,
+            message:
+              errorData?.error ||
+              `File Corrupted: The underlying storage block for "${file.originalName}" is missing or corrupted in cloud storage. This file occupies ${file.fileSizeMB} MB of your quota. Please delete this corrupted file to free up space.`,
+          });
+          return;
+        }
+        throw new Error(errorData?.error || 'Failed to download file');
       }
 
       const blob = await res.blob();
@@ -294,9 +330,12 @@ export const Storage: React.FC = () => {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-    } catch (err) {
+    } catch (err: any) {
       console.error('Download error:', err);
-      alert('Unable to download file. Please try again.');
+      setUploadFeedback({
+        type: 'error',
+        message: err.message || 'Unable to download file. Please try again.',
+      });
     }
   };
 
@@ -716,6 +755,40 @@ export const Storage: React.FC = () => {
         className="hidden"
       />
 
+      {/* Cloud Storage Maintenance Banner */}
+      {summary?.s3Info?.isUnderMaintenance && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-amber-900 shadow-xs backdrop-blur-xs"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-amber-500/20 text-amber-700 border border-amber-500/30 shrink-0">
+              <AlertTriangle className="w-5 h-5 animate-pulse text-amber-600" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h4 className="font-bold text-sm text-amber-950">Cloud Storage Under Maintenance</h4>
+                <span className="px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                  Paused
+                </span>
+              </div>
+              <p className="text-xs text-amber-800/90 mt-0.5">
+                {summary.s3Info.maintenanceMessage || 'AWS S3 Cloud Storage is currently undergoing maintenance. File uploads are temporarily paused and will resume shortly.'}
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => fetchStorageData()}
+            className="shrink-0 px-3 py-1.5 rounded-lg bg-white hover:bg-amber-50 text-amber-800 text-xs font-semibold border border-amber-300 shadow-xs transition active:scale-95 flex items-center gap-1.5 cursor-pointer"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin' : ''}`} />
+            Check Status
+          </button>
+        </motion.div>
+      )}
+
       {/* 2. Quota Warning Banner (if near or exceeded limit) */}
       {isNearLimit && (
         <motion.div
@@ -906,17 +979,34 @@ export const Storage: React.FC = () => {
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        onClick={() => fileInputRef.current?.click()}
-        className={`relative border-2 border-dashed rounded-2xl p-6 text-center transition-all cursor-pointer group ${
-          isDragging
-            ? 'border-emerald-500 bg-emerald-50/40 scale-[1.002]'
-            : 'border-slate-200/90 bg-white hover:border-slate-300 hover:bg-slate-50/50'
+        onClick={() => {
+          if (summary?.s3Info?.isUnderMaintenance) {
+            setUploadFeedback({
+              type: 'error',
+              message: summary.s3Info.maintenanceMessage || '⚠️ AWS S3 Cloud Storage is currently under maintenance. File uploads are temporarily paused.',
+            });
+            return;
+          }
+          fileInputRef.current?.click();
+        }}
+        className={`relative border-2 border-dashed rounded-2xl p-6 text-center transition-all group ${
+          summary?.s3Info?.isUnderMaintenance
+            ? 'border-amber-300/80 bg-amber-50/30 cursor-not-allowed'
+            : isDragging
+            ? 'border-emerald-500 bg-emerald-50/40 scale-[1.002] cursor-pointer'
+            : 'border-slate-200/90 bg-white hover:border-slate-300 hover:bg-slate-50/50 cursor-pointer'
         } ${isUploading ? 'pointer-events-none opacity-60' : ''}`}
       >
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 max-w-4xl mx-auto">
           <div className="flex items-center gap-3.5 text-left">
-            <div className="w-10 h-10 rounded-xl bg-slate-900 text-[#c8f542] flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition">
-              {isUploading ? (
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-xs transition ${
+              summary?.s3Info?.isUnderMaintenance
+                ? 'bg-amber-100 text-amber-700'
+                : 'bg-slate-900 text-[#c8f542] group-hover:scale-105'
+            }`}>
+              {summary?.s3Info?.isUnderMaintenance ? (
+                <AlertTriangle className="w-4 h-4 text-amber-600 animate-pulse" />
+              ) : isUploading ? (
                 <RefreshCw className="w-4 h-4 animate-spin" />
               ) : (
                 <Upload className="w-4 h-4" />
@@ -924,10 +1014,16 @@ export const Storage: React.FC = () => {
             </div>
             <div>
               <p className="text-sm font-bold text-slate-900">
-                {isUploading ? 'Streaming files to S3 bucket...' : 'Drop files here or click to browse'}
+                {summary?.s3Info?.isUnderMaintenance
+                  ? 'Cloud Storage Under Maintenance'
+                  : isUploading
+                  ? 'Streaming files to S3 bucket...'
+                  : 'Drop files here or click to browse'}
               </p>
               <p className="text-xs text-slate-400 mt-0.5">
-                Direct AWS S3 multipart push. Supports CSV, TSV, JSON, Code, Docs up to 100MB per file.
+                {summary?.s3Info?.isUnderMaintenance
+                  ? 'AWS S3 bucket is temporarily offline or undergoing maintenance. Uploads will resume shortly.'
+                  : 'Direct AWS S3 multipart push. Supports CSV, TSV, JSON, Code, Docs up to 100MB per file.'}
               </p>
             </div>
           </div>
@@ -1170,6 +1266,70 @@ export const Storage: React.FC = () => {
           await loadPageData();
         }}
       />
+
+      {/* 8. Corrupted File Alert Modal */}
+      {corruptedFileAlert && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-rose-200 overflow-hidden"
+          >
+            <div className="p-6">
+              <div className="w-12 h-12 rounded-2xl bg-rose-100 text-rose-600 flex items-center justify-center mb-4">
+                <AlertCircle className="w-6 h-6 text-rose-600" />
+              </div>
+
+              <div className="flex items-center gap-2">
+                <h3 className="text-base font-bold text-slate-900">File Corrupted / Storage Inaccessible</h3>
+                <span className="px-2 py-0.5 text-[10px] font-bold uppercase rounded-md bg-rose-100 text-rose-700 border border-rose-200">
+                  Storage Lost
+                </span>
+              </div>
+
+              <p className="text-xs text-slate-500 mt-2 leading-relaxed">
+                The cloud storage block for <strong className="text-slate-800">{corruptedFileAlert.fileName}</strong> is unreachable or was removed from AWS S3.
+              </p>
+
+              {/* Quota Hold Telemetry Card */}
+              <div className="mt-4 p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-slate-500 font-medium">Allocated Quota Held:</span>
+                  <span className="text-xs font-bold text-rose-600 font-mono">
+                    {corruptedFileAlert.sizeMB} MB
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  This space remains locked in your quota until you delete the file record.
+                </p>
+              </div>
+
+              <div className="mt-6 flex flex-col gap-2.5">
+                <button
+                  onClick={async () => {
+                    const fileObj = files.find((f) => f._id === corruptedFileAlert.fileId);
+                    if (fileObj) {
+                      await handleDelete(fileObj);
+                    }
+                    setCorruptedFileAlert(null);
+                  }}
+                  className="w-full py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold shadow-sm transition active:scale-95 flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  Delete File & Free {corruptedFileAlert.sizeMB} MB
+                </button>
+
+                <button
+                  onClick={() => setCorruptedFileAlert(null)}
+                  className="w-full py-2.5 px-4 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold transition active:scale-95 cursor-pointer"
+                >
+                  Keep Record (Do Not Free Space)
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 };
