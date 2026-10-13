@@ -19,10 +19,12 @@ import {
   ChevronRight,
   LogOut,
   PieChart as PieChartIcon,
-  Activity as ActivityIcon
+  Activity as ActivityIcon,
+  Menu,
 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Sidebar } from '../components/Sidebar';
+import { Footer } from '../components/Footer';
 import { motion } from 'framer-motion';
 import {
   AreaChart,
@@ -241,10 +243,19 @@ export const Dashboard = () => {
         {/* ─── Top Navigation Bar ─── */}
         <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-100">
           <div className="max-w-[1400px] mx-auto px-6 md:px-10 h-16 flex items-center justify-between">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5">
+              {/* Mobile Sidebar Toggle */}
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent('toggle-mobile-sidebar'))}
+                className="lg:hidden p-2 -ml-2 rounded-xl text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
+                title="Open Navigation Menu"
+              >
+                <Menu className="w-5 h-5" />
+              </button>
+
               <span className="text-[#5E9F71] font-semibold text-sm">Dashboard</span>
-              <ChevronRight className="w-3.5 h-3.5 text-slate-300" />
-              <span className="text-slate-400 text-sm capitalize">Live Consumption & Resource Metrics</span>
+              <ChevronRight className="w-3.5 h-3.5 text-slate-300 hidden sm:inline" />
+              <span className="text-slate-400 text-sm capitalize hidden sm:inline">Live Consumption & Resource Metrics</span>
             </div>
 
             {/* Right Actions */}
@@ -296,7 +307,7 @@ export const Dashboard = () => {
         </header>
 
         {/* ─── Main Content ─── */}
-        <main className="max-w-[1400px] mx-auto px-6 md:px-10 py-8 flex-1 w-full space-y-8">
+        <main className="max-w-[1400px] mx-auto px-6 md:px-10 pt-8 pb-0 flex-1 w-full space-y-8">
           {/* Welcome & Plan Header Banner */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-slate-200/80">
             <div>
@@ -998,6 +1009,9 @@ export const Dashboard = () => {
               <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-amber-600 ml-auto transition" />
             </Link>
           </div>
+
+          {/* Enterprise Footer */}
+          <Footer />
         </main>
 
         {/* Dedicated Resource Plans Modal */}
