@@ -81,9 +81,10 @@ export const PlansModal: React.FC<PlansModalProps> = ({
       'Compute Node': 3,
     },
     storage: {
-      'Free Tier': 1,
+      'Starter Dev': 1,
       'Solo Dev': 2,
       'Pro Dev': 3,
+      'Free Tier': 1,
     },
   };
 
@@ -176,38 +177,44 @@ export const PlansModal: React.FC<PlansModalProps> = ({
   // ─── Exact Storage & Workspace Plans from LandingPage.tsx ───
   const storagePlans = [
     {
-      name: 'Free Tier',
-      isTrial: true,
-      priceMonthly: 0,
-      priceYearly: 0,
-      badge: 'Free Forever',
-      description: 'Ideal for personal learning, experiments, and small side projects.',
-      usersMonthly: 1,
-      usersYearly: 1,
-      unitName: 'Team User',
-      features: [
-        '3 Active Projects',
-        '1 GB NVMe Storage',
-        '1,000 API Requests/day',
-        'Community Support',
-      ],
-      buttonText: 'Get Started Free',
-      popular: false,
-    },
-    {
-      name: 'Solo Dev',
+      name: 'Starter Dev',
       isTrial: false,
       priceMonthly: 5,
       priceYearly: 49,
       originalYearly: 60,
       discountBadge: '18% OFF',
-      description: 'Built for individual developers and indie hackers launching apps.',
-      usersMonthly: 3,
-      usersYearly: 5,
-      unitName: 'Team Users',
-      features: ['15 Active Projects', '15 GB NVMe Storage', '25,000 API Requests/day'],
+      badge: 'Starter',
+      description: 'Ideal for individual developers, learning, and lightweight projects.',
+      usersMonthly: 1,
+      usersYearly: 2,
+      unitName: 'Team User',
+      features: [
+        '3 Active Projects',
+        '5 GB NVMe Storage',
+        '5,000 API Requests/day',
+        'Community Support',
+      ],
       yearlyExtraFeatures: [
-        '+5 GB Extra Storage Bonus',
+        '+2 GB Extra Storage Bonus',
+        'Email Support Access',
+      ],
+      buttonText: 'Select Starter Dev',
+      popular: false,
+    },
+    {
+      name: 'Solo Dev',
+      isTrial: false,
+      priceMonthly: 15,
+      priceYearly: 139,
+      originalYearly: 180,
+      discountBadge: '23% OFF',
+      description: 'Built for individual developers and indie hackers launching apps.',
+      usersMonthly: 5,
+      usersYearly: 8,
+      unitName: 'Team Users',
+      features: ['15 Active Projects', '25 GB NVMe Storage', '50,000 API Requests/day'],
+      yearlyExtraFeatures: [
+        '+10 GB Extra Storage Bonus',
         'Automated Daily Backups',
       ],
       popular: true,
@@ -216,19 +223,19 @@ export const PlansModal: React.FC<PlansModalProps> = ({
     {
       name: 'Pro Dev',
       isTrial: false,
-      priceMonthly: 15,
-      priceYearly: 149,
-      originalYearly: 180,
-      discountBadge: '17% OFF',
+      priceMonthly: 35,
+      priceYearly: 319,
+      originalYearly: 420,
+      discountBadge: '24% OFF',
       description: 'For power developers and freelancers building client solutions.',
-      usersMonthly: 10,
-      usersYearly: 15,
+      usersMonthly: 15,
+      usersYearly: 20,
       unitName: 'Team Users',
-      features: ['Unlimited Active Projects', '50 GB NVMe Storage', '100,000 API Requests/day'],
+      features: ['Unlimited Active Projects', '100 GB NVMe Storage', '200,000 API Requests/day'],
       yearlyExtraFeatures: [
-        '+15 GB Extra Storage Bonus',
+        '+25 GB Extra Storage Bonus',
         'Automated Daily Backups',
-        'Priority Email & Chat Support',
+        'Priority 24/7 Dedicated Support',
       ],
       buttonText: 'Select Pro Dev',
       popular: false,
@@ -284,12 +291,12 @@ export const PlansModal: React.FC<PlansModalProps> = ({
 
         const verifyData = await verifyRes.json();
         if (!verifyRes.ok) {
-          throw new Error(verifyData.error || 'Failed to activate Free Tier');
+          throw new Error(verifyData.error || `Failed to activate ${planName}`);
         }
 
         login(verifyData.token, verifyData.user, verifyData.tenant);
         setProvisioningPlan(null);
-        setSuccessMessage(`Free Tier activated successfully! 1 GB storage & community support ready.`);
+        setSuccessMessage(`"${planName}" activated successfully! Resources are ready.`);
         if (onSelectPlan) {
           onSelectPlan(planName, category);
         }
