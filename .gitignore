@@ -9,3 +9,5 @@ coverage/
 uploads/
 backend/uploads/
 post_login_flow.md
+EC2_SETUP_GUIDE.md
+setup_ec2.sh
