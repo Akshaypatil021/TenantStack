@@ -12,6 +12,7 @@ import {
   PanelLeftClose, PanelLeftOpen, Menu, Info, Shield, ClipboardList,
   Sparkles, ArrowRight
 } from 'lucide-react';
+import { AdminResourcesSection } from '../components/AdminResourcesSection';
 
 // ─── Animations ───
 const fadeUp: Variants = {
@@ -1238,8 +1239,15 @@ export const AdminDashboard = () => {
             </motion.div>
           )}
 
+          {/* ─── COMPUTE & STORAGE RESOURCES TAB ─── */}
+          {activeTab === 'resources' && (
+            <motion.div variants={fadeUp}>
+              <AdminResourcesSection token={token} showToast={showToast} />
+            </motion.div>
+          )}
+
           {/* ─── PLACEHOLDER VIEWS ─── */}
-          {['financials', 'health', 'tenants', 'resources', 'roles', 'audit'].includes(activeTab) && (
+          {['financials', 'health', 'tenants', 'roles', 'audit'].includes(activeTab) && (
             <motion.div variants={fadeUp} className="bg-white border border-slate-100 rounded-2xl p-12 flex flex-col items-center justify-center text-center">
               <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-4">
                 <Info className="w-8 h-8 text-slate-400" />

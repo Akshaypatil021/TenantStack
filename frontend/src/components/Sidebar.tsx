@@ -19,7 +19,7 @@ import {
 import { useAuth } from '../context/AuthContext';
 
 export const Sidebar: React.FC = () => {
-  const { logout, tenant, user } = useAuth();
+  const { logout, tenant } = useAuth();
   const navigate = useNavigate();
 
   // Desktop Pin & Hover State (Persisted in localStorage)
