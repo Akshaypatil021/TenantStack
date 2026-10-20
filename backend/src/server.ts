@@ -7,6 +7,7 @@ dotenv.config();
 
 import { connectDB } from './config/database';
 import { initRedis } from './services/redis.service';
+import { S3Service } from './services/s3.service';
 import User from './modules/users/user.model';
 import Role from './modules/roles/role.model';
 import bcrypt from 'bcrypt';
@@ -52,6 +53,9 @@ const startServer = async () => {
     
     // Seed Admin User
     await seedAdminUser();
+
+    // Initialize S3 Storage runtime config from DB
+    await S3Service.initFromDb();
 
     // Redis Cache connection (graceful - server runs even if Redis fails)
     initRedis();

@@ -4,6 +4,12 @@ import User from '../users/user.model';
 import Tenant from '../tenants/tenant.model';
 import Invoice from '../subscriptions/invoice.model';
 import PaidUser from '../payments/paidUser.model';
+import Ec2Host from '../compute/ec2Host.model';
+import ComputeInstance from '../compute/compute.model';
+import StorageConfig from '../storage/storageConfig.model';
+import StorageObject from '../storage/storage.model';
+import { S3Service } from '../../services/s3.service';
+import { getOrCreateMasterHost } from '../compute/compute.controller';
 
 /**
  * 1. Admin Dashboard Stats
@@ -382,3 +388,228 @@ export const declineSubscription = async (req: AuthenticatedRequest, res: Respon
     res.status(500).json({ error: error.message || 'Failed to decline subscription' });
   }
 };
+
+/**
+ * Helper: Get or Initialize Super Admin S3 Storage Configuration
+ */
+export const getOrCreateStorageConfig = async () => {
+  let config = await StorageConfig.findOne({ isDefault: true });
+  if (!config) {
+    config = await StorageConfig.create({
+      provider: 'AWS_S3',
+      bucketName: process.env.S3_BUCKET_NAME || 'tenantstack-storage',
+      region: process.env.AWS_REGION || 'ap-south-1',
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
+      status: (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_ACCESS_KEY_ID.length > 8) ? 'connected' : 'not_configured',
+      isDefault: true,
+      notes: 'Master AWS S3 Cloud Storage configuration managed by Super Admin',
+    });
+  }
+  return config;
+};
+
+/**
+ * 8. Consolidated Admin Resources & Telemetry Overview
+ * GET /api/v1/admin/resources
+ */
+export const getAdminResources = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const [masterHost, storageConfig, totalInstances, runningInstances, totalStorageObjects, storageSizeAgg, totalTenants, hostedInstances] =
+      await Promise.all([
+        getOrCreateMasterHost(),
+        getOrCreateStorageConfig(),
+        ComputeInstance.countDocuments({ status: { $ne: 'terminated' } }),
+        ComputeInstance.countDocuments({ status: 'running' }),
+        StorageObject.countDocuments(),
+        StorageObject.aggregate([{ $group: { _id: null, totalBytes: { $sum: '$fileSizeBytes' } } }]),
+        Tenant.countDocuments({ status: 'ACTIVE' }),
+        ComputeInstance.find({ status: { $ne: 'terminated' } })
+          .populate('tenantId', 'name subdomain plan')
+          .sort({ updatedAt: -1 })
+          .limit(25)
+          .lean(),
+      ]);
+
+    const totalStorageBytes = storageSizeAgg.length > 0 ? storageSizeAgg[0].totalBytes : 0;
+    const totalStorageMB = Number((totalStorageBytes / (1024 * 1024)).toFixed(2));
+
+    res.status(200).json({
+      success: true,
+      ec2Host: {
+        _id: masterHost._id,
+        label: masterHost.label,
+        hostIp: masterHost.hostIp,
+        sshUsername: masterHost.sshUsername,
+        hasSshKey: !!masterHost.sshKey,
+        region: masterHost.region,
+        status: masterHost.status,
+        basePort: masterHost.basePort,
+        totalAppsHosted: totalInstances,
+        lastCheckedAt: masterHost.lastCheckedAt,
+        notes: masterHost.notes,
+      },
+      storageConfig: {
+        _id: storageConfig._id,
+        provider: storageConfig.provider,
+        bucketName: storageConfig.bucketName,
+        region: storageConfig.region,
+        accessKeyId: storageConfig.accessKeyId,
+        hasSecretKey: !!storageConfig.secretAccessKey,
+        secretAccessKeyMasked: storageConfig.secretAccessKey ? '••••••••••••••••' : '',
+        status: storageConfig.status,
+        lastTestedAt: storageConfig.lastTestedAt,
+        testMessage: storageConfig.testMessage,
+        notes: storageConfig.notes,
+      },
+      telemetry: {
+        totalInstances,
+        runningInstances,
+        totalStorageObjects,
+        totalStorageBytes,
+        totalStorageMB,
+        totalTenants,
+      },
+      instances: hostedInstances,
+    });
+  } catch (error: any) {
+    console.error('Error fetching admin resources:', error);
+    res.status(500).json({ error: error.message || 'Failed to fetch admin resources' });
+  }
+};
+
+/**
+ * 9. Get S3 Storage Configuration
+ * GET /api/v1/admin/storage-config
+ */
+export const getAdminStorageConfig = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const config = await getOrCreateStorageConfig();
+    res.status(200).json({
+      success: true,
+      storageConfig: {
+        _id: config._id,
+        provider: config.provider,
+        bucketName: config.bucketName,
+        region: config.region,
+        accessKeyId: config.accessKeyId,
+        hasSecretKey: !!config.secretAccessKey,
+        secretAccessKeyMasked: config.secretAccessKey ? '••••••••••••••••' : '',
+        status: config.status,
+        lastTestedAt: config.lastTestedAt,
+        testMessage: config.testMessage,
+        notes: config.notes,
+      },
+    });
+  } catch (error: any) {
+    console.error('Error getting storage config:', error);
+    res.status(500).json({ error: error.message || 'Failed to get storage configuration' });
+  }
+};
+
+/**
+ * 10. Update S3 Storage Configuration
+ * PUT /api/v1/admin/storage-config
+ */
+export const updateAdminStorageConfig = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { provider, bucketName, region, accessKeyId, secretAccessKey, notes } = req.body;
+
+    let config = await StorageConfig.findOne({ isDefault: true });
+    if (!config) {
+      config = new StorageConfig({ isDefault: true });
+    }
+
+    if (provider) config.provider = provider;
+    if (bucketName) config.bucketName = bucketName.trim();
+    if (region) config.region = region.trim();
+    if (accessKeyId !== undefined) config.accessKeyId = accessKeyId.trim();
+    
+    // Only update secret key if provided and not the masked placeholder
+    if (secretAccessKey && secretAccessKey !== '••••••••••••••••') {
+      config.secretAccessKey = secretAccessKey.trim();
+    }
+
+    if (notes !== undefined) config.notes = notes.trim();
+
+    await config.save();
+
+    // Propagate to runtime S3Service
+    S3Service.setRuntimeConfig({
+      bucketName: config.bucketName,
+      region: config.region,
+      accessKeyId: config.accessKeyId,
+      secretAccessKey: config.secretAccessKey,
+      provider: config.provider as any,
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'AWS S3 Cloud Storage configuration saved successfully.',
+      storageConfig: {
+        _id: config._id,
+        provider: config.provider,
+        bucketName: config.bucketName,
+        region: config.region,
+        accessKeyId: config.accessKeyId,
+        hasSecretKey: !!config.secretAccessKey,
+        secretAccessKeyMasked: config.secretAccessKey ? '••••••••••••••••' : '',
+        status: config.status,
+        lastTestedAt: config.lastTestedAt,
+        notes: config.notes,
+      },
+    });
+  } catch (error: any) {
+    console.error('Error updating storage config:', error);
+    res.status(500).json({ error: error.message || 'Failed to update storage configuration' });
+  }
+};
+
+/**
+ * 11. Test S3 Bucket Connection
+ * POST /api/v1/admin/storage-config/test
+ */
+export const testAdminStorageConfig = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { bucketName, region, accessKeyId, secretAccessKey } = req.body || {};
+
+    const config = await getOrCreateStorageConfig();
+
+    // Use passed credentials or fall back to stored credentials
+    const testBucket = bucketName?.trim() || config.bucketName;
+    const testRegion = region?.trim() || config.region;
+    const testAccessKey = accessKeyId?.trim() || config.accessKeyId;
+    const testSecretKey =
+      secretAccessKey && secretAccessKey !== '••••••••••••••••'
+        ? secretAccessKey.trim()
+        : config.secretAccessKey;
+
+    const result = await S3Service.testConnection({
+      bucketName: testBucket,
+      region: testRegion,
+      accessKeyId: testAccessKey,
+      secretAccessKey: testSecretKey,
+    });
+
+    config.status = result.success ? 'connected' : 'error';
+    config.lastTestedAt = new Date();
+    config.testMessage = result.message;
+    await config.save();
+
+    res.status(200).json({
+      success: result.success,
+      message: result.message,
+      latencyMs: result.latencyMs,
+      bucket: result.bucket || testBucket,
+      region: result.region || testRegion,
+      status: config.status,
+    });
+  } catch (error: any) {
+    console.error('Error testing S3 configuration:', error);
+    res.status(500).json({
+      success: false,
+      error: error.message || 'Failed to test S3 bucket connection',
+    });
+  }
+};
+

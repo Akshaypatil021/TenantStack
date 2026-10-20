@@ -7,7 +7,16 @@ import {
   getAllInvoices,
   approveSubscription,
   declineSubscription,
+  getAdminResources,
+  getAdminStorageConfig,
+  updateAdminStorageConfig,
+  testAdminStorageConfig,
 } from './admin.controller';
+import {
+  getAdminEc2Host,
+  updateAdminEc2Host,
+  testAdminEc2Host,
+} from '../compute/compute.controller';
 import { authenticate, AuthenticatedRequest } from '../../middleware/auth.middleware';
 import { Response, NextFunction } from 'express';
 import User from '../users/user.model';
@@ -52,5 +61,16 @@ router.put('/subscriptions/:id/decline', declineSubscription);
 
 // Invoice / Billing history
 router.get('/invoices', getAllInvoices);
+
+// Compute & S3 Storage Resources Management
+router.get('/resources', getAdminResources);
+router.get('/storage-config', getAdminStorageConfig);
+router.put('/storage-config', updateAdminStorageConfig);
+router.post('/storage-config/test', testAdminStorageConfig);
+
+// Master AWS EC2 Host Configuration
+router.get('/ec2-host', getAdminEc2Host);
+router.put('/ec2-host', updateAdminEc2Host);
+router.post('/ec2-host/test', testAdminEc2Host);
 
 export default router;

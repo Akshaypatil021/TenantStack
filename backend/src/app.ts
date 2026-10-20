@@ -14,7 +14,7 @@ app.use(express.urlencoded({ extended: true }));
 // Basic Rate Limiting
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per `window` (here, per 15 minutes)
+  max: 5000, // Limit each IP to 5000 requests per 15 minutes (allows terminal & live telemetry)
   standardHeaders: true,
   legacyHeaders: false,
 });
@@ -37,6 +37,7 @@ import activityRoutes from './modules/activity/activity.routes';
 import taskRoutes from './modules/tasks/task.routes';
 import dashboardRoutes from './modules/dashboard/dashboard.routes';
 import storageRoutes from './modules/storage/storage.routes';
+import computeRoutes from './modules/compute/compute.routes';
 import { startGithubSyncCron } from './services/github.service';
 
 // Serve uploads directory
@@ -54,6 +55,7 @@ app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/activity', activityRoutes);
 app.use('/api/v1/dashboard', dashboardRoutes);
 app.use('/api/v1/storage', storageRoutes);
+app.use('/api/v1/compute', computeRoutes);
 
 // Global Error Handler placeholder
 app.use((err: any, req: Request, res: Response, next: Function) => {

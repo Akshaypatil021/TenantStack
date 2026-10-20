@@ -40,11 +40,52 @@ export class S3Service {
   private static cachedAccessKey: string | null = null;
   private static localBaseDir: string = path.join(process.cwd(), 'uploads', 'tenants');
 
-  private static get bucketName(): string {
+  private static runtimeConfig: {
+    bucketName?: string;
+    region?: string;
+    accessKeyId?: string;
+    secretAccessKey?: string;
+    provider?: StorageProvider;
+  } | null = null;
+
+  public static setRuntimeConfig(config: {
+    bucketName?: string;
+    region?: string;
+    accessKeyId?: string;
+    secretAccessKey?: string;
+    provider?: StorageProvider;
+  }): void {
+    this.runtimeConfig = { ...this.runtimeConfig, ...config };
+    this.s3Client = null;
+    this.cachedAccessKey = null;
+    this.lastHealthCheckTime = 0;
+  }
+
+  public static async initFromDb(): Promise<void> {
+    try {
+      const StorageConfig = (await import('../modules/storage/storageConfig.model')).default;
+      const config = await StorageConfig.findOne({ isDefault: true }).lean();
+      if (config) {
+        this.setRuntimeConfig({
+          bucketName: config.bucketName,
+          region: config.region,
+          accessKeyId: config.accessKeyId,
+          secretAccessKey: config.secretAccessKey,
+          provider: config.provider as StorageProvider,
+        });
+      }
+    } catch (err) {
+      console.warn('[S3Service] Could not load storage config from DB:', err);
+    }
+  }
+
+  public static get bucketName(): string {
+    if (this.runtimeConfig?.bucketName) return this.runtimeConfig.bucketName.trim();
     return (process.env.S3_BUCKET_NAME || 'tenantstack-storage').trim();
   }
 
-  private static get region(): string {
+  public static get region(): string {
+    if (this.runtimeConfig?.region) return this.runtimeConfig.region.trim();
     return (process.env.AWS_REGION || 'ap-south-1').trim();
   }
 
@@ -53,8 +94,8 @@ export class S3Service {
    * Returns null if AWS credentials are dummy/placeholder values or not set.
    */
   private static getClient(): S3Client | null {
-    const accessKey = process.env.AWS_ACCESS_KEY_ID?.trim();
-    const secretKey = process.env.AWS_SECRET_ACCESS_KEY?.trim();
+    const accessKey = (this.runtimeConfig?.accessKeyId || process.env.AWS_ACCESS_KEY_ID || '').trim();
+    const secretKey = (this.runtimeConfig?.secretAccessKey || process.env.AWS_SECRET_ACCESS_KEY || '').trim();
 
     // Check for placeholder/missing credentials
     const isPlaceholder =
@@ -148,6 +189,95 @@ export class S3Service {
       };
       this.lastHealthCheckTime = now;
       return this.cachedHealthStatus;
+    }
+  }
+
+  /**
+   * Diagnostic test of AWS S3 credentials and bucket accessibility.
+   */
+  public static async testConnection(customConfig?: {
+    bucketName?: string;
+    region?: string;
+    accessKeyId?: string;
+    secretAccessKey?: string;
+  }): Promise<{ success: boolean; message: string; latencyMs?: number; region?: string; bucket?: string }> {
+    const bucket = (customConfig?.bucketName || this.bucketName || '').trim();
+    const region = (customConfig?.region || this.region || '').trim();
+    const accessKeyId = (customConfig?.accessKeyId || this.runtimeConfig?.accessKeyId || process.env.AWS_ACCESS_KEY_ID || '').trim();
+    const secretAccessKey = (customConfig?.secretAccessKey || this.runtimeConfig?.secretAccessKey || process.env.AWS_SECRET_ACCESS_KEY || '').trim();
+
+    if (!accessKeyId || !secretAccessKey || accessKeyId.length < 5) {
+      return {
+        success: false,
+        message: 'AWS Access Key ID and Secret Access Key must be specified before testing connectivity.',
+      };
+    }
+
+    if (!bucket) {
+      return {
+        success: false,
+        message: 'AWS S3 Bucket Name must be specified.',
+      };
+    }
+
+    const startTime = Date.now();
+    try {
+      const testClient = new S3Client({
+        region,
+        credentials: {
+          accessKeyId,
+          secretAccessKey,
+        },
+      });
+
+      await testClient.send(new HeadBucketCommand({ Bucket: bucket }));
+      const latencyMs = Date.now() - startTime;
+      return {
+        success: true,
+        latencyMs,
+        bucket,
+        region,
+        message: `Successfully connected to AWS S3 bucket "${bucket}" in ${region} (${latencyMs}ms latency). Read/write authorization verified.`,
+      };
+    } catch (err: any) {
+      const latencyMs = Date.now() - startTime;
+      const statusCode = err.$metadata?.httpStatusCode;
+      const errorName = err.name || err.Code || '';
+
+      if (statusCode === 403 || errorName === 'AccessDenied' || errorName === 'Forbidden') {
+        return {
+          success: false,
+          latencyMs,
+          message: `Access Denied (HTTP 403): Verify that IAM user credentials have "s3:HeadBucket" and "s3:PutObject" permissions for bucket "${bucket}".`,
+        };
+      }
+      if (statusCode === 404 || errorName === 'NotFound' || errorName === 'NoSuchBucket') {
+        return {
+          success: false,
+          latencyMs,
+          message: `Bucket Not Found (HTTP 404): AWS S3 bucket "${bucket}" was not found in region "${region}". Please verify the bucket name in your AWS Console.`,
+        };
+      }
+      if (errorName === 'InvalidAccessKeyId') {
+        return {
+          success: false,
+          latencyMs,
+          message: `Invalid AWS Access Key ID: The AWS Access Key ID does not exist in AWS IAM.`,
+        };
+      }
+      if (errorName === 'SignatureDoesNotMatch') {
+        return {
+          success: false,
+          latencyMs,
+          message: `Invalid AWS Secret Access Key: The request signature calculation failed. Please re-check your secret key.`,
+        };
+      }
+
+      return {
+        success: false,
+        latencyMs,
+        message: `AWS S3 Connection Error: ${err.message || errorName || 'Unknown error'}`,
+      };
     }
   }
 
