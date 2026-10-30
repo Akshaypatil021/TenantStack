@@ -1,22 +1,27 @@
 import { Response } from 'express';
 import { z } from 'zod';
+import mongoose from 'mongoose';
 import Tenant from '../tenants/tenant.model';
 import User from '../users/user.model';
 import Project from '../projects/project.model';
+import StorageModel from '../storage/storage.model';
 import Subscription from './subscription.model';
 import Invoice from './invoice.model';
-import { PLAN_CONFIG } from '../../config/plan.config';
+import { PLAN_CONFIG, resolveWorkspacePlanName, getPlanLimits } from '../../config/plan.config';
 import { AuthenticatedRequest } from '../../middleware/auth.middleware';
 import { getOrSetCache, invalidateCache } from '../../services/redis.service';
 
 const UpgradeSchema = z.object({
-  newPlan: z.enum(['FREE', 'PRO', 'BUSINESS']),
+  newPlan: z.enum(['Starter Dev', 'Solo Dev', 'Pro Dev', 'FREE', 'PRO', 'BUSINESS']),
 });
 
-const PLAN_PRICES: Record<'FREE' | 'PRO' | 'BUSINESS', number> = {
+const PLAN_PRICES: Record<string, number> = {
+  'Starter Dev': 5,
+  'Solo Dev': 15,
+  'Pro Dev': 35,
   FREE: 0,
-  PRO: 29,
-  BUSINESS: 99,
+  PRO: 15,
+  BUSINESS: 35,
 };
 
 export const getCurrentSubscription = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
@@ -31,13 +36,21 @@ export const getCurrentSubscription = async (req: AuthenticatedRequest, res: Res
         const tenant = await Tenant.findById(tenantId);
         if (!tenant) return null;
 
-        const planName = (tenant.subscriptionPlan || 'FREE') as 'FREE' | 'PRO' | 'BUSINESS';
-        const planLimits = PLAN_CONFIG[planName] || PLAN_CONFIG.FREE;
+        const planName = resolveWorkspacePlanName(tenant.subscriptionPlan, tenant.storagePlan);
+        const planLimits = PLAN_CONFIG[planName] || PLAN_CONFIG['Starter Dev'];
 
-        const [projectsCount, usersCount] = await Promise.all([
+        const tenantObjectId = new mongoose.Types.ObjectId(tenantId);
+        const [projectsCount, usersCount, storageResult] = await Promise.all([
           Project.countDocuments({ tenantId }),
           User.countDocuments({ tenantId }),
+          StorageModel.aggregate([
+            { $match: { tenantId: tenantObjectId } },
+            { $group: { _id: null, totalBytes: { $sum: '$fileSizeBytes' } } },
+          ]),
         ]);
+
+        const currentBytes = storageResult.length > 0 ? storageResult[0].totalBytes : 0;
+        const currentMB = Number((currentBytes / (1024 * 1024)).toFixed(2));
 
         const subscription = await Subscription.findOne({ tenantId });
 
@@ -45,10 +58,23 @@ export const getCurrentSubscription = async (req: AuthenticatedRequest, res: Res
           plan: planName,
           status: subscription?.status || 'ACTIVE',
           usage: {
-            projects: { used: projectsCount, max: planLimits.maxProjects },
-            users: { used: usersCount, max: planLimits.maxUsers },
-            storageMB: { used: 0, max: planLimits.maxStorageMB },
-            apiRequestsPerDay: { used: 0, max: planLimits.maxApiRequestsPerDay },
+            projects: {
+              used: projectsCount,
+              max: planLimits.maxProjects,
+              isUnlimited: planLimits.maxProjects === -1,
+            },
+            users: {
+              used: usersCount,
+              max: planLimits.maxUsers,
+            },
+            storageMB: {
+              used: currentMB,
+              max: planLimits.maxStorageMB,
+            },
+            apiRequestsPerDay: {
+              used: tenant.apiRequests || 0,
+              max: planLimits.maxApiRequestsPerDay,
+            },
           },
         };
       }
@@ -83,7 +109,7 @@ export const upgradePlan = async (req: AuthenticatedRequest, res: Response): Pro
       return;
     }
 
-    const price = PLAN_PRICES[newPlan];
+    const price = PLAN_PRICES[newPlan] ?? 0;
     const transactionId = `txn_mock_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
 
     // 1. Create Invoice Record
@@ -98,6 +124,7 @@ export const upgradePlan = async (req: AuthenticatedRequest, res: Response): Pro
 
     // 2. Update Tenant Plan
     tenant.subscriptionPlan = newPlan;
+    tenant.storagePlan = newPlan;
     await tenant.save();
 
     // 3. Update or Create Subscription Record
@@ -120,6 +147,8 @@ export const upgradePlan = async (req: AuthenticatedRequest, res: Response): Pro
       invalidateCache(`tenant:${tenantId}:plan`),
       invalidateCache(`tenant:${tenantId}:subscription`),
       invalidateCache(`tenant:${tenantId}:storage`),
+      invalidateCache(`tenant:${tenantId}:projects:count`),
+      invalidateCache(`tenant:${tenantId}:users:count`),
     ]);
 
     res.status(200).json({

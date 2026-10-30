@@ -5,7 +5,7 @@ import Project from '../projects/project.model';
 import Task from '../tasks/task.model';
 import { FileModel } from '../files/file.model';
 import Activity from '../activity/activity.model';
-import { PLAN_CONFIG } from '../../config/plan.config';
+import { PLAN_CONFIG, resolveWorkspacePlanName } from '../../config/plan.config';
 import mongoose from 'mongoose';
 
 /**
@@ -38,8 +38,8 @@ export const getDashboardStats = async (req: AuthenticatedRequest, res: Response
     }
 
     // Get plan limits
-    const planName = tenant.subscriptionPlan || 'Starter Dev';
-    const planLimits = PLAN_CONFIG[planName] || PLAN_CONFIG['Starter Dev'] || PLAN_CONFIG.FREE;
+    const planName = resolveWorkspacePlanName(tenant.subscriptionPlan, tenant.storagePlan);
+    const planLimits = PLAN_CONFIG[planName] || PLAN_CONFIG['Starter Dev'];
 
     // ─── Run all aggregations in parallel ───
     const [

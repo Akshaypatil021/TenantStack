@@ -2,7 +2,7 @@ import { Response, NextFunction } from 'express';
 import Tenant from '../modules/tenants/tenant.model';
 import Project from '../modules/projects/project.model';
 import User from '../modules/users/user.model';
-import { PLAN_CONFIG } from '../config/plan.config';
+import { PLAN_CONFIG, resolveWorkspacePlanName } from '../config/plan.config';
 import { AuthenticatedRequest } from './auth.middleware';
 import { getOrSetCache } from '../services/redis.service';
 
@@ -28,7 +28,10 @@ export const checkResourceLimit = (resource: 'projects' | 'users') => {
         async () => {
           const tenant = await Tenant.findById(tenantId).lean();
           if (!tenant) return null;
-          return { plan: tenant.subscriptionPlan || 'FREE' };
+          return {
+            subscriptionPlan: tenant.subscriptionPlan,
+            storagePlan: tenant.storagePlan,
+          };
         }
       );
 
@@ -40,8 +43,8 @@ export const checkResourceLimit = (resource: 'projects' | 'users') => {
       // Set cache status header for debugging/monitoring
       res.setHeader('X-Cache-Plan', planCached ? 'HIT' : 'MISS');
 
-      const planName = tenantData.plan as 'FREE' | 'PRO' | 'BUSINESS';
-      const planLimits = PLAN_CONFIG[planName] || PLAN_CONFIG.FREE;
+      const planName = resolveWorkspacePlanName(tenantData.subscriptionPlan, tenantData.storagePlan);
+      const planLimits = PLAN_CONFIG[planName] || PLAN_CONFIG['Starter Dev'];
 
       // 2. Check current resource count vs limit (cached for 30 seconds)
       if (resource === 'projects') {
@@ -55,10 +58,11 @@ export const checkResourceLimit = (resource: 'projects' | 'users') => {
 
         if (planLimits.maxProjects !== -1 && count >= planLimits.maxProjects) {
           res.status(403).json({
-            error: 'Subscription plan limit reached. Please upgrade your plan to create more projects.',
+            error: `Active project limit reached (${count}/${planLimits.maxProjects}). Your ${planName} plan allows a maximum of ${planLimits.maxProjects} active projects. Please upgrade your plan for higher or unlimited project capacity.`,
             plan: planName,
             currentUsage: count,
             maxLimit: planLimits.maxProjects,
+            upgradeRequired: true,
           });
           return;
         }
@@ -73,10 +77,11 @@ export const checkResourceLimit = (resource: 'projects' | 'users') => {
 
         if (planLimits.maxUsers !== -1 && count >= planLimits.maxUsers) {
           res.status(403).json({
-            error: 'Subscription plan limit reached. Please upgrade your plan to add more users.',
+            error: `Team user limit reached (${count}/${planLimits.maxUsers}). Your ${planName} plan allows up to ${planLimits.maxUsers} team user(s). Please upgrade to Solo Dev or Pro Dev to collaborate with more members.`,
             plan: planName,
             currentUsage: count,
             maxLimit: planLimits.maxUsers,
+            upgradeRequired: true,
           });
           return;
         }

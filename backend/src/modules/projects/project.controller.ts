@@ -5,6 +5,8 @@ import mongoose from 'mongoose';
 import Project from './project.model';
 import ProjectInvitation from './projectInvitation.model';
 import User from '../users/user.model';
+import Tenant from '../tenants/tenant.model';
+import { PLAN_CONFIG, resolveWorkspacePlanName } from '../../config/plan.config';
 import { AuthenticatedRequest } from '../../middleware/auth.middleware';
 import { invalidateCache } from '../../services/redis.service';
 import { sendProjectInvitationEmail } from '../../services/email.service';
@@ -126,6 +128,10 @@ export const inviteToProject = async (req: AuthenticatedRequest, res: Response):
     }
 
     const { userId, tenantId } = req.user;
+    if (!tenantId) {
+      res.status(400).json({ error: 'Tenant context required' });
+      return;
+    }
     const projectId = req.params.projectId as string;
     const validatedData = InviteToProjectSchema.parse(req.body);
 
@@ -168,7 +174,35 @@ export const inviteToProject = async (req: AuthenticatedRequest, res: Response):
       return;
     }
 
-    // 4. Generate secure token and create invitation
+    // 4. Validate Subscription Plan team member limits
+    // If the user being invited is not already a member of this tenant's team, it will consume a team seat.
+    const isAlreadyTenantMember = existingUser && existingUser.tenantId?.toString() === tenantId.toString();
+    if (!isAlreadyTenantMember) {
+      const tenant = await Tenant.findById(tenantId).lean();
+      const planName = resolveWorkspacePlanName(tenant?.subscriptionPlan, tenant?.storagePlan);
+      const planLimits = PLAN_CONFIG[planName] || PLAN_CONFIG['Starter Dev'];
+
+      if (planLimits.maxUsers !== -1) {
+        const [tenantUsersCount, pendingInvitesCount] = await Promise.all([
+          User.countDocuments({ tenantId }),
+          ProjectInvitation.countDocuments({ tenantId, status: 'PENDING' }),
+        ]);
+        const currentTeamSeatUsage = tenantUsersCount + pendingInvitesCount;
+
+        if (currentTeamSeatUsage >= planLimits.maxUsers) {
+          res.status(403).json({
+            error: `Team member limit reached (${currentTeamSeatUsage}/${planLimits.maxUsers}). Your current plan (${planName}) allows up to ${planLimits.maxUsers} team user(s). Please upgrade to Solo Dev (up to 5 users) or Pro Dev (up to 15 users) to invite more team members.`,
+            plan: planName,
+            currentUsage: currentTeamSeatUsage,
+            maxLimit: planLimits.maxUsers,
+            upgradeRequired: true,
+          });
+          return;
+        }
+      }
+    }
+
+    // 5. Generate secure token and create invitation
     const token = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // 7 days expiry
@@ -323,6 +357,7 @@ export const acceptProjectInvite = async (req: Request, res: Response): Promise<
       // Mark invitation as accepted
       invitation.status = 'ACCEPTED';
       await invitation.save();
+      await invalidateCache(`tenant:${invitation.tenantId}:users:count`);
 
       // Generate fresh JWT with tenantId
       const jwtToken = generateToken({
@@ -395,6 +430,7 @@ export const acceptProjectInvite = async (req: Request, res: Response): Promise<
       // Mark invitation as accepted
       invitation.status = 'ACCEPTED';
       await invitation.save();
+      await invalidateCache(`tenant:${invitation.tenantId}:users:count`);
 
       // Generate JWT
       const jwtToken = generateToken({
@@ -569,6 +605,7 @@ export const revokeProjectInvitation = async (req: AuthenticatedRequest, res: Re
 
     invitation.status = 'EXPIRED';
     await invitation.save();
+    await invalidateCache(`tenant:${invitation.tenantId}:users:count`);
 
     res.status(200).json({ message: 'Invitation revoked successfully' });
   } catch (error: any) {

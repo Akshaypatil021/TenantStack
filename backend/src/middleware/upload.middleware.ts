@@ -4,7 +4,7 @@ import { Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from './auth.middleware';
 import Tenant from '../modules/tenants/tenant.model';
 import { FileModel } from '../modules/files/file.model';
-import { PLAN_CONFIG } from '../config/plan.config';
+import { PLAN_CONFIG, resolveWorkspacePlanName } from '../config/plan.config';
 import { StorageService } from '../services/storage.service';
 import { getOrSetCache } from '../services/redis.service';
 
@@ -52,7 +52,11 @@ export const checkStorageLimit = async (
       async () => {
         const tenant = await Tenant.findById(tenantId).lean();
         if (!tenant) return null;
-        return { plan: tenant.subscriptionPlan || 'FREE', _id: tenant._id };
+        return {
+          subscriptionPlan: tenant.subscriptionPlan,
+          storagePlan: tenant.storagePlan,
+          _id: tenant._id,
+        };
       }
     );
 
@@ -61,8 +65,8 @@ export const checkStorageLimit = async (
       return;
     }
 
-    const planName = tenantData.plan as 'FREE' | 'PRO' | 'BUSINESS';
-    const planLimits = PLAN_CONFIG[planName] || PLAN_CONFIG.FREE;
+    const planName = resolveWorkspacePlanName(tenantData.subscriptionPlan, tenantData.storagePlan);
+    const planLimits = PLAN_CONFIG[planName] || PLAN_CONFIG['Starter Dev'];
 
     // Calculate current storage consumed by this tenant across all files
     // (Not cached here because we need real-time accuracy before accepting uploads)

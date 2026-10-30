@@ -1,7 +1,7 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IPlan extends Document {
-  name: 'FREE' | 'PRO' | 'BUSINESS';
+  name: string;
   maxUsers: number;
   maxProjects: number;
   maxStorageMB: number;
@@ -13,7 +13,12 @@ export interface IPlan extends Document {
 
 const PlanSchema: Schema = new Schema(
   {
-    name: { type: String, enum: ['FREE', 'PRO', 'BUSINESS'], required: true, unique: true },
+    name: {
+      type: String,
+      enum: ['Starter Dev', 'Solo Dev', 'Pro Dev', 'FREE', 'PRO', 'BUSINESS'],
+      required: true,
+      unique: true,
+    },
     maxUsers: { type: Number, required: true },
     maxProjects: { type: Number, required: true },
     maxStorageMB: { type: Number, required: true },
