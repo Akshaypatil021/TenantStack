@@ -17,6 +17,7 @@ import { Activity } from './pages/Activity';
 import { Team } from './pages/Team';
 import { Compute } from './pages/Compute';
 import { Storage } from './pages/Storage';
+import { StorageWorkbench } from './pages/StorageWorkbench';
 import { GlobalSessionManager } from './components/GlobalSessionManager';
 import { OnboardingPlans } from './pages/OnboardingPlans';
 import { ForgotPassword } from './pages/ForgotPassword';
@@ -147,6 +148,7 @@ function AppRoutes() {
         <Route path="/projects" element={<Projects />} />
         <Route path="/compute" element={<Compute />} />
         <Route path="/storage" element={<Storage />} />
+        <Route path="/storage/:fileId/workbench" element={<StorageWorkbench />} />
         <Route path="/activity" element={<Activity />} />
         <Route path="/team" element={<Team />} />
         <Route path="/billing" element={<Billing />} />

@@ -22,9 +22,10 @@ import {
   ShieldAlert,
   Clock,
   Lock,
-  Layers,
   ChevronRight,
   AlertTriangle,
+  Terminal,
+  ExternalLink,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { PlansModal } from '../components/PlansModal';
@@ -152,45 +153,77 @@ export const Storage: React.FC = () => {
   }, [token, tenant, user]);
 
   // Fetch Storage Data
-  const fetchStorageData = useCallback(async () => {
-    if (!token) return;
-    setIsLoading(true);
+  const fetchStorageData = useCallback(
+    async (cat?: string, search?: string) => {
+      if (!token) return;
+      setIsLoading(true);
 
-    try {
-      const categoryParam = selectedCategory !== 'ALL' ? `&category=${selectedCategory}` : '';
-      const searchParam = searchQuery.trim() ? `&search=${encodeURIComponent(searchQuery.trim())}` : '';
+      try {
+        const activeCat = cat !== undefined ? cat : selectedCategory;
+        const activeSearch = search !== undefined ? search : searchQuery;
 
-      const res = await fetch(`http://localhost:5000/api/v1/storage?limit=100${categoryParam}${searchParam}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+        const categoryParam = activeCat && activeCat !== 'ALL' ? `&category=${activeCat}` : '';
+        const searchParam = activeSearch && activeSearch.trim() ? `&search=${encodeURIComponent(activeSearch.trim())}` : '';
 
-      if (res.ok) {
-        const data = await res.json();
-        setFiles(data.files || []);
-        setSummary(data.summary || null);
+        const res = await fetch(`http://localhost:5000/api/v1/storage?limit=100${categoryParam}${searchParam}`, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          setFiles(data.files || []);
+          if (data.summary) {
+            setSummary(data.summary);
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching storage objects:', err);
+      } finally {
+        setIsLoading(false);
       }
-    } catch (err) {
-      console.error('Error fetching storage objects:', err);
-    } finally {
-      setIsLoading(false);
-    }
-  }, [token, selectedCategory, searchQuery]);
+    },
+    [token, selectedCategory, searchQuery]
+  );
 
-  // Initial Load
+  // Initial Load: Check Plan ONLY ONCE on mount
   const loadPageData = useCallback(async () => {
     setIsCheckingPlan(true);
-    const subStatus = await checkSubscriptionStatus();
-    if (subStatus.active) {
-      await fetchStorageData();
+    try {
+      const subStatus = await checkSubscriptionStatus();
+      if (subStatus.active) {
+        await fetchStorageData('ALL', '');
+      }
+    } catch (err) {
+      console.error('Error in initial load:', err);
+    } finally {
+      setIsCheckingPlan(false);
     }
-    setIsCheckingPlan(false);
-  }, [checkSubscriptionStatus, fetchStorageData]);
+  }, [checkSubscriptionStatus, token]); // Note: fetchStorageData is NOT in deps to avoid re-checking plan on filter/search
 
   useEffect(() => {
     loadPageData();
   }, [loadPageData]);
+
+  // Refetch files on category or search change WITHOUT triggering plan check or full page spinner
+  const isInitialFilterMount = useRef(true);
+  useEffect(() => {
+    if (isInitialFilterMount.current) {
+      isInitialFilterMount.current = false;
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      fetchStorageData(selectedCategory, searchQuery);
+    }, 150);
+
+    return () => clearTimeout(timer);
+  }, [selectedCategory, searchQuery, fetchStorageData]);
+
+  const handleCategoryClick = (cat: string) => {
+    setSelectedCategory((prev) => (prev === cat ? 'ALL' : cat));
+  };
 
   // Handle Drag & Drop
   const handleDragOver = (e: React.DragEvent) => {
@@ -205,7 +238,7 @@ export const Storage: React.FC = () => {
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    setIsDragging(false); 
+    setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
       handleFilesUpload(Array.from(e.dataTransfer.files));
     }
@@ -219,7 +252,6 @@ export const Storage: React.FC = () => {
     const totalIncomingBytes = uploadFiles.reduce((acc, f) => acc + f.size, 0);
     const totalIncomingMB = totalIncomingBytes / (1024 * 1024);
 
-    // Check if cloud storage is under maintenance
     if (summary?.s3Info?.isUnderMaintenance) {
       setUploadFeedback({
         type: 'error',
@@ -365,10 +397,9 @@ export const Storage: React.FC = () => {
     }
   };
 
-  // Trigger Gemini AI Modal
+  // Open AI Workbench in New Browser Tab
   const handleOpenAiAnalysis = (file: StorageFile) => {
-    setSelectedFileForAi(file);
-    setIsAiModalOpen(true);
+    window.open(`/storage/${file._id}/workbench`, '_blank');
   };
 
   // Callback when AI analysis finishes inside modal
@@ -387,38 +418,38 @@ export const Storage: React.FC = () => {
     switch (category) {
       case 'DATASET':
         return {
-          icon: <FileSpreadsheet className="w-4 h-4 text-emerald-600" />,
-          bg: 'bg-emerald-50 text-emerald-700 border-emerald-200/80',
+          icon: <FileSpreadsheet className="w-4 h-4 text-emerald-500" />,
+          bg: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
           ext: ext.slice(0, 4),
         };
       case 'DOCUMENT':
         return {
-          icon: <FileText className="w-4 h-4 text-sky-600" />,
-          bg: 'bg-sky-50 text-sky-700 border-sky-200/80',
+          icon: <FileText className="w-4 h-4 text-sky-500" />,
+          bg: 'bg-sky-500/10 text-sky-400 border-sky-500/20',
           ext: ext.slice(0, 4),
         };
       case 'CODE':
         return {
-          icon: <Code2 className="w-4 h-4 text-purple-600" />,
-          bg: 'bg-purple-50 text-purple-700 border-purple-200/80',
+          icon: <Code2 className="w-4 h-4 text-purple-500" />,
+          bg: 'bg-purple-500/10 text-purple-400 border-purple-500/20',
           ext: ext.slice(0, 4),
         };
       case 'IMAGE':
         return {
-          icon: <ImageIcon className="w-4 h-4 text-amber-600" />,
-          bg: 'bg-amber-50 text-amber-700 border-amber-200/80',
+          icon: <ImageIcon className="w-4 h-4 text-amber-500" />,
+          bg: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
           ext: ext.slice(0, 4),
         };
       case 'ARCHIVE':
         return {
-          icon: <Archive className="w-4 h-4 text-orange-600" />,
-          bg: 'bg-orange-50 text-orange-700 border-orange-200/80',
+          icon: <Archive className="w-4 h-4 text-orange-500" />,
+          bg: 'bg-orange-500/10 text-orange-400 border-orange-500/20',
           ext: ext.slice(0, 4),
         };
       default:
         return {
-          icon: <FileGeneric className="w-4 h-4 text-slate-500" />,
-          bg: 'bg-slate-100 text-slate-700 border-slate-200/80',
+          icon: <FileGeneric className="w-4 h-4 text-slate-400" />,
+          bg: 'bg-slate-500/10 text-slate-300 border-slate-500/20',
           ext: ext.slice(0, 4),
         };
     }
@@ -457,8 +488,8 @@ export const Storage: React.FC = () => {
           <div className="w-12 h-12 rounded-2xl border-2 border-slate-200 border-t-slate-900 animate-spin" />
           <HardDrive className="w-5 h-5 text-slate-900 absolute inset-0 m-auto" />
         </div>
-        <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mt-4">Connecting to Storage Engine</p>
-        <p className="text-sm text-slate-600 mt-1">Verifying subscription tier & quota allocations...</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-slate-400 mt-4">Connecting to Cloud Storage</p>
+        <p className="text-sm text-slate-600 mt-1">Verifying S3 bucket & telemetry allocations...</p>
       </div>
     );
   }
@@ -469,8 +500,7 @@ export const Storage: React.FC = () => {
   if (isPlanPending && pendingSubDetails) {
     return (
       <div className="max-w-3xl mx-auto py-6 space-y-6">
-        {/* Header Breadcrumb */}
-        <div className="flex items-center justify-between border-b border-slate-100 pb-5">
+        <div className="flex items-center justify-between border-b border-slate-200/80 pb-5">
           <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
             <span>Storage</span>
             <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
@@ -486,10 +516,8 @@ export const Storage: React.FC = () => {
           </button>
         </div>
 
-        {/* Enterprise Pending Approval Card */}
         <div className="bg-white border border-slate-200 rounded-2xl p-8 sm:p-10 shadow-xs relative overflow-hidden">
           <div className="flex flex-col items-center text-center max-w-xl mx-auto">
-            {/* Animated Status Beacon */}
             <div className="relative mb-6">
               <div className="w-14 h-14 rounded-2xl bg-amber-50 text-amber-600 flex items-center justify-center border border-amber-200/60 shadow-xs">
                 <Clock className="w-6 h-6 animate-pulse" />
@@ -500,181 +528,171 @@ export const Storage: React.FC = () => {
               </span>
             </div>
 
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-800 border border-amber-200/80 mb-3">
-              Payment Verified • Awaiting Manual Admin Approval
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-50 border border-amber-200/80 text-amber-800 text-xs font-bold mb-3">
+              <span>Manual Review In Progress</span>
             </div>
 
-            <h2 className="text-xl font-bold text-slate-900 tracking-tight">
-              Storage Plan Activation in Progress
+            <h2 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+              Storage Plan Activation Pending
             </h2>
 
-            <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-              We received your payment for the <span className="font-semibold text-slate-800">{pendingSubDetails.planName}</span> storage block ({pendingSubDetails.billing}).
-              Platform administrators review and provision S3 quotas manually to ensure dedicated multi-tenant isolation.
+            <p className="text-xs sm:text-sm text-slate-500 mt-2 leading-relaxed">
+              We received your payment for the <strong className="text-slate-800 font-semibold">{pendingSubDetails.planName}</strong> plan. Our platform administrator is verifying your transaction details.
             </p>
 
-            {/* Stepper Timeline */}
-            <div className="w-full mt-8 p-4 rounded-xl bg-slate-50/80 border border-slate-100 flex items-center justify-between text-xs font-medium">
-              <div className="flex items-center gap-2 text-emerald-700">
-                <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center font-bold text-[10px]">✓</div>
-                <span>Payment Done</span>
+            <div className="w-full mt-6 p-4 rounded-xl bg-slate-50 border border-slate-200/80 text-left font-mono text-xs space-y-2">
+              <div className="flex justify-between text-slate-600">
+                <span>Plan Tier:</span>
+                <span className="font-bold text-slate-900">{pendingSubDetails.planName}</span>
               </div>
-              <div className="h-[1px] flex-1 bg-slate-200 mx-3" />
-              <div className="flex items-center gap-2 text-amber-700 font-semibold">
-                <div className="w-5 h-5 rounded-full bg-amber-200 flex items-center justify-center font-bold text-[10px]">2</div>
-                <span>Admin Review</span>
+              <div className="flex justify-between text-slate-600">
+                <span>Amount Paid:</span>
+                <span className="font-bold text-slate-900">${pendingSubDetails.amountPaid} / {pendingSubDetails.billing}</span>
               </div>
-              <div className="h-[1px] flex-1 bg-slate-200 mx-3" />
-              <div className="flex items-center gap-2 text-slate-400">
-                <div className="w-5 h-5 rounded-full bg-slate-200 flex items-center justify-center font-bold text-[10px]">3</div>
-                <span>S3 Bucket Active</span>
+              <div className="flex justify-between text-slate-600">
+                <span>Transaction Ref:</span>
+                <span className="text-slate-500 truncate max-w-[200px]">{pendingSubDetails.transactionId}</span>
               </div>
             </div>
 
-            {/* Order Summary Metadata */}
-            <div className="w-full mt-6 grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-left text-xs">
-              <div className="p-3 bg-white rounded-xl border border-slate-100">
-                <p className="text-[10px] font-medium text-slate-400 uppercase">Selected Plan</p>
-                <p className="font-semibold text-slate-900 mt-0.5">{pendingSubDetails.planName}</p>
-              </div>
-              <div className="p-3 bg-white rounded-xl border border-slate-100">
-                <p className="text-[10px] font-medium text-slate-400 uppercase">Amount Paid</p>
-                <p className="font-semibold text-emerald-600 mt-0.5">₹{pendingSubDetails.amountPaid}</p>
-              </div>
-              <div className="p-3 bg-white rounded-xl border border-slate-100">
-                <p className="text-[10px] font-medium text-slate-400 uppercase">Order ID</p>
-                <p className="font-mono text-slate-700 mt-0.5 truncate">{pendingSubDetails.orderId || 'Direct'}</p>
-              </div>
-              <div className="p-3 bg-white rounded-xl border border-slate-100">
-                <p className="text-[10px] font-medium text-slate-400 uppercase">Status</p>
-                <p className="font-semibold text-amber-600 mt-0.5">In Review</p>
-              </div>
-            </div>
-
-            {/* Reassurance & Actions */}
-            <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-3 w-full">
+            <div className="mt-8 flex items-center gap-3 w-full sm:w-auto">
               <button
                 onClick={() => loadPageData()}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900 text-[#c8f542] hover:bg-slate-800 text-xs font-semibold transition active:scale-95 shadow-sm"
+                className="w-full sm:w-auto px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-[#c8f542] text-xs font-semibold shadow-xs transition active:scale-95 flex items-center justify-center gap-2"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
-                Check Approval Status
-              </button>
-              <button
-                onClick={() => setIsPlansModalOpen(true)}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-medium transition"
-              >
-                View Storage Plans
+                Refresh Activation Status
               </button>
             </div>
           </div>
         </div>
-
-        {/* Plans Modal */}
-        <PlansModal
-          isOpen={isPlansModalOpen}
-          onClose={() => {
-            setIsPlansModalOpen(false);
-            loadPageData();
-          }}
-          initialCategory="storage"
-          onSelectPlan={async () => {
-            setIsPlansModalOpen(false);
-            await loadPageData();
-          }}
-        />
       </div>
     );
   }
 
   // ─────────────────────────────────────────────────────────────
-  // STATE 2: NO STORAGE PLAN PURCHASED
+  // STATE 2: NO ACTIVE STORAGE PLAN (PAYWALL)
   // ─────────────────────────────────────────────────────────────
   if (!isPlanActive) {
     return (
-      <div className="max-w-4xl mx-auto py-6 space-y-6">
-        {/* Header Breadcrumb */}
-        <div className="flex items-center justify-between border-b border-slate-100 pb-5">
-          <div>
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Cloud Storage Engine</h1>
-            <p className="text-xs text-slate-500 mt-0.5">Dedicated AWS S3 bucket architecture & Gemini 2.5 Flash analysis</p>
+      <div className="max-w-4xl mx-auto py-8 space-y-8">
+        <div className="text-center max-w-2xl mx-auto space-y-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 text-[#c8f542] text-xs font-semibold shadow-xs">
+            <Lock className="w-3.5 h-3.5" />
+            <span>Multi-Tenant S3 Storage Engine</span>
           </div>
-
-          <button
-            onClick={() => setIsPlansModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 text-[#c8f542] hover:bg-slate-800 text-xs font-semibold transition shadow-sm active:scale-95"
-          >
-            <Sparkles className="w-3.5 h-3.5 text-[#c8f542]" />
-            Purchase Storage Plan
-          </button>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
+            Unlock High-Speed Cloud Storage
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
+            Attach dedicated AWS S3 buckets to your workspace with automated neural document analysis powered by Google Gemini 2.5 Flash.
+          </p>
         </div>
 
-        {/* Enterprise Subscription Paywall Card */}
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-8 sm:p-12 shadow-xs text-center relative overflow-hidden">
-          <div className="w-14 h-14 rounded-2xl bg-slate-900 text-[#c8f542] flex items-center justify-center mx-auto shadow-md">
-            <Lock className="w-6 h-6" />
-          </div>
-
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-slate-100 text-slate-700 border border-slate-200 mt-6">
-            <ShieldAlert className="w-3.5 h-3.5 text-slate-500" />
-            Plan Subscription Required
-          </div>
-
-          <h2 className="text-2xl font-bold text-slate-900 tracking-tight mt-3">
-            Unlock AWS S3 Storage & Gemini AI Data Engine
-          </h2>
-
-          <p className="text-xs text-slate-500 mt-2 max-w-lg mx-auto leading-relaxed">
-            You do not currently have an active Storage subscription. Purchase any storage tier to provision an
-            isolated AWS S3 bucket, upload tabular datasets & documents, and unlock Google Gemini 2.5 Flash neural data
-            analysis.
-          </p>
-
-          {/* 3 Tier Feature Highlights */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 mt-8 max-w-2xl mx-auto text-left">
-            <div className="p-4 rounded-xl bg-slate-50/70 border border-slate-100">
-              <div className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center mb-2.5">
-                <HardDrive className="w-3.5 h-3.5" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs flex flex-col justify-between">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Starter Dev</span>
+                <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">$5/mo</span>
               </div>
-              <h4 className="text-xs font-bold text-slate-900">Tenant-Isolated S3</h4>
-              <p className="text-[11px] text-slate-500 mt-1 leading-normal">
-                Dedicated prefix partitioning, high-speed streaming downloads, and presigned links.
-              </p>
-            </div>
-
-            <div className="p-4 rounded-xl bg-slate-50/70 border border-slate-100">
-              <div className="w-7 h-7 rounded-lg bg-[#c8f542]/20 text-slate-900 flex items-center justify-center mb-2.5">
-                <Brain className="w-3.5 h-3.5 text-emerald-700" />
+              <div>
+                <p className="text-2xl font-extrabold text-slate-900">5 GB</p>
+                <p className="text-xs text-slate-400 mt-0.5">High-Speed NVMe Storage</p>
               </div>
-              <h4 className="text-xs font-bold text-slate-900">Gemini 2.5 Flash</h4>
-              <p className="text-[11px] text-slate-500 mt-1 leading-normal">
-                Automated statistical summaries, pattern discovery, and natural language Q&A.
-              </p>
+              <ul className="text-xs text-slate-600 space-y-2 pt-2 border-t border-slate-100">
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <span>1 Workspace Member</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <span>Up to 3 Active Projects</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <span>Gemini AI File Summarizer</span>
+                </li>
+              </ul>
             </div>
-
-            <div className="p-4 rounded-xl bg-slate-50/70 border border-slate-100">
-              <div className="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center mb-2.5">
-                <Layers className="w-3.5 h-3.5" />
-              </div>
-              <h4 className="text-xs font-bold text-slate-900">Configurable Quotas</h4>
-              <p className="text-[11px] text-slate-500 mt-1 leading-normal">
-                Starter Dev (5 GB), Solo Dev (25 GB), or Pro Dev (100 GB) storage allocations.
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-8 pt-6 border-t border-slate-100 flex items-center justify-center gap-3">
             <button
               onClick={() => setIsPlansModalOpen(true)}
-              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-[#c8f542] text-xs font-semibold shadow-sm transition active:scale-95"
+              className="mt-6 w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-[#c8f542] text-xs font-semibold transition active:scale-95"
             >
-              <Sparkles className="w-4 h-4" />
-              Purchase Storage Plan
+              Select Starter Dev
+            </button>
+          </div>
+
+          <div className="bg-white border-2 border-slate-900 rounded-2xl p-6 shadow-md flex flex-col justify-between relative overflow-hidden">
+            <div className="absolute top-0 right-0 bg-[#c8f542] text-slate-900 text-[10px] font-extrabold px-3 py-1 rounded-bl-xl tracking-wider uppercase">
+              Popular
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-900 uppercase tracking-wider">Solo Dev</span>
+                <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-slate-900 text-[#c8f542]">$15/mo</span>
+              </div>
+              <div>
+                <p className="text-2xl font-extrabold text-slate-900">25 GB</p>
+                <p className="text-xs text-slate-400 mt-0.5">High-Speed NVMe Storage</p>
+              </div>
+              <ul className="text-xs text-slate-600 space-y-2 pt-2 border-t border-slate-100">
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <span>Up to 5 Team Members</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <span>Up to 15 Active Projects</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <span>Priority S3 Multipart Push</span>
+                </li>
+              </ul>
+            </div>
+            <button
+              onClick={() => setIsPlansModalOpen(true)}
+              className="mt-6 w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-[#c8f542] text-xs font-semibold transition active:scale-95 shadow-sm"
+            >
+              Select Solo Dev
+            </button>
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-2xl p-6 shadow-xs flex flex-col justify-between">
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Pro Dev</span>
+                <span className="text-xs font-bold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">$35/mo</span>
+              </div>
+              <div>
+                <p className="text-2xl font-extrabold text-slate-900">100 GB</p>
+                <p className="text-xs text-slate-400 mt-0.5">Enterprise Cloud Volume</p>
+              </div>
+              <ul className="text-xs text-slate-600 space-y-2 pt-2 border-t border-slate-100">
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <span>Up to 15 Team Members</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <span>Unlimited Active Projects</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
+                  <span>Full Neural AI Q&A Suite</span>
+                </li>
+              </ul>
+            </div>
+            <button
+              onClick={() => setIsPlansModalOpen(true)}
+              className="mt-6 w-full py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-[#c8f542] text-xs font-semibold transition active:scale-95"
+            >
+              Select Pro Dev
             </button>
           </div>
         </div>
 
-        {/* Plans Modal */}
         <PlansModal
           isOpen={isPlansModalOpen}
           onClose={() => {
@@ -692,52 +710,52 @@ export const Storage: React.FC = () => {
   }
 
   // ─────────────────────────────────────────────────────────────
-  // STATE 3: ACTIVE APPROVED STORAGE DASHBOARD
+  // STATE 3: ACTIVE STORAGE DASHBOARD (REDESIGNED)
   // ─────────────────────────────────────────────────────────────
   return (
-    <div className="space-y-6 max-w-7xl mx-auto pb-12">
-      {/* 1. Refined Executive Header Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-5">
+    <div className="space-y-6 pb-12">
+      {/* ─── 1. Header Bar: Sleek, Concise & Themed ─── */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
         <div>
-          <div className="flex items-center gap-2.5">
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Cloud Storage</h1>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/80">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight flex items-center gap-2.5">
+              <span>Cloud Storage Hub</span>
+            </h1>
+
+            <span className="hidden md:inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200/80">
               {activePlanName || summary?.plan || 'Active Storage'}
             </span>
-            <span className="text-xs text-slate-400 font-mono hidden md:inline">
-              {summary?.s3Info?.region || 'us-east-1'}
-            </span>
           </div>
-          <p className="text-xs text-slate-500 mt-0.5">
-            Multi-tenant AWS S3 architecture with automated Google Gemini 2.5 Flash neural analytics
+
+          <p className="text-xs text-slate-500 mt-1">
+            Multi-tenant AWS S3 storage blocks with integrated Google Gemini 2.5 Flash neural analytics
           </p>
         </div>
 
         {/* Top Control Actions */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2.5 shrink-0">
           <button
             onClick={() => fetchStorageData()}
-            className="p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition shadow-xs active:scale-95"
-            title="Refresh Objects"
+            className="p-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 transition shadow-xs active:scale-95 cursor-pointer"
+            title="Refresh Storage Objects"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? 'animate-spin text-slate-900' : ''}`} />
           </button>
 
           <button
             onClick={() => setIsPlansModalOpen(true)}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 text-xs font-semibold transition shadow-xs active:scale-95"
+            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 text-xs font-semibold transition shadow-xs active:scale-95 cursor-pointer"
           >
-            <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+            <Sparkles className="w-3.5 h-3.5 text-emerald-500" />
             Storage Plans
           </button>
 
           <button
             onClick={() => fileInputRef.current?.click()}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-[#c8f542] text-xs font-semibold transition shadow-sm active:scale-95"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-[#c8f542] text-xs font-bold transition shadow-sm active:scale-95 cursor-pointer"
           >
-            <Upload className="w-3.5 h-3.5" />
-            Upload Objects
+            <Upload className="w-3.5 h-3.5 text-[#c8f542]" />
+            Upload Files
           </button>
         </div>
       </div>
@@ -755,12 +773,12 @@ export const Storage: React.FC = () => {
         className="hidden"
       />
 
-      {/* Cloud Storage Maintenance Banner */}
+      {/* S3 Maintenance Warning Banner */}
       {summary?.s3Info?.isUnderMaintenance && (
         <motion.div
           initial={{ opacity: 0, y: -8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-amber-900 shadow-xs backdrop-blur-xs"
+          className="p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 text-amber-900 shadow-xs"
         >
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-xl bg-amber-500/20 text-amber-700 border border-amber-500/30 shrink-0">
@@ -789,7 +807,7 @@ export const Storage: React.FC = () => {
         </motion.div>
       )}
 
-      {/* 2. Quota Warning Banner (if near or exceeded limit) */}
+      {/* Quota Exceeded / Low Warning Banner */}
       {isNearLimit && (
         <motion.div
           initial={{ opacity: 0, y: -6 }}
@@ -818,7 +836,7 @@ export const Storage: React.FC = () => {
 
           <button
             onClick={() => setIsPlansModalOpen(true)}
-            className={`font-semibold px-3 py-1.5 rounded-lg transition shrink-0 inline-flex items-center gap-1.5 ${
+            className={`font-semibold px-3 py-1.5 rounded-lg transition shrink-0 inline-flex items-center gap-1.5 cursor-pointer ${
               isExceeded
                 ? 'bg-rose-600 hover:bg-rose-700 text-white'
                 : 'bg-amber-600 hover:bg-amber-700 text-white'
@@ -830,151 +848,254 @@ export const Storage: React.FC = () => {
         </motion.div>
       )}
 
-      {/* 3. Storage Quota & Capacity Widget (Modern Stacked Progress Bar & Telemetry Dock) */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs">
-        {/* Top Metric Header */}
-        <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-5 border-b border-slate-100">
+      {/* ─── 2. Redesigned High-Impact Telemetry Hub (Sleek Dark Cockpit + 4 Active Category Pills) ─── */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        {/* Left Card: Dark High-Tech Telemetry Cockpit (7 Cols) */}
+        <div className="lg:col-span-7 bg-slate-900 text-white border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-md relative overflow-hidden flex flex-col justify-between">
+          {/* Subtle Background Glow */}
+          <div className="absolute top-0 right-0 w-64 h-64 bg-radial from-[#c8f542]/10 via-transparent to-transparent pointer-events-none blur-2xl" />
+
           <div>
-            <div className="flex items-center gap-2 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-              <HardDrive className="w-3.5 h-3.5 text-slate-500" />
-              <span>Storage Quota Telemetry</span>
+            <div className="flex items-center justify-between pb-3 border-b border-slate-800/80">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded-lg bg-[#c8f542]/20 text-[#c8f542] flex items-center justify-center">
+                  <HardDrive className="w-3.5 h-3.5" />
+                </div>
+                <span className="text-xs font-bold uppercase tracking-wider text-slate-300">
+                  Storage Allocation Telemetry
+                </span>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1.5 text-[11px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  NVMe Connected
+                </span>
+              </div>
             </div>
-            <div className="flex items-baseline gap-2 mt-1">
-              <span className="text-3xl font-extrabold tracking-tight text-slate-900">
-                {summary ? (summary.totalUsedMB / 1024).toFixed(2) : '0.00'}
-              </span>
-              <span className="text-sm font-semibold text-slate-400">
-                / {summary ? (summary.maxStorageMB / 1024).toFixed(0) : '5'} GB
-              </span>
-              <span className="ml-2 text-xs font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">
-                {summary?.percentUsed || 0}% used
-              </span>
+
+            {/* Metric Readout */}
+            <div className="flex items-baseline justify-between mt-4">
+              <div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-3xl sm:text-4xl font-extrabold tracking-tight text-white font-mono">
+                    {summary ? (summary.totalUsedMB / 1024).toFixed(2) : '0.00'}
+                  </span>
+                  <span className="text-slate-400 font-semibold text-sm">
+                    / {summary ? (summary.maxStorageMB / 1024).toFixed(0) : '5'} GB
+                  </span>
+                  <span className="ml-2 px-2 py-0.5 rounded-md text-[11px] font-mono font-bold bg-[#c8f542] text-slate-950">
+                    {summary?.percentUsed || 0}% USED
+                  </span>
+                </div>
+                <p className="text-[11px] text-slate-400 mt-1">
+                  Total Objects Stored: <strong className="text-white font-semibold">{summary?.totalFiles || files.length} files</strong>
+                </p>
+              </div>
+
+              <div className="text-right">
+                <p className="text-[10px] font-medium uppercase tracking-wider text-slate-400">Headroom</p>
+                <p className="text-lg font-bold font-mono text-[#c8f542]">
+                  {summary ? ((summary.maxStorageMB - summary.totalUsedMB) / 1024).toFixed(2) : '5.00'} GB Free
+                </p>
+              </div>
+            </div>
+
+            {/* Glowing Multi-Segment Progress Bar */}
+            <div className="mt-4 space-y-1.5">
+              <div className="h-2.5 w-full bg-slate-800 rounded-full overflow-hidden flex p-0.5 gap-0.5">
+                {datasetPct > 0 && (
+                  <div
+                    style={{ width: `${Math.max(2, datasetPct)}%` }}
+                    className="h-full bg-emerald-400 rounded-full transition-all duration-500"
+                    title={`Datasets: ${datasetMB} MB`}
+                  />
+                )}
+                {docPct > 0 && (
+                  <div
+                    style={{ width: `${Math.max(2, docPct)}%` }}
+                    className="h-full bg-sky-400 rounded-full transition-all duration-500"
+                    title={`Documents: ${docMB} MB`}
+                  />
+                )}
+                {codePct > 0 && (
+                  <div
+                    style={{ width: `${Math.max(2, codePct)}%` }}
+                    className="h-full bg-purple-400 rounded-full transition-all duration-500"
+                    title={`Source Code: ${codeMB} MB`}
+                  />
+                )}
+                {imagePct > 0 && (
+                  <div
+                    style={{ width: `${Math.max(2, imagePct)}%` }}
+                    className="h-full bg-amber-400 rounded-full transition-all duration-500"
+                    title={`Media & Assets: ${imageMB} MB`}
+                  />
+                )}
+                {summary && summary.totalUsedMB === 0 && (
+                  <div className="h-full w-full bg-slate-800 rounded-full" />
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="text-left sm:text-right">
-            <p className="text-[11px] font-medium text-slate-400">Available Headroom</p>
-            <p className="text-sm font-bold text-emerald-600">
-              {summary ? ((summary.maxStorageMB - summary.totalUsedMB) / 1024).toFixed(2) : '5.00'} GB Free
-            </p>
+          {/* Bottom Telemetry Footer */}
+          <div className="flex items-center justify-between pt-3 mt-4 border-t border-slate-800 text-[11px] text-slate-400">
+            <div className="flex items-center gap-1.5">
+              <Brain className="w-3.5 h-3.5 text-[#c8f542]" />
+              <span>Gemini 2.5 Flash Neural Engine Active</span>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-1 text-slate-300">
+                <span className="w-2 h-2 rounded-full bg-emerald-400" />
+                Data
+              </span>
+              <span className="flex items-center gap-1 text-slate-300">
+                <span className="w-2 h-2 rounded-full bg-sky-400" />
+                Docs
+              </span>
+              <span className="flex items-center gap-1 text-slate-300">
+                <span className="w-2 h-2 rounded-full bg-purple-400" />
+                Code
+              </span>
+              <span className="flex items-center gap-1 text-slate-300">
+                <span className="w-2 h-2 rounded-full bg-amber-400" />
+                Media
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Stacked Multi-Category Progress Bar */}
-        <div className="pt-5 space-y-2.5">
-          <div className="h-2.5 w-full bg-slate-100 rounded-full overflow-hidden flex">
-            {datasetPct > 0 && (
-              <div
-                style={{ width: `${datasetPct}%` }}
-                className="h-full bg-emerald-500 transition-all duration-500"
-                title={`Datasets: ${datasetMB} MB`}
-              />
-            )}
-            {docPct > 0 && (
-              <div
-                style={{ width: `${docPct}%` }}
-                className="h-full bg-sky-500 transition-all duration-500"
-                title={`Documents: ${docMB} MB`}
-              />
-            )}
-            {codePct > 0 && (
-              <div
-                style={{ width: `${codePct}%` }}
-                className="h-full bg-purple-500 transition-all duration-500"
-                title={`Source Code: ${codeMB} MB`}
-              />
-            )}
-            {imagePct > 0 && (
-              <div
-                style={{ width: `${imagePct}%` }}
-                className="h-full bg-amber-500 transition-all duration-500"
-                title={`Images: ${imageMB} MB`}
-              />
-            )}
-          </div>
+        {/* Right Cards: 4 Interactive Filter Blocks (5 Cols) */}
+        <div className="lg:col-span-5 grid grid-cols-2 gap-2.5">
+          {/* 1. Datasets */}
+          <button
+            type="button"
+            onClick={() => handleCategoryClick('DATASET')}
+            className={`p-4 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between group cursor-pointer relative overflow-hidden ${
+              selectedCategory === 'DATASET'
+                ? 'bg-emerald-500/10 border-emerald-500/40 ring-1 ring-emerald-500/30'
+                : 'bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-xs'
+            }`}
+          >
+            <div className="flex items-center justify-between w-full">
+              <div className="p-2 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 group-hover:scale-105 transition">
+                <FileSpreadsheet className="w-4 h-4" />
+              </div>
+              <span className="text-[10px] font-mono font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">
+                CSV / JSON
+              </span>
+            </div>
+            <div className="mt-3">
+              <p className="text-xs font-bold text-slate-700">Datasets</p>
+              <div className="flex items-baseline gap-1 mt-0.5">
+                <span className="text-lg font-extrabold text-slate-900 font-mono">
+                  {summary?.categoryCounts?.DATASET?.count || 0}
+                </span>
+                <span className="text-[11px] text-slate-400 font-medium">
+                  ({summary?.categoryCounts?.DATASET?.sizeMB || 0} MB)
+                </span>
+              </div>
+            </div>
+          </button>
 
-          {/* Interactive Category Filter Pills (Clicking filters the table!) */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-2">
-            <button
-              onClick={() => setSelectedCategory('DATASET')}
-              className={`p-3 rounded-xl border text-left transition-all flex items-start gap-3 ${
-                selectedCategory === 'DATASET'
-                  ? 'bg-emerald-50/60 border-emerald-200 ring-1 ring-emerald-300'
-                  : 'bg-slate-50/60 border-slate-150 hover:bg-slate-100/70 hover:border-slate-200'
-              }`}
-            >
-              <div className="p-1.5 rounded-lg bg-emerald-100 text-emerald-700 shrink-0 mt-0.5">
-                <FileSpreadsheet className="w-3.5 h-3.5" />
+          {/* 2. Documents */}
+          <button
+            type="button"
+            onClick={() => handleCategoryClick('DOCUMENT')}
+            className={`p-4 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between group cursor-pointer relative overflow-hidden ${
+              selectedCategory === 'DOCUMENT'
+                ? 'bg-sky-500/10 border-sky-500/40 ring-1 ring-sky-500/30'
+                : 'bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-xs'
+            }`}
+          >
+            <div className="flex items-center justify-between w-full">
+              <div className="p-2 rounded-xl bg-sky-50 text-sky-600 border border-sky-100 group-hover:scale-105 transition">
+                <FileText className="w-4 h-4" />
               </div>
-              <div className="truncate">
-                <p className="text-[11px] font-semibold text-slate-500">Datasets</p>
-                <p className="text-xs font-bold text-slate-900 mt-0.5">
-                  {summary?.categoryCounts?.DATASET?.count || 0} files <span className="text-slate-400 font-normal">({summary?.categoryCounts?.DATASET?.sizeMB || 0} MB)</span>
-                </p>
+              <span className="text-[10px] font-mono font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">
+                PDF / DOCX
+              </span>
+            </div>
+            <div className="mt-3">
+              <p className="text-xs font-bold text-slate-700">Documents</p>
+              <div className="flex items-baseline gap-1 mt-0.5">
+                <span className="text-lg font-extrabold text-slate-900 font-mono">
+                  {summary?.categoryCounts?.DOCUMENT?.count || 0}
+                </span>
+                <span className="text-[11px] text-slate-400 font-medium">
+                  ({summary?.categoryCounts?.DOCUMENT?.sizeMB || 0} MB)
+                </span>
               </div>
-            </button>
+            </div>
+          </button>
 
-            <button
-              onClick={() => setSelectedCategory('DOCUMENT')}
-              className={`p-3 rounded-xl border text-left transition-all flex items-start gap-3 ${
-                selectedCategory === 'DOCUMENT'
-                  ? 'bg-sky-50/60 border-sky-200 ring-1 ring-sky-300'
-                  : 'bg-slate-50/60 border-slate-150 hover:bg-slate-100/70 hover:border-slate-200'
-              }`}
-            >
-              <div className="p-1.5 rounded-lg bg-sky-100 text-sky-700 shrink-0 mt-0.5">
-                <FileText className="w-3.5 h-3.5" />
+          {/* 3. Source Code */}
+          <button
+            type="button"
+            onClick={() => handleCategoryClick('CODE')}
+            className={`p-4 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between group cursor-pointer relative overflow-hidden ${
+              selectedCategory === 'CODE'
+                ? 'bg-purple-500/10 border-purple-500/40 ring-1 ring-purple-500/30'
+                : 'bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-xs'
+            }`}
+          >
+            <div className="flex items-center justify-between w-full">
+              <div className="p-2 rounded-xl bg-purple-50 text-purple-600 border border-purple-100 group-hover:scale-105 transition">
+                <Code2 className="w-4 h-4" />
               </div>
-              <div className="truncate">
-                <p className="text-[11px] font-semibold text-slate-500">Documents</p>
-                <p className="text-xs font-bold text-slate-900 mt-0.5">
-                  {summary?.categoryCounts?.DOCUMENT?.count || 0} files <span className="text-slate-400 font-normal">({summary?.categoryCounts?.DOCUMENT?.sizeMB || 0} MB)</span>
-                </p>
+              <span className="text-[10px] font-mono font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">
+                TS / PY / GO
+              </span>
+            </div>
+            <div className="mt-3">
+              <p className="text-xs font-bold text-slate-700">Source Code</p>
+              <div className="flex items-baseline gap-1 mt-0.5">
+                <span className="text-lg font-extrabold text-slate-900 font-mono">
+                  {summary?.categoryCounts?.CODE?.count || 0}
+                </span>
+                <span className="text-[11px] text-slate-400 font-medium">
+                  ({summary?.categoryCounts?.CODE?.sizeMB || 0} MB)
+                </span>
               </div>
-            </button>
+            </div>
+          </button>
 
-            <button
-              onClick={() => setSelectedCategory('CODE')}
-              className={`p-3 rounded-xl border text-left transition-all flex items-start gap-3 ${
-                selectedCategory === 'CODE'
-                  ? 'bg-purple-50/60 border-purple-200 ring-1 ring-purple-300'
-                  : 'bg-slate-50/60 border-slate-150 hover:bg-slate-100/70 hover:border-slate-200'
-              }`}
-            >
-              <div className="p-1.5 rounded-lg bg-purple-100 text-purple-700 shrink-0 mt-0.5">
-                <Code2 className="w-3.5 h-3.5" />
+          {/* 4. Media & Assets */}
+          <button
+            type="button"
+            onClick={() => handleCategoryClick('IMAGE')}
+            className={`p-4 rounded-2xl border text-left transition-all duration-200 flex flex-col justify-between group cursor-pointer relative overflow-hidden ${
+              selectedCategory === 'IMAGE'
+                ? 'bg-amber-500/10 border-amber-500/40 ring-1 ring-amber-500/30'
+                : 'bg-white border-slate-200/90 hover:border-slate-300 hover:shadow-xs'
+            }`}
+          >
+            <div className="flex items-center justify-between w-full">
+              <div className="p-2 rounded-xl bg-amber-50 text-amber-600 border border-amber-100 group-hover:scale-105 transition">
+                <ImageIcon className="w-4 h-4" />
               </div>
-              <div className="truncate">
-                <p className="text-[11px] font-semibold text-slate-500">Source Code</p>
-                <p className="text-xs font-bold text-slate-900 mt-0.5">
-                  {summary?.categoryCounts?.CODE?.count || 0} files <span className="text-slate-400 font-normal">({summary?.categoryCounts?.CODE?.sizeMB || 0} MB)</span>
-                </p>
+              <span className="text-[10px] font-mono font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-md">
+                PNG / WEBP
+              </span>
+            </div>
+            <div className="mt-3">
+              <p className="text-xs font-bold text-slate-700">Media & Assets</p>
+              <div className="flex items-baseline gap-1 mt-0.5">
+                <span className="text-lg font-extrabold text-slate-900 font-mono">
+                  {summary?.categoryCounts?.IMAGE?.count || 0}
+                </span>
+                <span className="text-[11px] text-slate-400 font-medium">
+                  ({summary?.categoryCounts?.IMAGE?.sizeMB || 0} MB)
+                </span>
               </div>
-            </button>
-
-            <button
-              onClick={() => setSelectedCategory('IMAGE')}
-              className={`p-3 rounded-xl border text-left transition-all flex items-start gap-3 ${
-                selectedCategory === 'IMAGE'
-                  ? 'bg-amber-50/60 border-amber-200 ring-1 ring-amber-300'
-                  : 'bg-slate-50/60 border-slate-150 hover:bg-slate-100/70 hover:border-slate-200'
-              }`}
-            >
-              <div className="p-1.5 rounded-lg bg-amber-100 text-amber-700 shrink-0 mt-0.5">
-                <ImageIcon className="w-3.5 h-3.5" />
-              </div>
-              <div className="truncate">
-                <p className="text-[11px] font-semibold text-slate-500">Media & Assets</p>
-                <p className="text-xs font-bold text-slate-900 mt-0.5">
-                  {summary?.categoryCounts?.IMAGE?.count || 0} files <span className="text-slate-400 font-normal">({summary?.categoryCounts?.IMAGE?.sizeMB || 0} MB)</span>
-                </p>
-              </div>
-            </button>
-          </div>
+            </div>
+          </button>
         </div>
       </div>
 
-      {/* 4. Streamlined Dropzone Dock */}
+      {/* ─── 3. Streamlined, High-Tech Dropzone Dock (Compact & Attractive) ─── */}
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
@@ -989,99 +1110,116 @@ export const Storage: React.FC = () => {
           }
           fileInputRef.current?.click();
         }}
-        className={`relative border-2 border-dashed rounded-2xl p-6 text-center transition-all group ${
+        className={`relative rounded-2xl p-4 sm:p-5 transition-all duration-200 border-2 border-dashed group ${
           summary?.s3Info?.isUnderMaintenance
-            ? 'border-amber-300/80 bg-amber-50/30 cursor-not-allowed'
+            ? 'border-amber-300 bg-amber-50/40 cursor-not-allowed'
             : isDragging
-            ? 'border-emerald-500 bg-emerald-50/40 scale-[1.002] cursor-pointer'
-            : 'border-slate-200/90 bg-white hover:border-slate-300 hover:bg-slate-50/50 cursor-pointer'
+            ? 'border-[#c8f542] bg-slate-900 text-white scale-[1.005] cursor-pointer shadow-lg'
+            : 'border-slate-300/80 bg-white hover:border-slate-800 hover:bg-slate-50/50 cursor-pointer shadow-xs'
         } ${isUploading ? 'pointer-events-none opacity-60' : ''}`}
       >
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 max-w-4xl mx-auto">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 max-w-5xl mx-auto">
           <div className="flex items-center gap-3.5 text-left">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-xs transition ${
+            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-xs transition-transform duration-200 ${
               summary?.s3Info?.isUnderMaintenance
                 ? 'bg-amber-100 text-amber-700'
                 : 'bg-slate-900 text-[#c8f542] group-hover:scale-105'
             }`}>
               {summary?.s3Info?.isUnderMaintenance ? (
-                <AlertTriangle className="w-4 h-4 text-amber-600 animate-pulse" />
+                <AlertTriangle className="w-5 h-5 text-amber-600 animate-pulse" />
               ) : isUploading ? (
-                <RefreshCw className="w-4 h-4 animate-spin" />
+                <RefreshCw className="w-4 h-4 animate-spin text-[#c8f542]" />
               ) : (
-                <Upload className="w-4 h-4" />
+                <Upload className="w-4 h-4 text-[#c8f542]" />
               )}
             </div>
+
             <div>
-              <p className="text-sm font-bold text-slate-900">
-                {summary?.s3Info?.isUnderMaintenance
-                  ? 'Cloud Storage Under Maintenance'
-                  : isUploading
-                  ? 'Streaming files to S3 bucket...'
-                  : 'Drop files here or click to browse'}
+              <p className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-2">
+                <span>
+                  {summary?.s3Info?.isUnderMaintenance
+                    ? 'Cloud Storage Maintenance Active'
+                    : isUploading
+                    ? 'Streaming files to S3 cloud storage...'
+                    : 'Drop files to upload or click to browse'}
+                </span>
+                {!isUploading && !summary?.s3Info?.isUnderMaintenance && (
+                  <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-[#c8f542] text-slate-950 font-mono">
+                    Direct S3
+                  </span>
+                )}
               </p>
-              <p className="text-xs text-slate-400 mt-0.5">
-                {summary?.s3Info?.isUnderMaintenance
-                  ? 'AWS S3 bucket is temporarily offline or undergoing maintenance. Uploads will resume shortly.'
-                  : 'Direct AWS S3 multipart push. Supports CSV, TSV, JSON, Code, Docs up to 100MB per file.'}
+              <p className="text-[11px] text-slate-400 mt-0.5">
+                Fast multipart streaming to bucket <strong className="text-slate-600 font-mono">{summary?.s3Info?.bucket || 'tenant-storage-akshay'}</strong> (up to 100MB per file)
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-1.5 text-[10px] font-mono text-slate-500 shrink-0">
-            <span className="px-2 py-0.5 bg-slate-100 rounded-md">.CSV</span>
-            <span className="px-2 py-0.5 bg-slate-100 rounded-md">.JSON</span>
-            <span className="px-2 py-0.5 bg-slate-100 rounded-md">.PDF</span>
-            <span className="px-2 py-0.5 bg-slate-100 rounded-md">.TS / .PY</span>
+          {/* Formats & Action Pill */}
+          <div className="flex items-center gap-2">
+            <div className="hidden sm:flex items-center gap-1 text-[10px] font-mono text-slate-500">
+              <span className="px-2 py-0.5 bg-slate-100 rounded-md border border-slate-200/60 font-semibold">.CSV</span>
+              <span className="px-2 py-0.5 bg-slate-100 rounded-md border border-slate-200/60 font-semibold">.JSON</span>
+              <span className="px-2 py-0.5 bg-slate-100 rounded-md border border-slate-200/60 font-semibold">.PDF</span>
+              <span className="px-2 py-0.5 bg-slate-100 rounded-md border border-slate-200/60 font-semibold">.DOCX</span>
+              <span className="px-2 py-0.5 bg-slate-100 rounded-md border border-slate-200/60 font-semibold">.TS/.PY</span>
+            </div>
+
+            <span className="text-xs font-bold px-3 py-1.5 rounded-xl bg-slate-900 text-[#c8f542] group-hover:bg-slate-800 transition shadow-xs shrink-0">
+              Select Files
+            </span>
           </div>
         </div>
 
-        {/* Upload Feedback Toast */}
+        {/* Feedback Message */}
         {uploadFeedback && (
-          <div
-            className={`mt-3.5 mx-auto max-w-lg p-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 ${
+          <motion.div
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`mt-3 mx-auto max-w-lg p-2.5 rounded-xl text-xs font-semibold flex items-center justify-center gap-2 ${
               uploadFeedback.type === 'success'
                 ? 'bg-emerald-50 text-emerald-800 border border-emerald-200'
                 : 'bg-rose-50 text-rose-800 border border-rose-200'
             }`}
           >
             {uploadFeedback.type === 'success' ? (
-              <CheckCircle2 className="w-3.5 h-3.5 shrink-0 text-emerald-600" />
+              <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
             ) : (
-              <AlertCircle className="w-3.5 h-3.5 shrink-0 text-rose-600" />
+              <AlertCircle className="w-4 h-4 shrink-0 text-rose-600" />
             )}
             <span>{uploadFeedback.message}</span>
-          </div>
+          </motion.div>
         )}
       </div>
 
-      {/* 5. Production-Grade Stored Objects Table */}
+      {/* ─── 4. Stored Objects Table (High-Density & Clean Typography) ─── */}
       <div className="bg-white border border-slate-200/90 rounded-2xl shadow-xs overflow-hidden">
-        {/* Table Filter & Search Control Dock */}
+        {/* Table Filter & Search Header */}
         <div className="p-4 sm:p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          {/* Segmented Category Pill Tabs */}
+          {/* Category Tabs */}
           <div className="flex items-center gap-1 overflow-x-auto pb-1 sm:pb-0">
             {[
               { id: 'ALL', label: 'All Files', count: summary?.totalFiles || files.length },
               { id: 'DATASET', label: 'Datasets', count: summary?.categoryCounts?.DATASET?.count || 0 },
               { id: 'DOCUMENT', label: 'Docs', count: summary?.categoryCounts?.DOCUMENT?.count || 0 },
               { id: 'CODE', label: 'Code', count: summary?.categoryCounts?.CODE?.count || 0 },
-              { id: 'IMAGE', label: 'Images', count: summary?.categoryCounts?.IMAGE?.count || 0 },
+              { id: 'IMAGE', label: 'Media', count: summary?.categoryCounts?.IMAGE?.count || 0 },
             ].map((tab) => (
               <button
+                type="button"
                 key={tab.id}
                 onClick={() => setSelectedCategory(tab.id)}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition inline-flex items-center gap-1.5 ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-medium transition inline-flex items-center gap-1.5 cursor-pointer ${
                   selectedCategory === tab.id
-                    ? 'bg-slate-900 text-white font-semibold shadow-xs'
+                    ? 'bg-slate-900 text-[#c8f542] font-bold shadow-xs'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100/70'
                 }`}
               >
                 <span>{tab.label}</span>
                 <span
-                  className={`text-[10px] px-1.5 py-0.2 rounded-full ${
+                  className={`text-[10px] px-1.5 py-0.2 rounded-full font-mono ${
                     selectedCategory === tab.id
-                      ? 'bg-white/20 text-white'
+                      ? 'bg-white/20 text-[#c8f542]'
                       : 'bg-slate-100 text-slate-500'
                   }`}
                 >
@@ -1099,36 +1237,37 @@ export const Storage: React.FC = () => {
               placeholder="Search file name..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:border-slate-900 transition w-full"
+              className="pl-8 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-200 rounded-xl text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent transition w-full"
             />
           </div>
         </div>
 
-        {/* Table Data */}
-        <div className="overflow-x-auto">
-          {isLoading ? (
+        {/* Table Rows */}
+        <div className="overflow-x-auto relative">
+          {isLoading && files.length === 0 ? (
             <div className="py-16 text-center text-slate-400 space-y-2">
               <RefreshCw className="w-5 h-5 animate-spin mx-auto text-slate-900" />
-              <p className="text-xs font-medium">Indexing objects...</p>
+              <p className="text-xs font-semibold">Querying S3 object metadata...</p>
             </div>
           ) : files.length === 0 ? (
             <div className="py-16 text-center space-y-2.5">
-              <div className="w-10 h-10 rounded-xl bg-slate-50 text-slate-400 flex items-center justify-center mx-auto border border-slate-150">
+              <div className="w-12 h-12 rounded-2xl bg-slate-50 text-slate-400 flex items-center justify-center mx-auto border border-slate-150">
                 <Database className="w-5 h-5" />
               </div>
-              <p className="text-sm font-semibold text-slate-800">No storage objects found</p>
+              <p className="text-sm font-bold text-slate-800">No objects found</p>
               <p className="text-xs text-slate-400 max-w-xs mx-auto">
                 {searchQuery || selectedCategory !== 'ALL'
-                  ? 'No items match your active search or category filter.'
-                  : 'Drop your first file above to start analyzing with Google Gemini.'}
+                  ? `No items match category "${selectedCategory}" or active search.`
+                  : 'Drop your first file above to start analyzing with Google Gemini 2.5 Flash.'}
               </p>
             </div>
           ) : (
-            <table className="w-full text-left border-collapse">
+            <div className={`transition-opacity duration-150 ${isLoading ? 'opacity-60 pointer-events-none' : 'opacity-100'}`}>
+              <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-slate-100 bg-slate-50/50 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                <tr className="border-b border-slate-100 bg-slate-50/70 text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">
                   <th className="py-3 px-5">Object Name</th>
-                  <th className="py-3 px-4">Type</th>
+                  <th className="py-3 px-4">Category</th>
                   <th className="py-3 px-4">Size</th>
                   <th className="py-3 px-4">Gemini AI Status</th>
                   <th className="py-3 px-4">Uploaded By</th>
@@ -1143,85 +1282,96 @@ export const Storage: React.FC = () => {
                   return (
                     <tr
                       key={file._id}
-                      className="hover:bg-slate-50/70 transition-colors group"
+                      className="hover:bg-slate-50/80 transition-colors group"
                     >
                       {/* Name & Badge */}
-                      <td className="py-3 px-5">
+                      <td className="py-3.5 px-5">
                         <div className="flex items-center gap-3">
-                          <div className={`p-2 rounded-lg border shrink-0 ${badgeInfo.bg}`}>
+                          <div className={`p-2 rounded-xl border shrink-0 ${badgeInfo.bg} shadow-2xs`}>
                             {badgeInfo.icon}
                           </div>
                           <div className="truncate max-w-sm">
-                            <p className="font-semibold text-slate-900 truncate" title={file.originalName}>
+                            <p className="font-bold text-slate-900 truncate group-hover:text-slate-700 transition" title={file.originalName}>
                               {file.originalName}
                             </p>
-                            <p className="text-[10px] text-slate-400">
+                            <p className="text-[10px] font-mono text-slate-400">
                               {new Date(file.createdAt).toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
                             </p>
                           </div>
                         </div>
                       </td>
 
-                      {/* Category Badge */}
-                      <td className="py-3 px-4">
-                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-mono font-medium bg-slate-100 text-slate-700">
+                      {/* Extension Chip */}
+                      <td className="py-3.5 px-4">
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-mono font-bold bg-slate-100 text-slate-700 border border-slate-200/60">
                           {badgeInfo.ext}
                         </span>
                       </td>
 
                       {/* Size */}
-                      <td className="py-3 px-4 font-mono text-slate-600">
+                      <td className="py-3.5 px-4 font-mono font-semibold text-slate-700">
                         {formatFileSize(file.fileSizeBytes)}
                       </td>
 
-                      {/* AI Status */}
-                      <td className="py-3 px-4">
+                      {/* Gemini AI Status */}
+                      <td className="py-3.5 px-4">
                         {isAnalyzed ? (
                           <button
+                            type="button"
                             onClick={() => handleOpenAiAnalysis(file)}
-                            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-[11px] font-medium bg-emerald-50 text-emerald-700 hover:bg-emerald-100 border border-emerald-200/80 transition"
+                            className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-[11px] font-bold bg-slate-900 text-[#c8f542] hover:bg-slate-800 transition shadow-2xs cursor-pointer group"
+                            title="Open AI Workbench in New Tab"
                           >
-                            <Sparkles className="w-3 h-3 text-emerald-600" />
-                            Analyzed
+                            <Sparkles className="w-3 h-3 text-[#c8f542]" />
+                            <span>Analyzed</span>
+                            <ExternalLink className="w-2.5 h-2.5 text-slate-400 group-hover:text-[#c8f542] transition" />
                           </button>
                         ) : (
-                          <span className="inline-flex items-center gap-1 text-[11px] text-slate-400">
-                            <Brain className="w-3 h-3" />
-                            Ready for AI
-                          </span>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenAiAnalysis(file)}
+                            className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg text-[11px] font-medium text-slate-500 hover:text-slate-800 hover:bg-slate-100 border border-transparent hover:border-slate-200 transition cursor-pointer group"
+                            title="Open AI Workbench in New Tab"
+                          >
+                            <Brain className="w-3 h-3 text-slate-400" />
+                            <span>Ready for AI</span>
+                            <ExternalLink className="w-2.5 h-2.5 text-slate-400 group-hover:text-slate-700 transition" />
+                          </button>
                         )}
                       </td>
 
                       {/* Uploaded By */}
-                      <td className="py-3 px-4 text-slate-500">
+                      <td className="py-3.5 px-4 text-slate-500">
                         <div className="flex items-center gap-1.5 truncate max-w-[140px]">
-                          <span className="w-4 h-4 rounded-full bg-slate-100 text-[9px] font-bold text-slate-600 flex items-center justify-center shrink-0">
+                          <span className="w-5 h-5 rounded-full bg-slate-900 text-[10px] font-bold text-[#c8f542] flex items-center justify-center shrink-0">
                             {(file.uploadedBy?.firstName?.[0] || 'U').toUpperCase()}
                           </span>
-                          <span className="truncate">
+                          <span className="truncate font-medium text-slate-700">
                             {file.uploadedBy ? file.uploadedBy.firstName : 'User'}
                           </span>
                         </div>
                       </td>
 
                       {/* Actions */}
-                      <td className="py-3 px-5 text-right">
+                      <td className="py-3.5 px-5 text-right">
                         <div className="flex items-center justify-end gap-1.5">
-                          {/* Analyze AI Button */}
+                          {/* Analyze / View Insights Button */}
                           <button
+                            type="button"
                             onClick={() => handleOpenAiAnalysis(file)}
-                            className="bg-slate-900 hover:bg-slate-800 text-[#c8f542] text-[11px] font-semibold px-2.5 py-1.5 rounded-lg transition shadow-2xs flex items-center gap-1 active:scale-95"
-                            title="Analyze document with Gemini AI"
+                            className="bg-slate-900 hover:bg-slate-800 text-[#c8f542] text-[11px] font-mono font-bold px-3 py-1.5 rounded-xl transition shadow-xs flex items-center gap-1.5 active:scale-95 cursor-pointer border border-slate-750 group"
+                            title="Open AI Workbench in New Browser Tab"
                           >
-                            <Sparkles className="w-3 h-3" />
-                            {isAnalyzed ? 'View Insights' : 'Analyze AI'}
+                            <Terminal className="w-3 h-3 text-[#c8f542]" />
+                            <span>{isAnalyzed ? 'Workbench' : 'Analyze AI'}</span>
+                            <ExternalLink className="w-3 h-3 text-slate-400 group-hover:text-[#c8f542] transition" />
                           </button>
 
                           {/* Download Button */}
                           <button
                             onClick={() => handleDownload(file)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition"
-                            title="Download Object"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
+                            title="Download Object from S3"
                           >
                             <Download className="w-3.5 h-3.5" />
                           </button>
@@ -1229,7 +1379,7 @@ export const Storage: React.FC = () => {
                           {/* Delete Button */}
                           <button
                             onClick={() => handleDelete(file)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition cursor-pointer"
                             title="Delete Object"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -1241,11 +1391,12 @@ export const Storage: React.FC = () => {
                 })}
               </tbody>
             </table>
+            </div>
           )}
         </div>
       </div>
 
-      {/* 6. Gemini AI Data Analysis & Q&A Modal */}
+      {/* ─── 5. Gemini AI Data Analysis & Q&A Modal ─── */}
       <AiAnalysisModal
         isOpen={isAiModalOpen}
         onClose={() => setIsAiModalOpen(false)}
@@ -1253,7 +1404,7 @@ export const Storage: React.FC = () => {
         onAnalysisUpdated={handleAnalysisUpdated}
       />
 
-      {/* 7. Plans Modal for Storage Upgrades */}
+      {/* ─── 6. Plans Modal for Storage Upgrades ─── */}
       <PlansModal
         isOpen={isPlansModalOpen}
         onClose={() => {
@@ -1267,7 +1418,7 @@ export const Storage: React.FC = () => {
         }}
       />
 
-      {/* 8. Corrupted File Alert Modal */}
+      {/* ─── 7. Corrupted File Alert Modal ─── */}
       {corruptedFileAlert && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
           <motion.div
@@ -1291,7 +1442,6 @@ export const Storage: React.FC = () => {
                 The cloud storage block for <strong className="text-slate-800">{corruptedFileAlert.fileName}</strong> is unreachable or was removed from AWS S3.
               </p>
 
-              {/* Quota Hold Telemetry Card */}
               <div className="mt-4 p-3.5 rounded-xl bg-slate-50 border border-slate-200/80">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-slate-500 font-medium">Allocated Quota Held:</span>

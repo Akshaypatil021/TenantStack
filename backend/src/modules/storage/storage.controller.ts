@@ -4,7 +4,7 @@ import StorageModel from './storage.model';
 import Tenant from '../tenants/tenant.model';
 import { S3Service, S3MaintenanceError } from '../../services/s3.service';
 import GeminiService from '../../services/gemini.service';
-import { PLAN_CONFIG } from '../../config/plan.config';
+import { PLAN_CONFIG, resolveWorkspacePlanName } from '../../config/plan.config';
 import { logActivity } from '../activity/activity.controller';
 import crypto from 'crypto';
 import path from 'path';
@@ -78,9 +78,8 @@ export const getStorageObjects = async (req: AuthenticatedRequest, res: Response
       Tenant.findById(tenantId).select('subscriptionPlan storagePlan name').lean(),
     ]);
 
-    // Calculate usage & plan metrics
-    const planName = (tenant?.subscriptionPlan || tenant?.storagePlan || 'Starter Dev') as string;
-    const planLimits = PLAN_CONFIG[planName] || PLAN_CONFIG['Starter Dev'] || PLAN_CONFIG.FREE;
+    const planName = resolveWorkspacePlanName(tenant?.subscriptionPlan, tenant?.storagePlan);
+    const planLimits = PLAN_CONFIG[planName] || PLAN_CONFIG['Starter Dev'];
 
     const totalBytes = aggregateStats.length > 0 ? aggregateStats[0].totalBytes : 0;
     const totalUsedMB = Number((totalBytes / (1024 * 1024)).toFixed(2));
@@ -189,8 +188,8 @@ export const getStorageQuota = async (req: AuthenticatedRequest, res: Response):
       return;
     }
 
-    const planName = (tenant.subscriptionPlan || tenant.storagePlan || 'Starter Dev') as string;
-    const planLimits = PLAN_CONFIG[planName] || PLAN_CONFIG['Starter Dev'] || PLAN_CONFIG.FREE;
+    const planName = resolveWorkspacePlanName(tenant.subscriptionPlan, tenant.storagePlan);
+    const planLimits = PLAN_CONFIG[planName] || PLAN_CONFIG['Starter Dev'];
 
     const totalBytes = aggregateResult.length > 0 ? aggregateResult[0].totalBytes : 0;
     const totalFiles = aggregateResult.length > 0 ? aggregateResult[0].totalFiles : 0;
@@ -463,6 +462,41 @@ export const deleteStorageObject = async (req: AuthenticatedRequest, res: Respon
   } catch (error: any) {
     console.error('Delete storage object error:', error);
     res.status(500).json({ error: 'Internal Server Error deleting file' });
+  }
+};
+
+/**
+ * GET /api/v1/storage/:fileId
+ * Retrieve single file metadata by ID with populated uploader details
+ */
+export const getStorageObjectById = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.user || !req.user.tenantId) {
+      res.status(401).json({ error: 'Unauthorized: Tenant required' });
+      return;
+    }
+    const { fileId } = req.params;
+    const tenantId = req.user.tenantId;
+
+    const file = await StorageModel.findOne({ _id: fileId, tenantId })
+      .populate('uploadedBy', 'firstName lastName email');
+
+    if (!file) {
+      res.status(404).json({ error: 'File not found or access denied' });
+      return;
+    }
+
+    res.status(200).json({
+      file,
+      s3Info: {
+        isActive: S3Service.isS3Active(),
+        bucket: S3Service.getBucketName(),
+        region: S3Service.getRegion(),
+      },
+    });
+  } catch (error: any) {
+    console.error('Get storage object by ID error:', error);
+    res.status(500).json({ error: 'Internal Server Error fetching file details' });
   }
 };
 

@@ -3,7 +3,7 @@ import { AuthenticatedRequest } from '../../middleware/auth.middleware';
 import { FileModel } from './file.model';
 import Project from '../projects/project.model';
 import Tenant from '../tenants/tenant.model';
-import { PLAN_CONFIG } from '../../config/plan.config';
+import { PLAN_CONFIG, resolveWorkspacePlanName } from '../../config/plan.config';
 import { StorageService } from '../../services/storage.service';
 import { getOrSetCache, invalidateCache } from '../../services/redis.service';
 
@@ -216,8 +216,8 @@ export const getStorageUsage = async (req: AuthenticatedRequest, res: Response):
         const tenant = await Tenant.findById(tenantId);
         if (!tenant) return null;
 
-        const planName = (tenant.subscriptionPlan || 'FREE') as 'FREE' | 'PRO' | 'BUSINESS';
-        const planLimits = PLAN_CONFIG[planName] || PLAN_CONFIG.FREE;
+        const planName = resolveWorkspacePlanName(tenant.subscriptionPlan, tenant.storagePlan);
+        const planLimits = PLAN_CONFIG[planName] || PLAN_CONFIG['Starter Dev'];
 
         const result = await FileModel.aggregate([
           { $match: { tenantId: tenant._id } },

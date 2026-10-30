@@ -64,8 +64,37 @@ export class S3Service {
   public static async initFromDb(): Promise<void> {
     try {
       const StorageConfig = (await import('../modules/storage/storageConfig.model')).default;
-      const config = await StorageConfig.findOne({ isDefault: true }).lean();
+      let config = await StorageConfig.findOne({ isDefault: true });
+
+      const envBucket = (process.env.S3_BUCKET_NAME || '').trim();
+      const envRegion = (process.env.AWS_REGION || '').trim();
+      const envAccessKey = (process.env.AWS_ACCESS_KEY_ID || '').trim();
+      const envSecretKey = (process.env.AWS_SECRET_ACCESS_KEY || '').trim();
+
       if (config) {
+        // Sync any updated .env variables into the DB configuration
+        let needsUpdate = false;
+        if (envBucket && config.bucketName !== envBucket) {
+          console.log(`[S3Service] Auto-syncing bucketName from .env: "${config.bucketName}" -> "${envBucket}"`);
+          config.bucketName = envBucket;
+          needsUpdate = true;
+        }
+        if (envRegion && config.region !== envRegion) {
+          config.region = envRegion;
+          needsUpdate = true;
+        }
+        if (envAccessKey && config.accessKeyId !== envAccessKey) {
+          config.accessKeyId = envAccessKey;
+          needsUpdate = true;
+        }
+        if (envSecretKey && config.secretAccessKey !== envSecretKey) {
+          config.secretAccessKey = envSecretKey;
+          needsUpdate = true;
+        }
+        if (needsUpdate) {
+          await config.save();
+        }
+
         this.setRuntimeConfig({
           bucketName: config.bucketName,
           region: config.region,

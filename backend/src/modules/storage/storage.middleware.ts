@@ -3,7 +3,7 @@ import { Response, NextFunction } from 'express';
 import { AuthenticatedRequest } from '../../middleware/auth.middleware';
 import Tenant from '../tenants/tenant.model';
 import StorageModel from './storage.model';
-import { PLAN_CONFIG } from '../../config/plan.config';
+import { PLAN_CONFIG, resolveWorkspacePlanName } from '../../config/plan.config';
 import mongoose from 'mongoose';
 
 // Memory storage so we have access to req.file.buffer for S3 and size validation before any S3 push
@@ -50,8 +50,8 @@ export const checkStorageQuota = async (
       return;
     }
 
-    const planName = (tenant.subscriptionPlan || tenant.storagePlan || 'Starter Dev') as string;
-    const planLimits = PLAN_CONFIG[planName] || PLAN_CONFIG['Starter Dev'] || PLAN_CONFIG.FREE;
+    const planName = resolveWorkspacePlanName(tenant.subscriptionPlan, tenant.storagePlan);
+    const planLimits = PLAN_CONFIG[planName] || PLAN_CONFIG['Starter Dev'];
 
     // 2. Calculate current storage consumed by this tenant in StorageModel
     const tenantObjectId = new mongoose.Types.ObjectId(tenantId);

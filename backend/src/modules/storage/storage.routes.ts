@@ -9,6 +9,7 @@ import {
   deleteStorageObject,
   analyzeStorageObject,
   askStorageObjectQuestion,
+  getStorageObjectById,
 } from './storage.controller';
 
 const router = Router();
@@ -18,6 +19,9 @@ router.get('/', authenticate, getStorageObjects);
 
 // GET /api/v1/storage/quota - Detailed quota breakdown
 router.get('/quota', authenticate, getStorageQuota);
+
+// GET /api/v1/storage/:fileId - Retrieve single file metadata by ID
+router.get('/:fileId', authenticate, getStorageObjectById);
 
 // POST /api/v1/storage/upload - Multipart upload with real-time quota check and S3 push
 router.post(
