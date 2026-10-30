@@ -1,4 +1,5 @@
 import mongoose, { Schema, Document } from "mongoose";
+import crypto from "crypto";
 
 export type InstanceStatus = "starting" | "running" | "stopping" | "stopped" | "restarting" | "error" | "terminated";
 export type InstanceTemplate = "nodejs" | "python" | "go" | "nginx" | "ubuntu" | "alpine" | "postgres" | "redis" | "nextjs" | "react" | "static" | "docker";
@@ -15,6 +16,17 @@ export interface IBuildLog {
   status: 'pending' | 'in_progress' | 'success' | 'failed';
 }
 
+export interface IWebhookDeployEvent {
+  commitHash: string;
+  commitMessage: string;
+  branch: string;
+  pusher: string;
+  triggeredAt: Date;
+  status: 'success' | 'failed' | 'in_progress';
+  error?: string;
+  deploymentDurationMs?: number;
+}
+
 export interface IComputeInstance extends Document {
   tenantId: mongoose.Types.ObjectId;
   createdBy: mongoose.Types.ObjectId;
@@ -29,6 +41,10 @@ export interface IComputeInstance extends Document {
   buildLogs?: IBuildLog[];
   lastCommitHash?: string;
   lastCommitMessage?: string;
+  webhookSecret?: string;
+  autoDeployEnabled?: boolean;
+  lastWebhookTriggeredAt?: Date;
+  webhookDeployHistory?: IWebhookDeployEvent[];
   status: InstanceStatus;
   port: number;
   publicIp: string;
@@ -86,6 +102,24 @@ const ComputeInstanceSchema: Schema = new Schema(
     ],
     lastCommitHash: { type: String },
     lastCommitMessage: { type: String },
+    webhookSecret: {
+      type: String,
+      default: () => `whsec_${crypto.randomBytes(16).toString('hex')}`,
+    },
+    autoDeployEnabled: { type: Boolean, default: true },
+    lastWebhookTriggeredAt: { type: Date },
+    webhookDeployHistory: [
+      {
+        commitHash: { type: String, default: '' },
+        commitMessage: { type: String, default: '' },
+        branch: { type: String, default: 'main' },
+        pusher: { type: String, default: 'github' },
+        triggeredAt: { type: Date, default: Date.now },
+        status: { type: String, enum: ['success', 'failed', 'in_progress'], default: 'in_progress' },
+        error: { type: String },
+        deploymentDurationMs: { type: Number },
+      },
+    ],
     status: {
       type: String,
       enum: ["starting", "running", "stopping", "stopped", "restarting", "error", "terminated"],

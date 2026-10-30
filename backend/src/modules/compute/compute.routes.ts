@@ -17,9 +17,24 @@ import {
   updateAdminEc2Host,
   testAdminEc2Host,
   getAvailablePort,
+  handleGithubWebhook,
+  getWebhookConfig,
+  updateWebhookConfig,
 } from './compute.controller';
 
 const router = Router();
+
+// =============================================================================
+// Webhook Routes (Public & Authenticated Management)
+// =============================================================================
+// POST /api/v1/compute/webhook/:instanceId — Public GitHub Webhook Auto-Deploy Trigger (NO Auth required)
+router.post('/webhook/:instanceId', handleGithubWebhook);
+
+// GET /api/v1/compute/:instanceId/webhook — Get Webhook URL & recent deployment logs
+router.get('/:instanceId/webhook', authenticate, getWebhookConfig);
+
+// PATCH /api/v1/compute/:instanceId/webhook — Toggle auto-deploy or regenerate secret
+router.patch('/:instanceId/webhook', authenticate, updateWebhookConfig);
 
 // GET /api/v1/compute/quota — Plan quota details
 router.get('/quota', authenticate, getComputeQuota);

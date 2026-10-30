@@ -58,7 +58,6 @@ interface ComputeCloudShellProps {
   onRefresh: () => void;
   onAction: (instanceId: string, action: string) => Promise<void>;
   onSwitchToGui: () => void;
-  onOpenDeployModal: () => void;
   onOpenGithubDeployModal: () => void;
 }
 
@@ -70,7 +69,6 @@ export const ComputeCloudShell: React.FC<ComputeCloudShellProps> = ({
   onRefresh,
   onAction,
   onSwitchToGui,
-  onOpenDeployModal,
   onOpenGithubDeployModal,
 }) => {
   const { token, user } = useAuth();
@@ -727,22 +725,8 @@ export const ComputeCloudShell: React.FC<ComputeCloudShellProps> = ({
         return;
       }
 
-      // 11. DEPLOY WIZARD SHORTCUTS (ts deploy | ts deploy-github)
-      if (mainCmd === 'ts' && subCmd === 'deploy') {
-        onOpenDeployModal();
-        setLogs((prev) => [
-          ...prev,
-          {
-            id: logId,
-            command: trimmed,
-            timestamp,
-            stdout: <span className="text-[#c8f542] font-mono text-xs">Opening Template Deployment Wizard modal...</span>,
-          },
-        ]);
-        return;
-      }
-
-      if (mainCmd === 'ts' && (subCmd === 'deploy-github' || subCmd === 'github')) {
+      // 11. DEPLOY WIZARD SHORTCUTS (ts deploy | ts deploy-github | ts github)
+      if (mainCmd === 'ts' && (subCmd === 'deploy' || subCmd === 'deploy-github' || subCmd === 'github')) {
         onOpenGithubDeployModal();
         setLogs((prev) => [
           ...prev,
@@ -910,8 +894,7 @@ export const ComputeCloudShell: React.FC<ComputeCloudShellProps> = ({
         <span className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider shrink-0">Quick Run:</span>
         {[
           { label: 'ts list', cmd: 'ts list', desc: 'List all instances' },
-          { label: 'ts deploy', cmd: 'ts deploy', desc: 'Deploy template' },
-          { label: 'ts deploy-github', cmd: 'ts deploy-github', desc: 'Deploy from GitHub' },
+          { label: 'ts deploy', cmd: 'ts deploy', desc: 'Deploy project from GitHub' },
           { label: 'ts quota', cmd: 'ts quota', desc: 'View plan limits' },
           { label: 'ts ping', cmd: 'ts ping', desc: 'Ping master host' },
           { label: 'help', cmd: 'help', desc: 'Show all commands' },

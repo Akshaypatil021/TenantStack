@@ -29,6 +29,7 @@ import {
   Copy,
   Check,
   Settings,
+  GitPullRequest,
 } from 'lucide-react';
 
 const GithubIcon = ({ className = "w-4 h-4" }: { className?: string }) => (
@@ -43,7 +44,7 @@ import { TerminalStatsModal } from '../components/TerminalStatsModal';
 import { DeployGithubModal } from '../components/DeployGithubModal';
 import { AdminEc2SettingsModal } from '../components/AdminEc2SettingsModal';
 import { BuildLogsModal } from '../components/BuildLogsModal';
-import { ComputeCloudShell } from '../components/ComputeCloudShell';
+import { GitOpsWebhookModal } from '../components/GitOpsWebhookModal';
 
 // ===========================================================================
 // Types
@@ -78,7 +79,34 @@ interface ComputeInstance {
   ramUsedMb?: number;
   networkInKb?: number;
   networkOutKb?: number;
+  isRealMonitoring?: boolean;
+  webhookSecret?: string;
+  autoDeployEnabled?: boolean;
+  lastWebhookTriggeredAt?: string;
+  webhookDeployHistory?: WebhookDeployEvent[];
   createdAt: string;
+}
+
+export interface WebhookDeployEvent {
+  commitHash: string;
+  commitMessage: string;
+  branch: string;
+  pusher: string;
+  triggeredAt: string;
+  status: 'success' | 'failed' | 'in_progress';
+  error?: string;
+  deploymentDurationMs?: number;
+}
+
+interface HostMetrics {
+  totalRamMb: number;
+  usedRamMb: number;
+  freeRamMb: number;
+  ramUsagePercent: number;
+  cpuUsagePercent: number;
+  loadAvg: number[];
+  cpuCount: number;
+  isOnline: boolean;
 }
 
 interface ComputeQuota {
@@ -450,6 +478,7 @@ interface InstanceCardProps {
   onOpenTerminalStats: (instance: ComputeInstance, tab?: 'stats' | 'terminal') => void;
   onOpenBuildLogs?: (instance: ComputeInstance) => void;
   onRedeploy?: (instance: ComputeInstance) => void;
+  onOpenWebhook?: (instance: ComputeInstance) => void;
 }
 
 const InstanceCard: React.FC<InstanceCardProps> = ({
@@ -460,6 +489,7 @@ const InstanceCard: React.FC<InstanceCardProps> = ({
   onOpenTerminalStats,
   onOpenBuildLogs,
   onRedeploy,
+  onOpenWebhook,
 }) => {
   const [copied, setCopied] = useState(false);
   const isLoading = actionLoading === instance._id;
@@ -495,9 +525,29 @@ const InstanceCard: React.FC<InstanceCardProps> = ({
             )}
           </div>
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <h3 className="font-bold text-slate-900 text-sm truncate">{instance.name}</h3>
               <StatusBadge status={instance.status} />
+              {instance.isRealMonitoring && instance.status === 'running' && (
+                <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200/80 px-1.5 py-0.5 rounded-full" title="Real-time live PM2 process telemetry directly from EC2 host">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                  Live PM2
+                </span>
+              )}
+              {instance.sourceType === 'github' && (
+                <button
+                  onClick={() => onOpenWebhook?.(instance)}
+                  className={`flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full border transition ${
+                    instance.autoDeployEnabled !== false
+                      ? 'bg-purple-50 hover:bg-purple-100 text-purple-700 border-purple-200'
+                      : 'bg-slate-100 hover:bg-slate-200 text-slate-500 border-slate-200'
+                  }`}
+                  title="Configure GitHub Auto-Deploy Webhook"
+                >
+                  <GitPullRequest className="w-3 h-3 text-purple-600" />
+                  <span>Auto-Deploy {instance.autoDeployEnabled === false ? 'OFF' : 'ON'}</span>
+                </button>
+              )}
             </div>
             {instance.sourceType === 'github' && instance.githubRepoUrl ? (
               <div className="flex items-center gap-1.5 text-xs text-slate-500 mt-0.5">
@@ -638,15 +688,25 @@ const InstanceCard: React.FC<InstanceCardProps> = ({
 
           {/* Redeploy for GitHub instances */}
           {instance.sourceType === 'github' ? (
-            <button
-              onClick={() => onRedeploy?.(instance)}
-              disabled={isLoading || isTransitioning}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 text-xs font-semibold transition disabled:opacity-50"
-              title="Pull latest code from GitHub and redeploy"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              Redeploy
-            </button>
+            <>
+              <button
+                onClick={() => onRedeploy?.(instance)}
+                disabled={isLoading || isTransitioning}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-purple-50 hover:bg-purple-100 border border-purple-200 text-purple-700 text-xs font-semibold transition disabled:opacity-50"
+                title="Pull latest code from GitHub and redeploy"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                Redeploy
+              </button>
+              <button
+                onClick={() => onOpenWebhook?.(instance)}
+                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-[#c8f542] text-xs font-semibold transition shadow-sm"
+                title="Configure GitOps Auto-Deploy Webhook"
+              >
+                <GitPullRequest className="w-3.5 h-3.5 text-[#c8f542]" />
+                Webhook
+              </button>
+            </>
           ) : (
             <button
               onClick={() => onAction(instance._id, 'restart')}
@@ -682,8 +742,8 @@ export const Compute: React.FC = () => {
 
   const [instances, setInstances] = useState<ComputeInstance[]>([]);
   const [quota, setQuota] = useState<ComputeQuota | null>(null);
+  const [hostMetrics, setHostMetrics] = useState<HostMetrics | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [viewMode, setViewMode] = useState<'gui' | 'cloudshell'>('gui');
   const [isDeployModalOpen, setIsDeployModalOpen] = useState(false);
   const [isDeploying, setIsDeploying] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -703,6 +763,7 @@ export const Compute: React.FC = () => {
   const [isDeployingGithub, setIsDeployingGithub] = useState(false);
   const [isAdminEc2ModalOpen, setIsAdminEc2ModalOpen] = useState(false);
   const [selectedInstanceForBuildLogs, setSelectedInstanceForBuildLogs] = useState<ComputeInstance | null>(null);
+  const [selectedInstanceForWebhook, setSelectedInstanceForWebhook] = useState<ComputeInstance | null>(null);
 
   // Check compute plan from tenant context
   const computePlan = tenant?.computePlan || tenant?.allocatedResources?.computePlan;
@@ -726,7 +787,12 @@ export const Compute: React.FC = () => {
       ]);
       const instData = await instRes.json();
       const quotaData = await quotaRes.json();
-      if (instRes.ok) setInstances(instData.instances || []);
+      if (instRes.ok) {
+        setInstances(instData.instances || []);
+        if (instData.hostMetrics) {
+          setHostMetrics(instData.hostMetrics);
+        }
+      }
       if (quotaRes.ok) setQuota(quotaData);
     } catch (err) {
       setError('Failed to load compute instances. Please refresh.');
@@ -737,10 +803,10 @@ export const Compute: React.FC = () => {
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
-  // Auto-refresh every 8 seconds for live telemetry
+  // Auto-refresh every 4 seconds for real live telemetry
   useEffect(() => {
     if (!hasComputePlan) return;
-    const interval = setInterval(fetchData, 8000);
+    const interval = setInterval(fetchData, 4000);
     return () => clearInterval(interval);
   }, [fetchData, hasComputePlan]);
 
@@ -885,23 +951,23 @@ export const Compute: React.FC = () => {
               <div className="w-20 h-20 rounded-2xl bg-slate-100 border border-slate-200 flex items-center justify-center mx-auto mb-6 shadow-sm">
                 <Server className="w-9 h-9 text-slate-400" />
               </div>
-              <h2 className="text-xl font-bold text-slate-900 mb-2">No Compute Plan Active</h2>
+              <h2 className="text-xl font-bold text-slate-900 mb-2">No Hosting Plan Active</h2>
               <p className="text-sm text-slate-500 max-w-sm leading-relaxed mb-8">
-                Deploy virtual machines and containers by activating a Compute plan. Choose from Sandbox, Dev Pro, or Compute Node.
+                Deploy web applications directly from GitHub by activating an App Hosting plan. Choose from Sandbox, Dev Pro, or Compute Node.
               </p>
 
               <div className="grid grid-cols-3 gap-4 mb-8 max-w-lg text-left">
                 {[
-                  { plan: 'Sandbox / Testing', vcpu: '1 vCPU', ram: '512MB RAM', instances: '1 instance', price: '₹449/mo' },
-                  { plan: 'Dev Pro', vcpu: '2 vCPU', ram: '2GB RAM', instances: '3 instances', price: '₹1,299/mo' },
-                  { plan: 'Compute Node', vcpu: '4 vCPU', ram: '8GB RAM', instances: '5 instances', price: '₹3,499/mo' },
+                  { plan: 'Sandbox / Testing', slot: '1 Project Slot', ram: '512MB RAM', feature: 'GitHub GitOps', price: '₹449/mo' },
+                  { plan: 'Dev Pro', slot: '3 Project Slots', ram: '2GB RAM', feature: 'Zero-Downtime', price: '₹1,299/mo' },
+                  { plan: 'Compute Node', slot: '5 Project Slots', ram: '8GB RAM', feature: 'Priority Node', price: '₹3,499/mo' },
                 ].map((p) => (
                   <div key={p.plan} className="bg-slate-50 border border-slate-200 rounded-xl p-4">
                     <div className="text-xs font-bold text-slate-900 mb-2">{p.plan}</div>
                     <div className="space-y-1">
-                      <div className="text-[11px] text-slate-500">{p.vcpu}</div>
+                      <div className="text-[11px] text-slate-500">{p.slot}</div>
                       <div className="text-[11px] text-slate-500">{p.ram}</div>
-                      <div className="text-[11px] text-slate-500">{p.instances}</div>
+                      <div className="text-[11px] text-slate-500">{p.feature}</div>
                     </div>
                     <div className="text-xs font-semibold text-slate-900 mt-3">{p.price}</div>
                   </div>
@@ -982,36 +1048,9 @@ export const Compute: React.FC = () => {
       <div className="flex items-center justify-between flex-wrap gap-4">
         <div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Compute Services</h1>
-          <p className="text-sm text-slate-500 mt-1">Manage, deploy and host applications on cloud infrastructure</p>
+          <p className="text-sm text-slate-500 mt-1">Deploy, run and host applications directly from GitHub on cloud infrastructure</p>
         </div>
         <div className="flex items-center gap-2.5 flex-wrap">
-          {/* View Mode Switcher: GUI vs CloudShell CMD */}
-          <div className="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200 shadow-inner">
-            <button
-              onClick={() => setViewMode('gui')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                viewMode === 'gui'
-                  ? 'bg-white text-slate-900 shadow-sm'
-                  : 'text-slate-500 hover:text-slate-900'
-              }`}
-            >
-              <Server className="w-3.5 h-3.5" />
-              <span>GUI Dashboard</span>
-            </button>
-            <button
-              onClick={() => setViewMode('cloudshell')}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                viewMode === 'cloudshell'
-                  ? 'bg-slate-900 text-[#c8f542] shadow-sm'
-                  : 'text-slate-500 hover:text-slate-900'
-              }`}
-            >
-              <Terminal className="w-3.5 h-3.5" />
-              <span>CloudShell CMD</span>
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-            </button>
-          </div>
-
           {/* Super Admin: Master EC2 Host Button */}
           {isSuperAdmin && (
             <button
@@ -1024,28 +1063,18 @@ export const Compute: React.FC = () => {
             </button>
           )}
 
-          {/* Deploy from GitHub Button */}
+          {/* Primary Action: Deploy from GitHub */}
           <button
             onClick={() => (quota?.isAtLimit ? setIsPlansModalOpen(true) : setIsDeployGithubModalOpen(true))}
-            className="flex items-center gap-2 font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white transition shadow-md"
-            title={quota?.isAtLimit ? 'Upgrade plan to deploy more' : 'Deploy website directly from GitHub repository'}
-          >
-            <GithubIcon className="w-4 h-4 text-white" />
-            <span>Deploy from GitHub</span>
-          </button>
-
-          {/* Deploy Instance Button */}
-          <button
-            onClick={() => (quota?.isAtLimit ? setIsPlansModalOpen(true) : setIsDeployModalOpen(true))}
             className={`flex items-center gap-2 font-semibold text-xs sm:text-sm px-4 py-2.5 rounded-xl transition shadow-lg ${
               quota?.isAtLimit
                 ? 'bg-slate-200 text-slate-500 shadow-slate-200/50 cursor-not-allowed'
                 : 'bg-slate-900 hover:bg-slate-800 text-[#c8f542] shadow-slate-900/10'
             }`}
-            title={quota?.isAtLimit ? 'Upgrade to deploy more instances' : undefined}
+            title={quota?.isAtLimit ? 'Upgrade plan to deploy more' : 'Deploy website or API directly from GitHub repository'}
           >
-            {quota?.isAtLimit ? <Lock className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
-            <span>Deploy Instance</span>
+            {quota?.isAtLimit ? <Lock className="w-4 h-4" /> : <GithubIcon className="w-4 h-4 text-[#c8f542]" />}
+            <span>Deploy from GitHub</span>
             {quota?.isAtLimit && (
               <span className="text-[10px] font-bold bg-amber-100 text-amber-700 px-1.5 py-0.5 rounded-full ml-1">
                 Limit
@@ -1055,19 +1084,7 @@ export const Compute: React.FC = () => {
         </div>
       </div>
 
-      {viewMode === 'cloudshell' ? (
-        <ComputeCloudShell
-          instances={instances}
-          quota={quota}
-          onRefresh={fetchData}
-          onAction={handleAction}
-          onSwitchToGui={() => setViewMode('gui')}
-          onOpenDeployModal={() => (quota?.isAtLimit ? setIsPlansModalOpen(true) : setIsDeployModalOpen(true))}
-          onOpenGithubDeployModal={() => (quota?.isAtLimit ? setIsPlansModalOpen(true) : setIsDeployGithubModalOpen(true))}
-        />
-      ) : (
-        <>
-          {/* Stats Row */}
+      {/* Stats Row */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
               { label: 'Total Instances', value: instances.length, icon: <Server className="w-4 h-4" />, color: 'text-slate-700', bg: 'bg-slate-100' },
@@ -1135,6 +1152,83 @@ export const Compute: React.FC = () => {
             </div>
           )}
 
+          {/* EC2 Master Host Live Telemetry Banner */}
+          {hostMetrics && (
+            <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 border border-slate-700/60 rounded-2xl p-5 text-white shadow-lg">
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-slate-800 border border-slate-700 flex items-center justify-center">
+                    <Server className="w-5 h-5 text-[#c8f542]" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-white tracking-tight">AWS EC2 Master Node Telemetry</span>
+                      <span className="flex items-center gap-1.5 text-[10px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                        100% Live EC2 OS Load
+                      </span>
+                    </div>
+                    <p className="text-xs text-slate-400 mt-0.5">
+                      Direct kernel metrics from Linux host · {hostMetrics.cpuCount || 2} vCPU Core(s) · Load Avg: {hostMetrics.loadAvg?.slice(0, 3).map((n: number) => n.toFixed(2)).join(', ')}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Host Live Metrics Chips */}
+                <div className="flex items-center gap-3 flex-wrap">
+                  {/* Host CPU */}
+                  <div className="bg-slate-800/80 border border-slate-700/80 rounded-xl px-4 py-2 min-w-[130px]">
+                    <div className="text-[11px] text-slate-400 flex items-center justify-between">
+                      <span>EC2 Host CPU</span>
+                      <Cpu className="w-3 h-3 text-[#c8f542]" />
+                    </div>
+                    <div className="text-lg font-bold text-white mt-0.5">
+                      {hostMetrics.cpuUsagePercent}%
+                    </div>
+                    <div className="w-full bg-slate-700 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                      <div
+                        className="bg-[#c8f542] h-full rounded-full transition-all duration-500"
+                        style={{ width: `${Math.min(100, hostMetrics.cpuUsagePercent)}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Host RAM */}
+                  <div className="bg-slate-800/80 border border-slate-700/80 rounded-xl px-4 py-2 min-w-[170px]">
+                    <div className="text-[11px] text-slate-400 flex items-center justify-between">
+                      <span>EC2 Host RAM</span>
+                      <Activity className="w-3 h-3 text-cyan-400" />
+                    </div>
+                    <div className="text-lg font-bold text-white mt-0.5">
+                      {hostMetrics.ramUsagePercent}% <span className="text-xs font-normal text-slate-400">({hostMetrics.usedRamMb} / {hostMetrics.totalRamMb} MB)</span>
+                    </div>
+                    <div className="w-full bg-slate-700 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                      <div
+                        className="bg-cyan-400 h-full rounded-full transition-all duration-500"
+                        style={{ width: `${Math.min(100, hostMetrics.ramUsagePercent)}%` }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* PM2 Engine */}
+                  <div className="bg-slate-800/80 border border-slate-700/80 rounded-xl px-4 py-2 min-w-[120px]">
+                    <div className="text-[11px] text-slate-400 flex items-center justify-between">
+                      <span>PM2 Engine</span>
+                      <Zap className="w-3 h-3 text-amber-400" />
+                    </div>
+                    <div className="text-lg font-bold text-emerald-400 mt-0.5 flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      Active
+                    </div>
+                    <div className="text-[10px] text-slate-400 mt-1 truncate">
+                      Runner Port :3999
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Error */}
           {error && (
             <div className="flex items-center gap-3 bg-red-50 border border-red-200 rounded-xl p-4 text-sm text-red-600">
@@ -1146,19 +1240,19 @@ export const Compute: React.FC = () => {
           {/* Instances Grid */}
           {instances.length === 0 ? (
             <div className="bg-white border border-dashed border-slate-200 rounded-2xl p-12 text-center">
-              <div className="w-14 h-14 rounded-2xl bg-slate-100 flex items-center justify-center mx-auto mb-4">
-                <Server className="w-6 h-6 text-slate-400" />
+              <div className="w-14 h-14 rounded-2xl bg-slate-900 flex items-center justify-center mx-auto mb-4 shadow-sm">
+                <GithubIcon className="w-7 h-7 text-[#c8f542]" />
               </div>
-              <h3 className="text-sm font-semibold text-slate-700 mb-1">No instances deployed yet</h3>
-              <p className="text-xs text-slate-400 max-w-xs mx-auto mb-5">
-                Deploy your first instance to get started. Choose from Node.js, Python, Go, Linux VMs, databases, and more.
+              <h3 className="text-sm font-bold text-slate-800 mb-1">No applications deployed yet</h3>
+              <p className="text-xs text-slate-500 max-w-sm mx-auto mb-5 leading-relaxed">
+                Deploy your website or backend directly from a GitHub repository. Instant automatic build and live hosting on your cloud node.
               </p>
               <button
-                onClick={() => setIsDeployModalOpen(true)}
+                onClick={() => (quota?.isAtLimit ? setIsPlansModalOpen(true) : setIsDeployGithubModalOpen(true))}
                 className="inline-flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-[#c8f542] font-semibold text-sm px-5 py-2.5 rounded-xl transition shadow-lg shadow-slate-900/10"
               >
-                <Plus className="w-4 h-4" />
-                Deploy First Instance
+                <GithubIcon className="w-4 h-4 text-[#c8f542]" />
+                Deploy from GitHub
               </button>
             </div>
           ) : (
@@ -1184,14 +1278,13 @@ export const Compute: React.FC = () => {
                       }
                       onOpenBuildLogs={(inst) => setSelectedInstanceForBuildLogs(inst)}
                       onRedeploy={(inst) => handleRedeploy(inst)}
+                      onOpenWebhook={(inst) => setSelectedInstanceForWebhook(inst)}
                     />
                   ))}
                 </AnimatePresence>
               </motion.div>
             </div>
           )}
-        </>
-      )}
 
       {/* Deploy Template Instance Modal */}
       <DeployModal
@@ -1259,6 +1352,17 @@ export const Compute: React.FC = () => {
         template={selectedInstanceForTerminalStats?.instance.template || 'nodejs'}
         status={selectedInstanceForTerminalStats?.instance.status || 'stopped'}
         initialTab={selectedInstanceForTerminalStats?.tab || 'stats'}
+      />
+
+      {/* GitOps Auto-Deploy Webhook Modal */}
+      <GitOpsWebhookModal
+        isOpen={!!selectedInstanceForWebhook}
+        onClose={() => setSelectedInstanceForWebhook(null)}
+        instanceId={selectedInstanceForWebhook?._id || null}
+        instanceName={selectedInstanceForWebhook?.name || ''}
+        githubRepoUrl={selectedInstanceForWebhook?.githubRepoUrl}
+        githubBranch={selectedInstanceForWebhook?.githubBranch || 'main'}
+        onConfigUpdated={fetchData}
       />
     </div>
   );
