@@ -1202,10 +1202,10 @@ export const LandingPage = () => {
             <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={scrollReveal} className="text-center max-w-3xl mx-auto mb-16">
               <span className="text-emerald-500 text-sm font-semibold tracking-wider uppercase block mb-3">How it Works</span>
               <h2 className="text-3xl md:text-5xl font-bold text-slate-900 tracking-tight">
-                How Server & Hosting Works
+                How App Hosting & GitOps Works
               </h2>
               <p className="text-slate-600 text-lg mt-5">
-                A brief overview of the core technologies powering your enterprise application.
+                A brief overview of the high-performance AWS cloud engine powering your web applications.
               </p>
             </motion.div>
 
@@ -1215,9 +1215,9 @@ export const LandingPage = () => {
             <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-emerald-500/30">
               <Server className="w-8 h-8 text-white" />
             </div>
-            <h3 className="text-xl font-bold text-slate-900 mb-4">Total Instance Isolation</h3>
+            <h3 className="text-xl font-bold text-slate-900 mb-4">Isolated App Sandboxes</h3>
             <p className="text-slate-600 text-sm leading-relaxed">
-              Every tenant receives a dedicated EC2 instance or sandboxed container. We ensure zero cross-tenant resource contention and complete environment isolation.
+              Every tenant application runs in an isolated, sandboxed environment on our AWS EC2 cloud cluster. Zero cross-tenant resource interference and strict memory boundaries.
             </p>
           </motion.div>
 
@@ -1226,9 +1226,9 @@ export const LandingPage = () => {
             <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-emerald-500/30">
               <Lock className="w-8 h-8 text-white" />
             </div>
-            <h3 className="text-xl font-bold text-slate-900 mb-4">VPC Networking</h3>
+            <h3 className="text-xl font-bold text-slate-900 mb-4">Automated GitOps Engine</h3>
             <p className="text-slate-600 text-sm leading-relaxed">
-              Deploy tenant resources within isolated Virtual Private Clouds (VPCs) with strict security groups, ensuring private networking and secure access control.
+              Deploy websites directly from GitHub in 1-click. Automatic runtime detection for React, Vite, Next.js, Node.js, HTML, and Python without manual server setup.
             </p>
           </motion.div>
 
@@ -1237,9 +1237,9 @@ export const LandingPage = () => {
             <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg shadow-emerald-500/30">
               <Sliders className="w-8 h-8 text-white" />
             </div>
-            <h3 className="text-xl font-bold text-slate-900 mb-4">Auto-Scaling Groups</h3>
+            <h3 className="text-xl font-bold text-slate-900 mb-4">24/7 Process Health & Recovery</h3>
             <p className="text-slate-600 text-sm leading-relaxed">
-              Automatically scale your EC2 compute capacity up or down based on real-time traffic demands. Ensure high availability without manual intervention.
+              Integrated PM2 daemons continuously monitor your services, automatically restarting crashed processes and maintaining persistent uptime across node reboots.
             </p>
           </motion.div>
         </motion.div>
@@ -1255,7 +1255,7 @@ export const LandingPage = () => {
             In-Depth Architecture of Our Compute Engine
           </h2>
           <p className="text-slate-600 text-lg mt-5">
-            The foundational building blocks engineered to keep your server instances isolated, secure, and auto-scaled on shared cloud infrastructure.
+            The foundational building blocks engineered to keep your web apps isolated, secure, and resilient on high-speed AWS cloud infrastructure.
           </p>
         </motion.div>
 
@@ -1264,17 +1264,17 @@ export const LandingPage = () => {
           <motion.div variants={scrollReveal} className="h-full">
             <div className="bg-slate-50 border border-slate-100 rounded-[2rem] p-8 md:p-10 flex flex-col h-full hover:shadow-lg hover:border-slate-200 transition-all duration-300">
             <h3 className="text-2xl font-bold text-slate-900 mb-4 pr-8">
-              Guarantees Strict Network and Hardware Isolation
+              Guarantees Strict Process and Port Isolation
             </h3>
             <p className="text-slate-600 text-base leading-relaxed mb-10">
-              Every EC2 instance is isolated within a dedicated VPC subnetwork, eliminating cross-tenant resource contention and horizontal privilege escalation.
+              Every deployed application receives a dedicated port, sandboxed workdir, and independent process daemon, eliminating cross-tenant interference and unauthorized access.
             </p>
             
             {/* Visual Mockup - Card 1 */}
             <div className="mt-auto bg-white border border-slate-100 rounded-2xl p-6 shadow-sm flex-1">
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-slate-900">VPC Network Status</span>
+                  <span className="font-bold text-slate-900">App Sandbox Status</span>
                   <span className="px-2 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-bold rounded-full tracking-wide">SECURE</span>
                 </div>
                 <div className="text-xs font-medium text-slate-400 bg-slate-50 px-3 py-1.5 rounded-lg border border-slate-100">
@@ -1286,21 +1286,21 @@ export const LandingPage = () => {
                 <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                    <span className="text-sm font-medium text-slate-700">Network Boundary Check</span>
+                    <span className="text-sm font-medium text-slate-700">Process Boundary Check</span>
                   </div>
                   <span className="text-xs font-bold text-emerald-600 bg-emerald-100 px-2.5 py-1 rounded-md">PASS</span>
                 </div>
                 <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                    <span className="text-sm font-medium text-slate-700">Security Group Enforcement</span>
+                    <span className="text-sm font-medium text-slate-700">Port & Network Isolation</span>
                   </div>
                   <span className="text-xs font-bold text-emerald-600 bg-emerald-100 px-2.5 py-1 rounded-md">PASS</span>
                 </div>
                 <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-100">
                   <div className="flex items-center gap-3">
                     <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
-                    <span className="text-sm font-medium text-slate-700">Network Routing Latency</span>
+                    <span className="text-sm font-medium text-slate-700">Proxy Routing Latency</span>
                   </div>
                   <span className="text-xs font-bold text-slate-700 bg-white border border-slate-200 px-2.5 py-1 rounded-md shadow-sm">&lt; 0.8ms</span>
                 </div>
@@ -1313,10 +1313,10 @@ export const LandingPage = () => {
           <motion.div variants={scrollReveal} className="h-full">
             <div className="bg-slate-50 border border-slate-100 rounded-[2rem] p-8 md:p-10 flex flex-col h-full hover:shadow-lg hover:border-slate-200 transition-all duration-300">
             <h3 className="text-2xl font-bold text-slate-900 mb-4 pr-8">
-              Real-time Instance Health & Telemetry
+              Real-time App Health & Telemetry
             </h3>
             <p className="text-slate-600 text-base leading-relaxed mb-10">
-              Visualize the complete lifecycle of your server instances. Monitor CPU spikes, memory utilization, and network throughput with our high-resolution telemetry pipeline.
+              Visualize the complete lifecycle of your deployed projects. Monitor CPU spikes, memory utilization, and network throughput with our high-resolution telemetry pipeline.
             </p>
             
             {/* Visual Mockup - Card 2 (Histogram / Bar Chart) */}
@@ -1333,7 +1333,7 @@ export const LandingPage = () => {
                   </svg>
                 </div>
               </div>
-              <p className="text-[11px] font-medium text-slate-400 mb-8">Average resource utilization across all EC2 instances</p>
+              <p className="text-[11px] font-medium text-slate-400 mb-8">Average resource utilization across all tenant applications</p>
 
               {/* Chart Area */}
               <div className="relative flex-1 min-h-[180px] mt-2 mb-2">
@@ -1590,49 +1590,49 @@ export const LandingPage = () => {
               {/* Header */}
               <div className="mb-8">
                 <div className="flex items-center gap-3 mb-2">
-                  <h3 className="text-lg font-bold text-slate-900">Active Compute Nodes</h3>
+                  <h3 className="text-lg font-bold text-slate-900">Active Deployed Applications</h3>
                   <span className="px-2 py-0.5 bg-slate-900 text-white text-[10px] font-bold rounded-full tracking-wide">LIVE</span>
                 </div>
-                <p className="text-[11px] font-medium text-slate-400">Cluster Status: AP-South-1</p>
+                <p className="text-[11px] font-medium text-slate-400">Cluster Status: AP-South-1 (AWS EC2 Engine)</p>
               </div>
 
               {/* Table Header */}
               <div className="grid grid-cols-4 gap-4 pb-4 border-b border-slate-100 text-[11px] font-semibold text-slate-400 mb-5">
-                <div>Instance ID</div>
-                <div className="flex items-center gap-1">Type <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" /></svg></div>
+                <div>Application</div>
+                <div className="flex items-center gap-1">Runtime <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" /></svg></div>
                 <div>Status</div>
-                <div className="flex items-center justify-end gap-1 text-right">CPU Load <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" /></svg></div>
+                <div className="flex items-center justify-end gap-1 text-right">Port / URL <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 9l4-4 4 4m0 6l-4 4-4-4" /></svg></div>
               </div>
 
               {/* Table Rows */}
               <div className="flex flex-col gap-5 text-[12px] font-medium text-slate-600">
                 {/* Row 1 */}
                 <div className="grid grid-cols-4 gap-4 items-center border-b border-slate-50 pb-5">
-                  <div className="text-slate-900 font-mono text-[11px]">i-09abf34...</div>
-                  <div>t3.large</div>
+                  <div className="text-slate-900 font-mono text-[11px] font-semibold">portfolio-vite</div>
+                  <div>React / Vite</div>
                   <div><span className="px-3 py-1 bg-[#5E9F71]/10 text-[#5E9F71] rounded-full text-[10px] font-bold flex items-center gap-1 w-max"><span className="w-1.5 h-1.5 rounded-full bg-[#5E9F71] animate-pulse"></span> Running</span></div>
-                  <div className="text-right">78.2%</div>
+                  <div className="text-right font-mono font-bold text-slate-700">:3000</div>
                 </div>
                 {/* Row 2 */}
                 <div className="grid grid-cols-4 gap-4 items-center border-b border-slate-50 pb-5">
-                  <div className="text-slate-900 font-mono text-[11px]">i-08c3d12...</div>
-                  <div>c5.xlarge</div>
-                  <div><span className="px-3 py-1 bg-amber-100 text-amber-600 rounded-full text-[10px] font-bold flex items-center gap-1 w-max"><span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-spin"></span> Scaling</span></div>
-                  <div className="text-right">94.1%</div>
+                  <div className="text-slate-900 font-mono text-[11px] font-semibold">ecommerce-api</div>
+                  <div>Node Express</div>
+                  <div><span className="px-3 py-1 bg-[#5E9F71]/10 text-[#5E9F71] rounded-full text-[10px] font-bold flex items-center gap-1 w-max"><span className="w-1.5 h-1.5 rounded-full bg-[#5E9F71] animate-pulse"></span> Running</span></div>
+                  <div className="text-right font-mono font-bold text-slate-700">:3001</div>
                 </div>
                 {/* Row 3 */}
                 <div className="grid grid-cols-4 gap-4 items-center border-b border-slate-50 pb-5">
-                  <div className="text-slate-900 font-mono text-[11px]">i-067a9cd...</div>
-                  <div>m5.large</div>
-                  <div><span className="px-3 py-1 bg-slate-100 text-slate-500 rounded-full text-[10px] font-bold flex items-center gap-1 w-max"><span className="w-1.5 h-1.5 rounded-full bg-slate-400"></span> Stopped</span></div>
-                  <div className="text-right">0.0%</div>
+                  <div className="text-slate-900 font-mono text-[11px] font-semibold">ai-service-api</div>
+                  <div>Python FastAPI</div>
+                  <div><span className="px-3 py-1 bg-[#5E9F71]/10 text-[#5E9F71] rounded-full text-[10px] font-bold flex items-center gap-1 w-max"><span className="w-1.5 h-1.5 rounded-full bg-[#5E9F71] animate-pulse"></span> Running</span></div>
+                  <div className="text-right font-mono font-bold text-slate-700">:3002</div>
                 </div>
                 {/* Row 4 */}
                 <div className="grid grid-cols-4 gap-4 items-center">
-                  <div className="text-slate-900 font-mono text-[11px]">i-054fba3...</div>
-                  <div>t3.medium</div>
+                  <div className="text-slate-900 font-mono text-[11px] font-semibold">admin-portal</div>
+                  <div>Next.js SSR</div>
                   <div><span className="px-3 py-1 bg-[#5E9F71]/10 text-[#5E9F71] rounded-full text-[10px] font-bold flex items-center gap-1 w-max"><span className="w-1.5 h-1.5 rounded-full bg-[#5E9F71] animate-pulse"></span> Running</span></div>
-                  <div className="text-right">45.8%</div>
+                  <div className="text-right font-mono font-bold text-slate-700">:3003</div>
                 </div>
               </div>
             </div>
@@ -1641,10 +1641,10 @@ export const LandingPage = () => {
           {/* Right: Text Content */}
           <motion.div variants={scrollReveal} className="lg:pl-8">
             <h3 className="text-3xl font-bold text-slate-900 mb-6 leading-tight">
-              Monitor, Scale, and Orchestrate Servers
+              Monitor, Manage, and Deploy Applications
             </h3>
             <p className="text-slate-600 text-base leading-relaxed mb-12">
-              Instantly view all your active compute resources in real-time. Define auto-scaling thresholds, manage load distribution, and guarantee high availability across all your deployed availability zones.
+              Instantly view all your active deployed web applications in real-time. Track process uptime, inspect live build logs, and restart services with 1-click on your cloud cluster.
             </p>
 
             {/* Mini Grid */}
@@ -1656,9 +1656,9 @@ export const LandingPage = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
                   </svg>
                 </div>
-                <h4 className="text-base font-bold text-slate-900 mb-2">Auto-Scaling Groups</h4>
+                <h4 className="text-base font-bold text-slate-900 mb-2">Zero-Downtime GitOps</h4>
                 <p className="text-sm text-slate-600 leading-relaxed">
-                  Automatically spin up or terminate instances based on CPU utilization to handle traffic spikes seamlessly.
+                  Push updates to GitHub or trigger redeployments without interrupting active website visitors.
                 </p>
               </div>
 
@@ -1669,9 +1669,9 @@ export const LandingPage = () => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
                   </svg>
                 </div>
-                <h4 className="text-base font-bold text-slate-900 mb-2">Automated Health Checks</h4>
+                <h4 className="text-base font-bold text-slate-900 mb-2">Automated Process Health Checks</h4>
                 <p className="text-sm text-slate-600 leading-relaxed">
-                  Continuous polling of node vitals ensures traffic is only routed to healthy, responsive instances.
+                  Continuous PM2 daemon polling ensures traffic is always routed to active, healthy process ports with instant crash auto-recovery.
                 </p>
               </div>
             </div>
@@ -1685,12 +1685,12 @@ export const LandingPage = () => {
         className="relative z-10 max-w-6xl mx-auto px-8 py-[60px]"
       >
         <motion.div initial="hidden" whileInView="visible" viewport={{ once: true, margin: "-100px" }} variants={scrollReveal} className="text-center max-w-3xl mx-auto mb-10">
-          <p className="text-[#5E9F71] font-semibold text-sm mb-4">Instance Pricing</p>
+          <p className="text-[#5E9F71] font-semibold text-sm mb-4">Hosting & Compute Plans</p>
           <h2 className="text-3xl md:text-4xl font-bold text-slate-900 tracking-tight">
-            Select your Compute Node
+            Select your Web Hosting Plan
           </h2>
           <p className="text-slate-600 text-base mt-4 max-w-xl mx-auto">
-            Pay-as-you-go billing with a predictable monthly cap. Pause or destroy nodes anytime.
+            Predictable monthly billing for high-speed application hosting on AWS cloud infrastructure.
           </p>
         </motion.div>
 
@@ -1720,13 +1720,15 @@ export const LandingPage = () => {
               priceYearly: 42,
               originalYearly: 60,
               badge: 'Best for Testing',
-              description: 'Shared vCPU ideal for development, testing, and small personal projects.',
+              description: 'Shared cloud resources ideal for development, testing, and personal projects.',
               usersMonthly: 1,
               usersYearly: 1,
+              unitName: 'Active Project Slot',
               features: [
-                '1 GB Memory (RAM)',
-                '25 GB NVMe Storage',
-                'Shared CPU Architecture',
+                '512 MB RAM per App Sandbox',
+                'Instant 1-Click GitHub Deploy',
+                'Auto-Detect (React, Node, Python, HTML)',
+                'Live Logs & Real-Time Telemetry',
                 'Community Support',
               ],
               buttonText: 'Deploy Sandbox',
@@ -1740,9 +1742,15 @@ export const LandingPage = () => {
               originalYearly: 180,
               discountBadge: '30% OFF',
               description: 'Balanced performance for production apps and staging environments.',
-              usersMonthly: 2,
-              usersYearly: 2,
-              features: ['4 GB Memory (RAM)', '80 GB NVMe Storage', 'Dedicated CPU Architecture'],
+              usersMonthly: 3,
+              usersYearly: 3,
+              unitName: 'Active Project Slots',
+              features: [
+                '2 GB RAM per App Sandbox',
+                'High-Performance AWS Cloud Node',
+                'Automated Zero-Downtime Redeploy',
+                '24/7 PM2 Crash Auto-Recovery Daemon',
+              ],
               yearlyExtraFeatures: [
                 'Free Automated Daily Backups',
                 'Priority Support Access',
@@ -1758,10 +1766,15 @@ export const LandingPage = () => {
               priceYearly: 336,
               originalYearly: 480,
               discountBadge: '30% OFF',
-              description: 'High performance dedicated CPUs for intensive workloads and CI/CD.',
-              usersMonthly: 4,
-              usersYearly: 4,
-              features: ['8 GB Memory (RAM)', '160 GB NVMe Storage', 'High-Frequency CPU'],
+              description: 'High performance dedicated cloud compute for intensive workloads and SSR.',
+              usersMonthly: 5,
+              usersYearly: 5,
+              unitName: 'Active Project Slots',
+              features: [
+                '8 GB RAM per App Sandbox (Heavy Workloads & SSR)',
+                'Dedicated Process Priority on AWS Node',
+                'Unlimited GitHub Deploys & Rollbacks',
+              ],
               yearlyExtraFeatures: [
                 'Free Automated Daily Backups',
                 'Priority Support Access',
@@ -1843,14 +1856,14 @@ export const LandingPage = () => {
                           {isYearly && plan.usersYearly > plan.usersMonthly ? (
                             <>
                               <span className="line-through text-slate-400 opacity-40 blur-[0.6px] select-none text-xs font-semibold">
-                                {plan.usersMonthly} vCPU Cores
+                                {plan.usersMonthly} {plan.unitName || 'Project Slots'}
                               </span>
                               <span className={`font-bold transition-colors ${isDark ? 'text-white' : 'text-slate-900'}`}>
-                                {plan.usersYearly} vCPU Cores
+                                {plan.usersYearly} {plan.unitName || 'Project Slots'}
                               </span>
                             </>
                           ) : (
-                            <span>{plan.usersMonthly} vCPU Core{plan.usersMonthly > 1 ? 's' : ''}</span>
+                            <span>{plan.usersMonthly} {plan.unitName || (plan.usersMonthly > 1 ? 'Project Slots' : 'Project Slot')}</span>
                           )}
                         </div>
                       </div>

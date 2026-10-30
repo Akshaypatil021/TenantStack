@@ -17,12 +17,11 @@ import {
   Shield,
   Layers,
   ChevronRight,
-  LogOut,
   PieChart as PieChartIcon,
   Activity as ActivityIcon,
   Menu,
 } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Sidebar } from '../components/Sidebar';
 import { Footer } from '../components/Footer';
 import { motion } from 'framer-motion';
@@ -134,8 +133,7 @@ const PRIORITY_BADGES: Record<string, { bg: string; text: string }> = {
 };
 
 export const Dashboard = () => {
-  const { user, tenant, logout, token } = useAuth();
-  const navigate = useNavigate();
+  const { user, tenant, token } = useAuth();
 
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -180,11 +178,6 @@ export const Dashboard = () => {
   useEffect(() => {
     fetchStats();
   }, [fetchStats]);
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
 
   const userInitials =
     `${user?.firstName?.charAt(0) || ''}${user?.lastName?.charAt(0) || ''}`.toUpperCase() || 'U';
@@ -284,11 +277,7 @@ export const Dashboard = () => {
 
               <div className="w-px h-6 bg-slate-200 mx-1"></div>
 
-              <div
-                className="flex items-center gap-3 group cursor-pointer"
-                onClick={handleLogout}
-                title="Sign Out"
-              >
+              <div className="flex items-center gap-3 select-none">
                 <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#c8f542] to-[#5E9F71] flex items-center justify-center text-slate-900 font-bold text-xs shadow-sm">
                   {userInitials}
                 </div>
@@ -300,7 +289,6 @@ export const Dashboard = () => {
                     {user?.developerRole || 'Developer'}
                   </p>
                 </div>
-                <LogOut className="w-3.5 h-3.5 text-slate-400 group-hover:text-rose-500 transition hidden lg:block" />
               </div>
             </div>
           </div>

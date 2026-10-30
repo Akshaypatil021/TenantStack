@@ -25,7 +25,7 @@ export const Sidebar: React.FC = () => {
   // Desktop Pin & Hover State (Persisted in localStorage)
   const [isPinned, setIsPinned] = useState<boolean>(() => {
     const saved = localStorage.getItem('tenantstack_sidebar_pinned');
-    return saved !== null ? saved === 'true' : true;
+    return saved !== null ? saved === 'true' : false;
   });
   const [isHovered, setIsHovered] = useState<boolean>(false);
   const [mobileOpen, setMobileOpen] = useState<boolean>(false);
@@ -59,14 +59,23 @@ export const Sidebar: React.FC = () => {
       {/* ─────────────────────────────────────────────────────────────
           1. DESKTOP RESPONSIVE & COLLAPSIBLE SIDEBAR
       ───────────────────────────────────────────────────────────── */}
+      {/* Structural layout spacer: keeps screen content completely stable during hover */}
+      <div
+        className={`hidden lg:block shrink-0 transition-all duration-300 ease-in-out ${
+          isPinned ? 'w-64' : 'w-20'
+        }`}
+        aria-hidden="true"
+      />
+
+      {/* Floating fixed drawer: overlays over page content on hover without moving it */}
       <aside
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        className={`hidden lg:flex flex-col h-screen sticky top-0 z-40 bg-white border-r border-slate-100 transition-all duration-300 ease-in-out shrink-0 select-none ${
-          isExpanded ? 'w-64 shadow-xl shadow-slate-900/5' : 'w-20 shadow-none'
+        className={`hidden lg:flex flex-col justify-between fixed inset-y-0 left-0 z-50 bg-white border-r border-slate-100 transition-all duration-300 ease-in-out select-none ${
+          isExpanded ? 'w-64 shadow-2xl shadow-slate-900/10' : 'w-20 shadow-none'
         }`}
       >
-        <div>
+        <div className="flex-1 overflow-y-auto">
           {/* Brand Header */}
           <div className="h-16 px-4 flex items-center justify-between border-b border-slate-100">
             <div className="flex items-center gap-3 overflow-hidden">
@@ -97,7 +106,7 @@ export const Sidebar: React.FC = () => {
                     ? 'text-[#5E9F71] bg-[#c8f542]/20 hover:bg-[#c8f542]/30'
                     : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'
                 }`}
-                title={isPinned ? 'Collapse sidebar (expand on hover)' : 'Pin sidebar open'}
+                title={isPinned ? 'Unpin sidebar (auto-collapse on leave)' : 'Pin sidebar open'}
               >
                 {isPinned ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeftOpen className="w-4 h-4" />}
               </button>
@@ -151,6 +160,19 @@ export const Sidebar: React.FC = () => {
           </nav>
         </div>
 
+        {/* Desktop Logout Footer */}
+        <div className="p-3 border-t border-slate-100 mt-auto">
+          <button
+            onClick={handleLogout}
+            className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-xl font-semibold text-sm text-slate-500 hover:text-rose-600 hover:bg-rose-50/80 transition-colors cursor-pointer ${
+              !isExpanded ? 'justify-center px-0' : ''
+            }`}
+            title={!isExpanded ? 'Sign Out' : undefined}
+          >
+            <LogOut className="w-5 h-5 shrink-0 text-slate-400 hover:text-rose-500" />
+            {isExpanded && <span className="truncate whitespace-nowrap">Sign Out</span>}
+          </button>
+        </div>
       </aside>
 
       {/* ─────────────────────────────────────────────────────────────

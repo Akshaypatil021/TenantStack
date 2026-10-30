@@ -1,15 +1,8 @@
 import { useAuth } from '../context/AuthContext';
-import { ShieldCheck, Menu, LogOut } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { ShieldCheck, Menu } from 'lucide-react';
 
 export const Navbar = () => {
-  const { user, tenant, logout } = useAuth();
-  const navigate = useNavigate();
-
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
+  const { user, tenant } = useAuth();
 
   const userInitials = (
     (user?.firstName?.[0] || '') + (user?.lastName?.[0] || '')
@@ -42,12 +35,8 @@ export const Navbar = () => {
 
         <div className="w-px h-6 bg-slate-200 mx-1 hidden sm:block"></div>
 
-        {/* User Info & Sign Out */}
-        <div
-          className="flex items-center gap-2.5 group cursor-pointer"
-          onClick={handleLogout}
-          title="Sign Out"
-        >
+        {/* User Info Profile Pill */}
+        <div className="flex items-center gap-2.5 select-none">
           <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#c8f542] to-[#5E9F71] flex items-center justify-center text-slate-900 font-bold text-xs shadow-xs">
             {userInitials}
           </div>
@@ -59,7 +48,6 @@ export const Navbar = () => {
               {user?.developerRole || 'Developer'}
             </p>
           </div>
-          <LogOut className="w-3.5 h-3.5 text-slate-400 group-hover:text-rose-500 transition hidden sm:block" />
         </div>
       </div>
     </header>
